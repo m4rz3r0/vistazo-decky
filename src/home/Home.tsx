@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import {
   Game,
-  SHELVES,
+  activeShelves,
   ShelfId,
   currentStatus,
   heroUrls,
@@ -180,8 +180,11 @@ let lastShelf: ShelfId = "installed";
 const lastFocus: Partial<Record<ShelfId, number>> = {};
 
 export function Home() {
-  const [shelf, setShelf] = useState<ShelfId>(lastShelf);
-  const [games, setGames] = useState<Game[]>(() => loadShelf(lastShelf));
+  const shelves = activeShelves(useSettings().shelves);
+  const [shelf, setShelf] = useState<ShelfId>(() =>
+    shelves.some((s) => s.id === lastShelf) ? lastShelf : shelves[0].id,
+  );
+  const [games, setGames] = useState<Game[]>(() => loadShelf(shelf));
   // Tender builds its retro collections a few seconds after boot, and games get installed or removed
   // while the home stays open: re-read the shelf when it changes, when it comes back into view, and
   // twice more shortly after if it came up empty.
@@ -213,16 +216,23 @@ export function Home() {
   const focused =
     focusedId === null ? null : (games.find((g) => g.appid === focusedId) ?? games[0] ?? null);
 
-  const cycle = (dir: number) => {
-    const i = SHELVES.findIndex((s) => s.id === shelf);
-    const next = SHELVES[(i + dir + SHELVES.length) % SHELVES.length];
-    // L1/R1: each shelf comes back on the cover it was left on; its covers mount with that one autofocused.
-    const nextGames = loadShelf(next.id);
-    lastShelf = next.id;
+  const show = (id: ShelfId) => {
+    // Each shelf comes back on the cover it was left on; its covers mount with that one autofocused.
+    const nextGames = loadShelf(id);
+    lastShelf = id;
     setGames(nextGames);
-    setFocusedId(lastFocus[next.id] ?? nextGames[0]?.appid ?? 0);
-    setShelf(next.id);
+    setFocusedId(lastFocus[id] ?? nextGames[0]?.appid ?? 0);
+    setShelf(id);
   };
+  const cycle = (dir: number) => {
+    const i = shelves.findIndex((s) => s.id === shelf);
+    show(shelves[(i + dir + shelves.length) % shelves.length].id);
+  };
+  // The shelf on show was turned off in the settings: move to the first one still on.
+  const shelfIds = shelves.map((s) => s.id).join("|");
+  useEffect(() => {
+    if (!shelves.some((s) => s.id === shelf)) show(shelves[0].id);
+  }, [shelfIds]);
 
   // On the root, so L1/R1 work wherever the focus is (covers or the friends corner).
   const onButtonDown = (evt: any) => {
@@ -288,7 +298,7 @@ export function Home() {
 
       <div className="vh-shelves">
         <span className="vh-glyph">L1</span>
-        {SHELVES.map((s) => (
+        {shelves.map((s) => (
           <span
             key={s.id}
             className={`vh-shelf${s.id === shelf ? " vh-on" : ""}`}
@@ -331,7 +341,7 @@ export function Home() {
         ))}
         {games.length === 0 && (
           <div className="vh-empty">
-            {shelf === "retro" ? t.noRetroGames : t.noInstalledGames}
+            {shelf === "retro" ? t.noRetroGames : shelf === "installed" ? t.noInstalledGames : t.emptyShelf}
           </div>
         )}
         <Focusable

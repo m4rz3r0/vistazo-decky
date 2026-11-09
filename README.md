@@ -19,8 +19,9 @@ and the game pages for the OLED screen, and swaps the menu sounds for quieter on
 The art of the focused game fills the screen and fades to black, with its logo, hours played and last session.
 Below, one row of covers:
 
-- **L1 / R1** switch shelf: **Installed** (Steam games, most recent first) and **Retro** (RomM games added by
-  the Tender plugin, by last session).
+- **L1 / R1** switch shelf: **Installed** (Steam games, most recent first), **Retro** (RomM games added by
+  the Tender plugin, when there are any) and any of your Steam collections, such as Favourites. You choose
+  which ones show in the settings.
 - **A** plays, **X** opens the game page, **Y** opens the full library. The footer always shows these. You can
   swap A and X in the settings.
 - **Friends** sit in the top-left corner: a dot in your status colour and how many friends are online. Press
@@ -53,11 +54,13 @@ through Steam's own audio output and follow its settings: volume, output device,
 
 Open them from the quick access menu: **⋯ → Decky (plug icon) → Vistazo**. They are grouped by screen:
 
-- **Home**: **Shelves on the home screen** swaps Steam's home for Vistazo's; **Swap A and X** makes A open the game page
+- **Home**: **Covers and game art** swaps Steam's home for Vistazo's; **Swap A and X** makes A open the game page
   and X play
-- **Game page**: **Achievements and facts on the page** swaps Steam's game page for Vistazo's; **ProtonDB rating** adds the
+- **Shelves**: one switch per shelf: Installed, Retro if you have RomM games, and each of your own
+  Steam collections, found on your Deck
+- **Game page**: **Achievements and facts** swaps Steam's game page for Vistazo's; **ProtonDB rating** adds the
   community's rating (off: no requests leave the Deck)
-- **Sound**: **Soft sounds** swaps Steam's menu sounds for soft tones, with a button to hear them
+- **Sound**: **Soft tones** swaps Steam's menu sounds for soft tones, with a button to hear them
 
 Changes apply right away and are kept on the Deck.
 

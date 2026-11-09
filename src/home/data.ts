@@ -15,11 +15,38 @@ export interface Game {
   lastPlayed: number; // unix seconds, 0 = never
 }
 
-export type ShelfId = "installed" | "retro";
-export const SHELVES: { id: ShelfId; label: string }[] = [
-  { id: "installed", label: t.installed },
-  { id: "retro", label: t.retro },
-];
+// A shelf is "installed", "retro" (Tender's RomM collections together) or one of the user's Steam
+// collections, by its id. The settings say which ones show, in this order.
+export type ShelfId = string;
+export interface Shelf {
+  id: ShelfId;
+  label: string;
+}
+
+const isRomm = (c: any) => /^RomM:/.test(String(c?.displayName ?? ""));
+
+// Read from this Deck's own Steam collections every time, so each person sees theirs.
+export function availableShelves(): Shelf[] {
+  const collections: any[] = safe(() => collectionStore.userCollections, []);
+  const out: Shelf[] = [{ id: "installed", label: t.installed }];
+  // "Retro" only where Tender has added RomM games.
+  if (collections.some(isRomm)) out.push({ id: "retro", label: t.retro });
+  // Favourites and collections the user made (or a tool such as Steam ROM Manager made for them);
+  // Steam's built-in ones (installed, soundtracks, uncategorised…) and Tender's RomM ones are left out.
+  for (const c of collections) {
+    const id = String(c?.id ?? "");
+    if ((id === "favorite" || /^(uc|srm)-/.test(id)) && !isRomm(c))
+      out.push({ id, label: String(c.displayName ?? id) });
+  }
+  return out;
+}
+
+// The shelves the home shows; never none, so L1/R1 and the row always have something to stand on.
+export function activeShelves(enabled: string[]): Shelf[] {
+  const all = availableShelves();
+  const on = all.filter((s) => enabled.includes(s.id));
+  return on.length ? on : all.slice(0, 1);
+}
 
 const toGame = (
   o: any,
@@ -37,13 +64,19 @@ const toGame = (
 const byRecent = (a: Game, b: Game) =>
   b.lastPlayed - a.lastPlayed || a.name.localeCompare(b.name, "es");
 
+const isSteamApp = (o: any) => o.app_type === 1 && !o.BIsShortcut?.();
+
 export function loadShelf(id: ShelfId): Game[] {
   try {
     if (id === "installed") {
       return (collectionStore.localGamesCollection?.allApps ?? [])
-        .filter((o: any) => o.app_type === 1 && !o.BIsShortcut?.())
+        .filter(isSteamApp)
         .map((o: any) => toGame(o, true))
         .sort(byRecent);
+    }
+    if (id !== "retro") {
+      const c = (collectionStore.userCollections ?? []).find((x: any) => x.id === id);
+      return (c?.allApps ?? []).map((o: any) => toGame(o, isSteamApp(o))).sort(byRecent);
     }
     // Tender keeps one collection per console, named "RomM: <console> (<device>)".
     const seen = new Set<number>();

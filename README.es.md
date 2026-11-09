@@ -18,8 +18,9 @@ suaves.
 El arte del juego enfocado llena la pantalla y se funde a negro, con su logo, las horas jugadas y la última
 partida. Debajo, una fila de portadas:
 
-- **L1 / R1** cambian de estantería: **Instalados** (juegos de Steam, del más reciente al más antiguo) y
-  **Retro** (juegos de RomM que añade el plugin Tender, por última partida).
+- **L1 / R1** cambian de estantería: **Instalados** (juegos de Steam, del más reciente al más antiguo),
+  **Retro** (juegos de RomM que añade el plugin Tender, si los hay) y cualquiera de tus colecciones de Steam,
+  como Favoritos. En los ajustes eliges cuáles se ven.
 - **A** juega, **X** abre la ficha, **Y** abre la biblioteca completa. El pie de pantalla siempre lo indica.
   A y X se pueden intercambiar en los ajustes.
 - **Amigos**, en la esquina superior izquierda: un punto con el color de tu estado y cuántos amigos hay
@@ -51,11 +52,13 @@ de Steam y respetan sus ajustes: volumen, dispositivo de salida y el interruptor
 
 Están en el menú de acceso rápido: **⋯ → Decky (icono del enchufe) → Vistazo**, agrupados por pantalla:
 
-- **Inicio**: **Estanterías en el inicio** cambia el inicio de Steam por el de Vistazo; **Intercambiar A y X** hace que A
+- **Inicio**: **Portadas y arte del juego** cambia el inicio de Steam por el de Vistazo; **Intercambiar A y X** hace que A
   abra la ficha y X juegue
-- **Ficha del juego**: **Logros y datos en la ficha** cambia la ficha de Steam por la de Vistazo; **Nota de ProtonDB** añade la
+- **Estanterías**: un interruptor por estantería: Instalados, Retro si tienes juegos de RomM y cada una de
+  tus colecciones de Steam, sacadas de tu Deck
+- **Ficha del juego**: **Logros y datos** cambia la ficha de Steam por la de Vistazo; **Nota de ProtonDB** añade la
   nota de la comunidad (desactivada, no sale ninguna consulta de la Deck)
-- **Sonido**: **Sonidos suaves** cambia los sonidos de Steam por tonos suaves, con un botón para escucharlos
+- **Sonido**: **Tonos suaves** cambia los sonidos de Steam por tonos suaves, con un botón para escucharlos
 
 Los cambios se aplican al momento y se guardan en la Deck.
 

@@ -8,16 +8,20 @@ export interface Settings {
   protondb: boolean; // ask protondb.com for the game's rating
   sounds: boolean; // calm menu sounds instead of Steam's
   aOpensPage: boolean; // home: A opens the game page and X plays (Steam games only)
+  shelves: string[]; // home shelves on show, by id (see availableShelves)
 }
 
 const KEY = "vistazo:settings";
-const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false };
+const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, shelves: ["installed", "retro"] };
 
 function read(): Settings {
   const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});
   const out = { ...DEFAULTS };
-  for (const k of Object.keys(DEFAULTS) as (keyof Settings)[])
-    if (typeof saved[k] === "boolean") out[k] = saved[k];
+  for (const k of Object.keys(DEFAULTS) as (keyof Settings)[]) {
+    const v = saved[k];
+    if (typeof v === typeof DEFAULTS[k] && !Array.isArray(DEFAULTS[k])) (out as any)[k] = v;
+    else if (Array.isArray(DEFAULTS[k]) && Array.isArray(v)) (out as any)[k] = v.filter((x: unknown) => typeof x === "string");
+  }
   return out;
 }
 
