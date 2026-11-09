@@ -145,6 +145,11 @@ function Friends() {
       onOKActionDescription={t.changeStatus}
       onSecondaryButton={() => Navigation.NavigateToChat()}
       onSecondaryActionDescription={t.friends}
+      // The corner sits on the same line as Steam's top bar, which is focusable too: up from here
+      // would land on its search button. The corner is the top of the home.
+      onGamepadDirection={(evt: any) => {
+        if (evt?.detail?.button === GamepadButton.DIR_UP) evt.preventDefault?.();
+      }}
     >
       <span
         className="vh-dot vh-self"

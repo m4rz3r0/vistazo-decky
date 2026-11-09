@@ -44,6 +44,9 @@ export const homeCss = `
 .vh-stage {
   position: absolute;
   inset: 0 0 34% 0;
+  /* The new art settles from a little larger: clip it, or its lower edge shows as a line across
+     the screen for a moment below the fade. */
+  overflow: hidden;
 }
 .vh-hero {
   position: absolute;
@@ -195,35 +198,24 @@ export const homeCss = `
    left: all of them turn a little towards the game you're on. */
 .vh-row:has(.vh-cover.gpfocus) .vh-cover { --vh-tilt: 12deg; }
 .vh-row .vh-cover.gpfocus ~ .vh-cover { --vh-tilt: -12deg; }
-/* The selected cover faces you, steps forward and gets the theme's mark: a short bar of the accent
-   under it that opens out as the focus arrives. No frame around the art. */
+/* The selected cover is marked by size and light alone, no frame or line: it faces you, steps
+   forward and stays at full brightness while the rest lean towards it in the half-light. */
 .vh-row .vh-cover.gpfocus {
   --vh-tilt: 0deg;
-  transform: translateY(calc(-6px * var(--vh-motion))) scale(calc(1 + 0.1 * var(--vh-motion)));
+  transform: translateY(calc(-6px * var(--vh-motion))) scale(calc(1 + 0.12 * var(--vh-motion)));
   z-index: 1;
 }
-.vh-cover::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -11px;
-  width: 36px;
-  height: 4px;
-  margin-left: -18px;
-  border-radius: 2px;
-  background: var(--vh-accent);
-  transform: scaleX(0);
-  opacity: 0;
-  transition: transform calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity calc(160ms * var(--vh-motion)) ease-out;
-}
-.vh-cover.gpfocus::after { transform: scaleX(1); opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .vh-cover { --vh-motion: 0; }
 }
 /* Only the focused cover is at full brightness; on black, opacity dims for free (no filter pass). */
 .vh-cover:not(.gpfocus):not(.vh-library) {
   opacity: 0.72;
+}
+/* While the shelf has the focus the others step further back, so the chosen one is unmistakable
+   even with motion off. */
+.vh-row:has(.vh-cover.gpfocus) .vh-cover:not(.gpfocus) {
+  opacity: 0.5;
 }
 .vh-art {
   display: block;
@@ -290,13 +282,19 @@ export const homeCss = `
   align-items: center;
   gap: 8px;
   height: 28px;
-  padding: 0 10px 0 0;
-  border-radius: 12px;
+  margin-left: -10px;
+  padding: 0 12px 0 10px;
+  border-radius: 14px;
   color: var(--vh-muted);
   outline: none;
   z-index: 5;
+  transition: background-color calc(160ms * var(--vh-motion)) ease-out;
 }
-.vh-friends.gpfocus { color: var(--vh-text); }
+/* Selected: the theme's tinted surface, the same focus as a settings row. */
+.vh-friends.gpfocus {
+  color: var(--vh-text);
+  background: rgba(var(--obs-accent-rgb, 184, 243, 90), 0.16);
+}
 .vh-dot {
   display: inline-block;
   width: 9px;
