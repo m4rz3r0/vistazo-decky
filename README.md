@@ -1,7 +1,7 @@
 # Vistazo
 
-**A calmer Steam Deck.** A [Decky Loader](https://decky.xyz) plugin that redesigns the home screen and game
-pages for the OLED screen and softens the menu sounds.
+How I like my Steam Deck day to day: a [Decky Loader](https://decky.xyz) plugin that changes the home screen,
+the game pages and the menu sounds to my taste. Shared in case it's useful to someone else.
 
 [Leer en español](README.es.md)
 
