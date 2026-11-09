@@ -70,11 +70,16 @@ const es = {
   homeSection: "Inicio",
   pageSection: "Ficha del juego",
   homeLabel: "Inicio de Vistazo",
+  homeDesc: "Arte a pantalla completa y tus estanterías.",
   pageLabel: "Ficha resumida",
+  pageDesc: "Logros y datos nada más abrir un juego.",
   aOpensPageLabel: "A abre la ficha",
+  aOpensPageDesc: "Y X pasa a lanzar el juego.",
   protonLabel: "Nota de ProtonDB",
+  protonDesc: "Qué tal va cada juego, según protondb.com.",
   sound: "Sonido",
   soundsLabel: "Sonidos suaves",
+  soundsDesc: "Tonos cortos en vez de los de Steam.",
   playSample: "Escuchar",
 };
 
@@ -134,11 +139,16 @@ const en: typeof es = {
   homeSection: "Home",
   pageSection: "Game page",
   homeLabel: "Vistazo home",
+  homeDesc: "Full-screen art and your shelves.",
   pageLabel: "Compact page",
+  pageDesc: "Achievements and facts as soon as you open a game.",
   aOpensPageLabel: "A opens the page",
+  aOpensPageDesc: "And X launches the game.",
   protonLabel: "ProtonDB rating",
+  protonDesc: "How well each game runs, from protondb.com.",
   sound: "Sound",
   soundsLabel: "Soft sounds",
+  soundsDesc: "Short tones instead of Steam's.",
   playSample: "Listen",
 };
 
