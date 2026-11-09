@@ -1,7 +1,7 @@
 # Vistazo
 
-Así me gusta usar la Steam Deck cada día: un plugin de [Decky Loader](https://decky.xyz) que cambia el inicio,
-la ficha de cada juego y los sonidos de los menús a mi gusto. Lo comparto por si a alguien más le sirve.
+**Vistazo** es un plugin de [Decky Loader](https://decky.xyz) para Steam Deck, oscuro y con criterio propio: un
+inicio por estanterías, la ficha de cada juego de un vistazo y sonidos suaves.
 
 [Read in English](README.md)
 

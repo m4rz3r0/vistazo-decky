@@ -1,7 +1,7 @@
 # Vistazo
 
-How I like my Steam Deck day to day: a [Decky Loader](https://decky.xyz) plugin that changes the home screen,
-the game pages and the menu sounds to my taste. Shared in case it's useful to someone else.
+**Vistazo** is a dark, opinionated [Decky Loader](https://decky.xyz) plugin for the Steam Deck: a home built on
+shelves, every game page at a glance, and soft menu sounds.
 
 [Leer en español](README.es.md)
 
