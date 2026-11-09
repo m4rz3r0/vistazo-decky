@@ -279,10 +279,12 @@ export const homeCss = `
   font-size: 16px;
 }
 
-/* Friends, top-left: my status as a solid dot, then how many friends are online. */
+/* Friends, top-left: my status as a solid dot, then how many friends are online. It sits on the
+   same line as Steam's status icons on the right (centred 20 px from the top, 18 px icons, 16 px
+   text), so the top edge reads as one bar of status without a bar behind it. */
 .vh-friends {
   position: absolute;
-  top: 52px;
+  top: 6px;
   left: 28px;
   display: flex;
   align-items: center;
@@ -304,8 +306,8 @@ export const homeCss = `
   background: var(--vh-tone);
 }
 .vh-people {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   margin-left: 4px;
   fill: none;
   stroke: currentColor;
@@ -314,13 +316,13 @@ export const homeCss = `
 }
 .vh-friends.gpfocus .vh-people { stroke: var(--vh-accent); }
 .vh-online {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 .vh-status-label {
   display: none;
-  font-size: 15px;
+  font-size: 16px;
 }
 .vh-friends.gpfocus .vh-status-label { display: inline; }
 .vh-menu-row {
