@@ -1,5 +1,4 @@
 import { safe } from "../safe";
-import { navFocus } from "../focus";
 import { locale, num, t } from "../i18n";
 import {
   Focusable,
@@ -216,19 +215,6 @@ export function Home() {
   const [focusedId, setFocusedId] = useState<number | null>(games[startAt]?.appid ?? 0);
   const focused =
     focusedId === null ? null : (games.find((g) => g.appid === focusedId) ?? games[0] ?? null);
-
-  // Right after Steam starts, the covers can mount before Steam's navigation tree is ready (or arrive
-  // later, when the shelf filled in late) and autoFocus is lost: nothing is selected and the footer
-  // shows Steam's defaults. If the home still holds no selection, hand it to the cover it should be on.
-  const hasGames = games.length > 0;
-  useEffect(() => {
-    if (!hasGames) return;
-    const timer = setTimeout(() => {
-      if (document.querySelector(".vh-root .gpfocus")) return;
-      navFocus(document.querySelectorAll(".vh-row .vh-cover")[startAt]);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [hasGames, shelf]);
 
   const show = (id: ShelfId) => {
     // Each shelf comes back on the cover it was left on; its covers mount with that one autofocused.
