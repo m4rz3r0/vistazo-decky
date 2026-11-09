@@ -133,19 +133,18 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   color: var(--vz-text);
 }
 
-/* Achievements: ring, count, then what to go for next. No boxes; focus lifts the whole row a little. */
+/* Achievements: ring, count, then what to go for next. No box: at rest the ring and count are
+   white; with the focus they light up in lime, the same signal as the home's corners. */
 .vz-ach {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0 -10px;
-  padding: 8px 10px;
-  border-radius: 12px;
+  padding: 6px 0;
   outline: none;
 }
-.vz-ach.gpfocus {
-  background: rgba(255, 255, 255, 0.1);
-}
+.vz-ach.gpfocus .vz-ring-fill { stroke: var(--vz-accent); }
+.vz-ach.gpfocus .vz-ach-n,
+.vz-ach.gpfocus .vz-ach-label { color: var(--vz-accent); }
 .vz-ach-quiet {
   color: var(--vz-muted);
   font-size: 16px;
@@ -162,7 +161,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 .vz-ring-fill {
   fill: none;
-  stroke: var(--vz-accent);
+  stroke: var(--vz-text);
   stroke-width: 5;
   stroke-linecap: round;
 }
@@ -182,7 +181,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 .vz-ach-n {
   font-size: 28px;
   font-weight: 800;
-  color: var(--vz-accent);
+  color: var(--vz-text);
 }
 .vz-ach-of {
   font-size: 17px;
