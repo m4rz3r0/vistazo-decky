@@ -1,4 +1,5 @@
 import { safe } from "../safe";
+import { navFocus, wakeNavigation } from "../focus";
 import { locale, num, t } from "../i18n";
 import {
   Focusable,
@@ -6,9 +7,10 @@ import {
   Menu,
   MenuItem,
   Navigation,
+  Router,
   showContextMenu,
 } from "@decky/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Game,
   activeShelves,
@@ -178,6 +180,7 @@ const isRunning = (g: Game) =>
 // Remembered while Steam runs: coming back from a game page lands on the same shelf and cover.
 let lastShelf: ShelfId = "installed";
 const lastFocus: Partial<Record<ShelfId, number>> = {};
+let wokeOnce = false;
 
 export function Home() {
   const shelves = activeShelves(useSettings().shelves);
@@ -215,6 +218,24 @@ export function Home() {
   const [focusedId, setFocusedId] = useState<number | null>(games[startAt]?.appid ?? 0);
   const focused =
     focusedId === null ? null : (games.find((g) => g.appid === focusedId) ?? games[0] ?? null);
+
+  // After Steam starts nothing is selected until the first press: wake Steam's navigation and select
+  // the cover the home starts on. Once per client session, and never while a game is running (its
+  // input must not be taken).
+  const hasGames = games.length > 0;
+  const titleRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!hasGames || wokeOnce || Router.MainRunningApp) return;
+    const timer = setTimeout(() => {
+      wokeOnce = true;
+      if (!wakeNavigation()) return;
+      // Plugins run in another window's context: look the cover up in the home's own document.
+      const doc = titleRef.current?.ownerDocument ?? document;
+      const cover = () => doc.querySelectorAll(".vh-row .vh-cover")[startAt];
+      navFocus(cover());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [hasGames]);
 
   const show = (id: ShelfId) => {
     // Each shelf comes back on the cover it was left on; its covers mount with that one autofocused.
@@ -278,7 +299,7 @@ export function Home() {
         <div className="vh-fade" />
       </div>
 
-      <div className="vh-title">
+      <div className="vh-title" ref={titleRef}>
         {focused && (
           <Img
             key={`l${focused.appid}`}
