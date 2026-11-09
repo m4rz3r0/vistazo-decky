@@ -27,6 +27,7 @@ import {
 } from "./data";
 import { homeCss } from "./styles";
 import { useSettings } from "../settings";
+import { AchievementSummary, cachedAchievements, loadAchievements } from "../data";
 
 // Image with fallbacks: tries each URL in turn, then shows `fallback`. Callers give it a key per
 // game, so a new game starts again from the first URL.
@@ -173,6 +174,26 @@ function Hero({ game }: { game: Game | null }) {
   );
 }
 
+// Achievements of the game on show, read a moment after the focus settles (scrolling past covers
+// doesn't ask Steam for each one) and kept in the game page's cache.
+function useAchievements(game: Game | null): AchievementSummary | null {
+  const id = game?.steam ? game.appid : 0;
+  const [sum, setSum] = useState<AchievementSummary | null>(() => (id && cachedAchievements(id)) || null);
+  useEffect(() => {
+    setSum((id && cachedAchievements(id)) || null);
+    if (!id || cachedAchievements(id) !== undefined) return;
+    let live = true;
+    const timer = setTimeout(() => {
+      loadAchievements(id).then((s) => live && setSum(s ?? null));
+    }, 300);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [id]);
+  return sum;
+}
+
 declare const SteamUIStore: any;
 const isRunning = (g: Game) =>
   safe(() => SteamUIStore.RunningApps.some((a: any) => a.appid === g.appid), false);
@@ -188,6 +209,8 @@ export function Home() {
     shelves.some((s) => s.id === lastShelf) ? lastShelf : shelves[0].id,
   );
   const [games, setGames] = useState<Game[]>(() => loadShelf(shelf));
+  // Which way the last L1/R1 went: the new shelf slides in from that side.
+  const [slide, setSlide] = useState<"" | "vh-from-left" | "vh-from-right">("");
   // Tender builds its retro collections a few seconds after boot, and games get installed or removed
   // while the home stays open: re-read the shelf when it changes, when it comes back into view, and
   // twice more shortly after if it came up empty.
@@ -247,6 +270,7 @@ export function Home() {
   };
   const cycle = (dir: number) => {
     const i = shelves.findIndex((s) => s.id === shelf);
+    if (shelves.length > 1) setSlide(dir < 0 ? "vh-from-left" : "vh-from-right");
     show(shelves[(i + dir + shelves.length) % shelves.length].id);
   };
   // The shelf on show was turned off in the settings: move to the first one still on.
@@ -281,12 +305,22 @@ export function Home() {
     };
   };
   const openLibrary = () => Navigation.Navigate("/library");
-  const meta = focused
+  const achievements = useAchievements(focused);
+  // Each fact keeps its meaning's color: mint while the game is running, gold for achievements.
+  const meta: { text: string; tone?: "playing" | "reward" }[] = focused
     ? [
-        focused.platform,
-        hours(focused.minutes),
-        since(focused.lastPlayed),
-      ].filter(Boolean)
+        isRunning(focused) ? { text: t.playingNow, tone: "playing" as const } : null,
+        focused.platform ? { text: focused.platform } : null,
+        { text: hours(focused.minutes) },
+        achievements?.total
+          ? {
+              text: t.achievementsOf(achievements.achieved, achievements.total),
+              // Gold only once there is something earned.
+              tone: achievements.achieved > 0 ? ("reward" as const) : undefined,
+            }
+          : null,
+        since(focused.lastPlayed) && !isRunning(focused) ? { text: since(focused.lastPlayed)! } : null,
+      ].filter((m): m is { text: string; tone?: "playing" | "reward" } => !!m)
     : [];
 
   return (
@@ -301,18 +335,21 @@ export function Home() {
 
       <div className="vh-title" ref={titleRef}>
         {focused && (
-          <Img
-            key={`l${focused.appid}`}
-            className="vh-logo"
-            srcs={logoUrls(focused)}
-            fallback={<div className="vh-name">{focused.name}</div>}
-          />
-        )}
-        {meta.length > 0 && (
-          <div className="vh-meta">
-            {meta.map((m, i) => (
-              <span key={i}>{m}</span>
-            ))}
+          <div key={focused.appid} className="vh-enter">
+            <Img
+              className="vh-logo"
+              srcs={logoUrls(focused)}
+              fallback={<div className="vh-name">{focused.name}</div>}
+            />
+            {meta.length > 0 && (
+              <div className="vh-meta">
+                {meta.map((m, i) => (
+                  <span key={i} className={m.tone ? `vh-${m.tone}` : undefined}>
+                    {m.text}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -330,7 +367,7 @@ export function Home() {
         <span className="vh-glyph">R1</span>
       </div>
 
-      <Focusable className="vh-row" flow-children="row">
+      <Focusable key={shelf} className={`vh-row ${slide}`} flow-children="row">
         {games.map((g, i) => (
           <Focusable
             key={g.appid}

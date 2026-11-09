@@ -33,7 +33,39 @@ export const homeCss = `
   height: 100%;
   object-fit: cover;
   object-position: center top;
-  filter: brightness(0.62);
+  /* The art is the life of the screen: near full brightness so the OLED shows its colour. The
+     gradients below keep the text readable where it sits, not everywhere. */
+  filter: brightness(0.86) saturate(1.08);
+}
+/* A new game's art settles into place: it starts a touch closer and eases back. Answers the
+   player's move along the shelf; nothing moves on its own. */
+.vh-hero[data-ready] {
+  animation: vh-settle calc(900ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes vh-settle {
+  from { transform: scale(1.045); }
+  to { transform: scale(1); }
+}
+.vh-enter {
+  animation: vh-rise calc(320ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes vh-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+/* L1/R1: the next shelf comes in from the side the player pressed. */
+.vh-row.vh-from-right { animation: vh-from-right calc(260ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.vh-row.vh-from-left { animation: vh-from-left calc(260ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes vh-from-right {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes vh-from-left {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vh-root { --vh-motion: 0; }
 }
 /* A new game's art and logo fade in once loaded: quick enough to keep the speed, no hard cut. */
 .vh-hero, .vh-logo { opacity: 0; transition: opacity 0.3s ease-out; }
@@ -43,7 +75,7 @@ export const homeCss = `
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right, #000 0%, rgba(0, 0, 0, 0.55) 30%, rgba(0, 0, 0, 0) 60%),
+    linear-gradient(to right, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.62) 32%, rgba(0, 0, 0, 0) 58%),
     linear-gradient(to bottom, rgba(0, 0, 0, 0) 45%, #000 100%);
 }
 
@@ -71,9 +103,22 @@ export const homeCss = `
   gap: 4px 16px;
   margin-top: 10px;
   font-size: 16px;
-  color: var(--vh-muted);
+  color: rgba(255, 255, 255, 0.66); /* over bright art, not just black: a step above --vh-muted */
 }
 .vh-meta span:first-child { color: var(--vh-text); }
+/* State colours, the same everywhere in Obsidiana: mint = playing, gold = achievements. */
+.vh-meta span.vh-playing { color: var(--obs-ingame, #5fd8a0); font-weight: 600; }
+.vh-meta span.vh-playing::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 2px;
+}
+.vh-meta span.vh-reward { color: var(--obs-reward, #f5cf5a); }
 
 /* Shelves: plain words. The active one is lime, the rest recede; L1/R1 are quiet hints. */
 .vh-shelves {
