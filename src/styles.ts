@@ -123,6 +123,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   /* Follows the Obsidiana theme's colour when it is installed; lime on its own. */
   --vz-accent: var(--obs-accent, #B8F35A);
   --vz-accent-rgb: var(--obs-accent-rgb, 184, 243, 90);
+  --vz-reward: var(--obs-reward, #f5cf5a); /* achievements are gold everywhere */
   --vz-text: #f4f4f4;
   --vz-muted: rgba(255, 255, 255, 0.62);
   --vz-faint: rgba(255, 255, 255, 0.14);
@@ -135,8 +136,9 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   color: var(--vz-text);
 }
 
-/* Achievements: ring, count, then what to go for next. No box: at rest the ring and count are
-   white; with the focus they light up in the accent, the same signal as the home's covers. */
+/* Achievements: ring, count, then what to go for next. No box: at rest the ring is gold (the
+   achievements color) and the count white; with the focus they light up in the accent, the same
+   signal as the home's covers. */
 .vz-ach {
   display: flex;
   align-items: center;
@@ -163,7 +165,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 .vz-ring-fill {
   fill: none;
-  stroke: var(--vz-text);
+  stroke: var(--vz-reward);
   stroke-width: 5;
   stroke-linecap: round;
 }

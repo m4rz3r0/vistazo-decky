@@ -286,11 +286,11 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   pointer-events: none;
 }
 .gamepadhomerecentgames_RecentGamesHeaderLabel_1KKWf {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 .basicgamecarousel_Featured_2eJEJ .appportrait_LibraryItemBox_WYgDg {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
@@ -314,11 +314,11 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 .homestorecarousel_Header_xpRXv,
 .recentlycompleted_Header_NhBU2 *,
 .homestorecarousel_Header_xpRXv * {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase !important;
-  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 /* Tarjetas de novedades */
 .gamepadhomewhatsnew_LibraryHomeWhatsNew_rvYRf .ReactVirtualized__Grid__innerScrollContainer > div > div > div:nth-child(2) {
@@ -993,4 +993,14 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 .gamepadpagedsettings_PagedSettingDialog_ContentColumn_3JPle .gamepaddialog_Toggle_24G4g {
   transform: scale(1.2);
   transform-origin: right center;
+}
+
+/* Game page play bar: "Last session" / "Play time" as quiet sentence-case labels over a white value,
+   the same voice as section headers (no caps anywhere). */
+[class*="34lrt5-Fc3usZU6trA1P0-"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
 }

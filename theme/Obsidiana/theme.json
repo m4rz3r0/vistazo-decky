@@ -1,7 +1,7 @@
 {
   "name": "Obsidiana",
   "author": "m4rz3r0",
-  "version": "v1.2",
+  "version": "v1.3",
   "target": "System-Wide",
   "description": "Negro puro para OLED, un tono vivo para lo que se puede pulsar y movimiento que responde al mando. Tema propio.",
   "manifest_version": 9,
