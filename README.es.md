@@ -21,6 +21,7 @@ partida. Debajo, una fila de portadas:
 - **L1 / R1** cambian de estantería: **Instalados** (juegos de Steam, del más reciente al más antiguo) y
   **Retro** (juegos de RomM que añade el plugin Tender, por última partida).
 - **A** juega, **X** abre la ficha, **Y** abre la biblioteca completa. El pie de pantalla siempre lo indica.
+  A y X se pueden intercambiar en los ajustes.
 - **Amigos**, en la esquina superior izquierda: un punto con el color de tu estado y cuántos amigos hay
   conectados. **A** cambia tu estado; **X** abre amigos y chat.
 
@@ -48,13 +49,12 @@ de Steam y respetan sus ajustes: volumen, dispositivo de salida y el interruptor
 
 ### Ajustes
 
-Están en el menú de acceso rápido: **⋯ → Decky (icono del enchufe) → Vistazo**. Cada parte se puede activar o
-desactivar:
+Están en el menú de acceso rápido: **⋯ → Decky (icono del enchufe) → Vistazo**, agrupados por pantalla:
 
-- el inicio
-- la ficha del juego
-- la nota de ProtonDB (desactivada, no sale ninguna consulta de la Deck)
-- los sonidos tranquilos, con un botón para escuchar una muestra
+- **Inicio**: activar o desactivar el inicio, y si **A** abre la ficha y **X** lanza el juego (desactivado, al
+  revés)
+- **Ficha del juego**: la ficha resumida y la nota de ProtonDB (desactivada, no sale ninguna consulta de la Deck)
+- **Sonido**: los sonidos tranquilos, con un botón para escuchar una muestra
 
 Los cambios se aplican al momento y se guardan en la Deck.
 
@@ -85,7 +85,7 @@ Todo sale del cliente de Steam de la Deck, con dos excepciones:
   puede desactivar.
 - Las portadas que el cliente no tiene guardadas se cargan del servidor de imágenes de Steam.
 
-No hay telemetría. Lo único que se guarda son tus cuatro ajustes, en la propia Deck.
+No hay telemetría. Lo único que se guarda son tus ajustes, en la propia Deck.
 
 ## Compatibilidad
 

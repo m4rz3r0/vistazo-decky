@@ -24,6 +24,7 @@ import {
   statusOptions,
 } from "./data";
 import { homeCss } from "./styles";
+import { useSettings } from "../settings";
 
 // Image with fallbacks: tries each URL in turn, then shows `fallback`. Callers give it a key per
 // game, so a new game starts again from the first URL.
@@ -231,6 +232,23 @@ export function Home() {
   };
 
   const openPage = (g: Game) => Navigation.Navigate(`/library/app/${g.appid}`);
+  // A and X on a cover. Steam games: play (or back to the running game) and game page, swapped if the
+  // player chose so. Retro games have no Steam page to open: A opens theirs, X does nothing.
+  const { aOpensPage } = useSettings();
+  const buttons = (g: Game) => {
+    const page = { run: () => openPage(g), label: g.steam ? t.gamePage : t.open };
+    if (!g.steam) return { onActivate: page.run, onOKActionDescription: page.label };
+    const play = isRunning(g)
+      ? { run: page.run, label: t.backToGame }
+      : { run: () => launch(g), label: t.play };
+    const [a, x] = aOpensPage ? [page, play] : [play, page];
+    return {
+      onActivate: a.run,
+      onOKActionDescription: a.label,
+      onSecondaryButton: x.run,
+      onSecondaryActionDescription: x.label,
+    };
+  };
   const openLibrary = () => Navigation.Navigate("/library");
   const meta = focused
     ? [
@@ -299,12 +317,7 @@ export function Home() {
                 block: "nearest",
               });
             }}
-            onActivate={() => (g.steam && !isRunning(g) ? launch(g) : openPage(g))}
-            onOKActionDescription={
-              !g.steam ? t.open : isRunning(g) ? t.backToGame : t.play
-            }
-            onSecondaryButton={g.steam ? () => openPage(g) : undefined}
-            onSecondaryActionDescription={g.steam ? t.gamePage : undefined}
+            {...buttons(g)}
             onOptionsButton={openLibrary}
             onOptionsActionDescription={t.fullLibrary}
           >

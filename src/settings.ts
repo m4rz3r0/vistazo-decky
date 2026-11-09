@@ -7,10 +7,11 @@ export interface Settings {
   page: boolean; // panel on each Steam game page
   protondb: boolean; // ask protondb.com for the game's rating
   sounds: boolean; // calm menu sounds instead of Steam's
+  aOpensPage: boolean; // home: A opens the game page and X plays (Steam games only)
 }
 
 const KEY = "vistazo:settings";
-const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true };
+const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false };
 
 function read(): Settings {
   const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});

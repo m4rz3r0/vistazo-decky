@@ -19,8 +19,11 @@ export function SettingsPanel() {
   );
   return (
     <>
-      <PanelSection title={t.screens}>
+      <PanelSection title={t.homeSection}>
         {toggle("home", t.homeLabel, t.homeDesc)}
+        {toggle("aOpensPage", t.aOpensPageLabel, t.aOpensPageDesc, !s.home)}
+      </PanelSection>
+      <PanelSection title={t.pageSection}>
         {toggle("page", t.pageLabel, t.pageDesc)}
         {toggle("protondb", t.protonLabel, t.protonDesc, !s.page)}
       </PanelSection>

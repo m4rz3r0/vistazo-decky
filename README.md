@@ -21,7 +21,8 @@ Below, one row of covers:
 
 - **L1 / R1** switch shelf: **Installed** (Steam games, most recent first) and **Retro** (RomM games added by
   the Tender plugin, by last session).
-- **A** plays, **X** opens the game page, **Y** opens the full library. The footer always shows these.
+- **A** plays, **X** opens the game page, **Y** opens the full library. The footer always shows these. You can
+  swap A and X in the settings.
 - **Friends** sit in the top-left corner: a dot in your status colour and how many friends are online. Press
   **A** there to change your status, **X** to open friends and chat.
 
@@ -50,12 +51,12 @@ through Steam's own audio output and follow its settings: volume, output device,
 
 ### Settings
 
-Open them from the quick access menu: **⋯ → Decky (plug icon) → Vistazo**. You can turn each part on or off:
+Open them from the quick access menu: **⋯ → Decky (plug icon) → Vistazo**. They are grouped by screen:
 
-- the home screen
-- the compact game page
-- the ProtonDB rating (off means no requests leave the Deck)
-- the calm sounds, with a button to hear a sample
+- **Home**: the home screen on or off, and whether **A** opens the game page and **X** launches the game
+  (off: the other way round)
+- **Game page**: the compact game page, and the ProtonDB rating (off means no requests leave the Deck)
+- **Sound**: the calm sounds, with a button to hear a sample
 
 Changes apply right away and are kept on the Deck.
 
@@ -86,7 +87,7 @@ Everything comes from the Steam client on the Deck, with two exceptions:
   sent. You can turn it off.
 - Cover art the client hasn't cached is loaded from Steam's own image server.
 
-There is no telemetry. The only thing stored is your four settings, on the Deck.
+There is no telemetry. The only thing stored is your settings, on the Deck.
 
 ## Compatibility
 
