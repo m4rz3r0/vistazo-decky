@@ -1,3 +1,4 @@
+import { safe } from "./safe";
 import { definePlugin, routerHook } from "@decky/api";
 import {
   afterPatch,
@@ -5,12 +6,11 @@ import {
   findInReactTree,
 } from "@decky/ui";
 import { createElement } from "react";
-import { Panel } from "./Panel";
+import { Panel, setTabsFiltered } from "./Panel";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
-import { setTabsFiltered } from "./tabs";
 
 const ROUTE = "/library/app/:appid";
 const HOME = "/library/home";
@@ -18,12 +18,7 @@ const KEEP_TABS = new Set(["YourStuff"]);
 
 // Steam store games only: shortcuts (Tender/RomM and other non-Steam apps) keep their own page untouched.
 function isSteamGame(overview: any): boolean {
-  if (!overview || overview.app_type !== 1) return false;
-  try {
-    return !overview.BIsModOrShortcut?.();
-  } catch {
-    return false;
-  }
+  return overview?.app_type === 1 && safe(() => !overview.BIsModOrShortcut?.(), false);
 }
 
 // Each loaded copy of the plugin marks its own wrappers. After unload (uninstall, update) the old
@@ -31,6 +26,10 @@ function isSteamGame(overview: any): boolean {
 const MARK = Symbol("vistazo");
 let active = true;
 const isOurs = (x: any) => !!x && x[MARK] === true;
+const ours = <T,>(x: T): T => {
+  (x as any)[MARK] = true;
+  return x;
+};
 
 type After = (props: any, out: any) => any;
 const wrapCache = new Map<string, WeakMap<object, any>>();
@@ -45,49 +44,37 @@ function wrapType(el: any, tag: string, after: After) {
   if (!cache) wrapCache.set(tag, (cache = new WeakMap()));
   let w = cache.get(orig);
   if (!w) {
-    const wrapFn = (fn: Function) => {
-      const f = function (this: any, props: any, ref: any) {
-        const out = fn.call(this, props, ref);
-        if (!active) return out;
-        try {
-          return after(props, out);
-        } catch (e) {
-          console.error(`[Vistazo] ${tag}`, e);
-          return out;
-        }
-      };
-      (f as any)[MARK] = true;
-      return f;
+    const run = (props: any, out: any) => {
+      if (!active) return out;
+      try {
+        return after(props, out);
+      } catch (e) {
+        console.error(`[Vistazo] ${tag}`, e);
+        return out;
+      }
     };
+    const wrapFn = (fn: Function) =>
+      ours(function (this: any, props: any, ref: any) {
+        return run(props, fn.call(this, props, ref));
+      });
     if (typeof orig === "function" && orig.prototype?.isReactComponent) {
       const Base = orig as any;
       // Steam's class components are MobX observers: on first render MobX installs its reactive render
       // as an own property via Object.defineProperty, after which the prototype render is bypassed.
       // Other plugins may wrap the same class the same way, so we chain instead of replacing:
       // intercept that defineProperty for this instance and wrap whatever render ends up installed.
-      const post = (self: any, out: any) => {
-        if (!active) return out;
-        try {
-          return after(self.props, out);
-        } catch (e) {
-          console.error(`[Vistazo] ${tag}`, e);
-          return out;
-        }
-      };
-      const wrapOwn = (self: any, fn: Function) => {
-        if (isOurs(fn)) return fn;
-        const wr = function (...r: any[]) {
-          return post(self, fn.apply(self, r));
-        };
-        (wr as any)[MARK] = true;
-        return wr;
-      };
+      const wrapOwn = (self: any, fn: Function) =>
+        ours(function (...r: any[]) {
+          return run(self.props, fn.apply(self, r));
+        });
+      const needsWrap = (d: PropertyDescriptor | undefined) =>
+        !!d && typeof d.value === "function" && !isOurs(d.value);
       const adoptOwnRender = (self: any) => {
         const d = Object.getOwnPropertyDescriptor(self, "render");
-        if (d && typeof d.value === "function" && !isOurs(d.value)) {
+        if (needsWrap(d)) {
           Object.defineProperty(self, "render", {
             ...d,
-            value: wrapOwn(self, d.value),
+            value: wrapOwn(self, d!.value),
           });
         }
       };
@@ -104,15 +91,8 @@ function wrapType(el: any, tag: string, after: After) {
             k: PropertyKey,
             d: PropertyDescriptor,
           ) {
-            if (
-              o === self &&
-              k === "render" &&
-              d &&
-              typeof d.value === "function" &&
-              !isOurs(d.value)
-            ) {
+            if (o === self && k === "render" && needsWrap(d))
               d = { ...d, value: wrapOwn(self, d.value) };
-            }
             return define.call(Object, o, k, d);
           } as typeof Object.defineProperty;
           let out;
@@ -122,10 +102,10 @@ function wrapType(el: any, tag: string, after: After) {
             Object.defineProperty = define;
           }
           adoptOwnRender(self);
-          return post(self, out);
+          return run(self.props, out);
         }
       };
-      (w as any)[MARK] = true;
+      ours(w);
     } else if (typeof orig === "function") {
       w = wrapFn(orig);
     } else if (typeof orig === "object" && typeof orig.type === "function") {
@@ -278,14 +258,15 @@ const isHomeFrame = (x: any) =>
 function HomeSwitch({ steam }: { steam: any }) {
   return useSettings().home ? createElement(Home) : steam;
 }
+// Keyed by appid: a new game starts with fresh state.
 function PagePanel({ appid }: { appid: number }) {
-  return useSettings().page ? createElement(Panel, { appid }) : null;
+  return useSettings().page ? createElement(Panel, { appid, key: appid }) : null;
 }
 
 function afterHome(_: any, out: any) {
   const frame = findInReactTree(out, isHomeFrame);
   if (!frame) missed("home");
-  if (frame)
+  else
     frame.props = {
       ...frame.props,
       children: createElement(HomeSwitch, { steam: frame.props.children }),

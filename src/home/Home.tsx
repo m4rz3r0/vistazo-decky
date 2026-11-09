@@ -1,3 +1,4 @@
+import { safe } from "../safe";
 import { locale, num, t } from "../i18n";
 import {
   Focusable,
@@ -7,7 +8,7 @@ import {
   Navigation,
   showContextMenu,
 } from "@decky/ui";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Game,
   SHELVES,
@@ -47,6 +48,7 @@ function Img({
       decoding="async"
       loading={lazy ? "lazy" : undefined}
       onError={() => setI(i + 1)}
+      onLoad={(e) => (e.currentTarget.dataset.ready = "")} // fades in once it has loaded
     />
   );
 }
@@ -151,25 +153,26 @@ function Friends() {
   );
 }
 
-declare const SteamUIStore: any;
-const isRunning = (g: Game) => {
-  try {
-    return (SteamUIStore?.RunningApps ?? []).some(
-      (a: any) => a.appid === g.appid,
+// Crossfade: the new art fades in over the previous one, which stays underneath until replaced.
+function Hero({ game }: { game: Game | null }) {
+  const [layers, setLayers] = useState<Game[]>([]);
+  useEffect(() => {
+    setLayers((l) =>
+      !game ? [] : l[l.length - 1]?.appid === game.appid ? l : [...l.slice(-1), game],
     );
-  } catch {
-    return false;
-  }
-};
-
-const sameGames = (a: Game[], b: Game[]) =>
-  a.length === b.length &&
-  a.every(
-    (g, i) =>
-      g.appid === b[i].appid &&
-      g.minutes === b[i].minutes &&
-      g.lastPlayed === b[i].lastPlayed,
+  }, [game]);
+  return (
+    <>
+      {layers.map((g) => (
+        <Img key={g.appid} className="vh-hero" srcs={heroUrls(g)} />
+      ))}
+    </>
   );
+}
+
+declare const SteamUIStore: any;
+const isRunning = (g: Game) =>
+  safe(() => SteamUIStore.RunningApps.some((a: any) => a.appid === g.appid), false);
 
 // Remembered while Steam runs: coming back from a game page lands on the same shelf and cover.
 let lastShelf: ShelfId = "installed";
@@ -183,8 +186,9 @@ export function Home() {
   // twice more shortly after if it came up empty.
   useEffect(() => {
     const reload = () => {
+      // Always a fresh list: playtimes and the "back to game" hint are current again.
       const next = loadShelf(shelf);
-      setGames((prev) => (sameGames(prev, next) ? prev : next));
+      setGames(next);
       return next;
     };
     const timers =
@@ -202,39 +206,20 @@ export function Home() {
     0,
     games.findIndex((g) => g.appid === lastFocus[shelf]),
   );
-  const [focused, setFocused] = useState<Game | null>(games[startAt] ?? null);
-  const row = useRef<HTMLDivElement>(null);
-  const onLibrary = useRef(false);
-
-  // A refresh keeps the game on show (with its fresh playtime); if it is gone, the first cover takes over.
-  useEffect(() => {
-    setFocused((cur) =>
-      cur
-        ? (games.find((g) => g.appid === cur.appid) ?? games[0] ?? null)
-        : onLibrary.current
-          ? null // the "full library" tile has the focus: no game on show
-          : (games[0] ?? null), // the shelf was empty and has just filled in
-    );
-  }, [games]);
-
-  // L1/R1: the new shelf's games, the hero and the focus all change together, then the row scrolls home
-  // and its first cover takes the focus once it has rendered.
-  const focusFirst = useRef(false);
-  useEffect(() => {
-    lastShelf = shelf;
-    if (!focusFirst.current) return;
-    focusFirst.current = false;
-    row.current?.scrollTo({ left: 0 });
-    (row.current?.querySelector(".vh-cover") as HTMLElement | null)?.focus();
-  }, [shelf]);
+  // The game on show is looked up by appid, so a refresh keeps it (with its fresh playtime) and a game
+  // that is gone, or a new shelf, hands over to the first cover. null: the "full library" tile is selected.
+  const [focusedId, setFocusedId] = useState<number | null>(games[startAt]?.appid ?? 0);
+  const focused =
+    focusedId === null ? null : (games.find((g) => g.appid === focusedId) ?? games[0] ?? null);
 
   const cycle = (dir: number) => {
     const i = SHELVES.findIndex((s) => s.id === shelf);
     const next = SHELVES[(i + dir + SHELVES.length) % SHELVES.length];
+    // L1/R1: each shelf comes back on the cover it was left on; its covers mount with that one autofocused.
     const nextGames = loadShelf(next.id);
-    focusFirst.current = true;
+    lastShelf = next.id;
     setGames(nextGames);
-    setFocused(nextGames[0] ?? null);
+    setFocusedId(lastFocus[next.id] ?? nextGames[0]?.appid ?? 0);
     setShelf(next.id);
   };
 
@@ -256,22 +241,12 @@ export function Home() {
     : [];
 
   return (
-    <Focusable
-      className="vh-root"
-      flow-children="column"
-      onButtonDown={onButtonDown}
-    >
-      <style>{homeCss()}</style>
+    <Focusable className="vh-root" flow-children="column" onButtonDown={onButtonDown}>
+      <style>{homeCss}</style>
       <Friends />
 
       <div className="vh-stage" aria-hidden="true">
-        {focused && (
-          <Img
-            key={`h${focused.appid}`}
-            className="vh-hero"
-            srcs={heroUrls(focused)}
-          />
-        )}
+        <Hero game={focused} />
         <div className="vh-fade" />
       </div>
 
@@ -306,37 +281,30 @@ export function Home() {
         <span className="vh-glyph">R1</span>
       </div>
 
-      <Focusable
-        className="vh-row"
-        flow-children="row"
-        ref={row as any}
-      >
+      <Focusable className="vh-row" flow-children="row">
         {games.map((g, i) => (
           <Focusable
             key={g.appid}
             autoFocus={i === startAt}
             className="vh-cover"
             noFocusRing
-            onFocus={(e: any) => {
-              onLibrary.current = false;
-              setFocused(g);
+            // Steam's own focus event: the browser's onFocus doesn't fire while the window isn't
+            // browser-focused, but the gamepad selection still moves.
+            onGamepadFocus={(e: any) => {
+              setFocusedId(g.appid);
               lastFocus[shelf] = g.appid;
-              (e.currentTarget as HTMLElement).scrollIntoView({
+              ((e?.currentTarget ?? e?.target) as HTMLElement | null)?.scrollIntoView?.({
                 behavior: "smooth",
                 inline: "center",
                 block: "nearest",
               });
             }}
-            onActivate={() =>
-              g.steam && !isRunning(g) ? launch(g) : openPage(g)
-            }
+            onActivate={() => (g.steam && !isRunning(g) ? launch(g) : openPage(g))}
             onOKActionDescription={
               !g.steam ? t.open : isRunning(g) ? t.backToGame : t.play
             }
             onSecondaryButton={g.steam ? () => openPage(g) : undefined}
-            onSecondaryActionDescription={
-              g.steam ? t.gamePage : undefined
-            }
+            onSecondaryActionDescription={g.steam ? t.gamePage : undefined}
             onOptionsButton={openLibrary}
             onOptionsActionDescription={t.fullLibrary}
           >
@@ -350,17 +318,14 @@ export function Home() {
         ))}
         {games.length === 0 && (
           <div className="vh-empty">
-            {shelf === "retro"
-              ? t.noRetroGames
-              : t.noInstalledGames}
+            {shelf === "retro" ? t.noRetroGames : t.noInstalledGames}
           </div>
         )}
         <Focusable
           className="vh-cover vh-library"
           noFocusRing
-          onFocus={() => {
-            onLibrary.current = true;
-            setFocused(null);
+          onGamepadFocus={() => {
+            setFocusedId(null);
           }}
           onActivate={openLibrary}
           onOKActionDescription={t.openLibrary}

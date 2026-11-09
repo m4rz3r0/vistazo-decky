@@ -1,18 +1,11 @@
+import { safe } from "./safe";
 // Interface text in Spanish or English, following Steam's own interface language
 // (Spanish for any Spanish locale, English for everything else).
 declare const LocalizationManager: any;
 
-function steamLanguage(): string {
-  try {
-    const l = LocalizationManager?.m_rgLocalesToUse?.[0];
-    if (typeof l === "string" && l) return l;
-  } catch {
-    /* fall through */
-  }
-  return navigator.language || "en";
-}
-
-export const lang: "es" | "en" = /^es|^latam|spanish/i.test(steamLanguage()) ? "es" : "en";
+const steamLanguage = safe(() => String(LocalizationManager.m_rgLocalesToUse[0] ?? ""), "");
+export const lang: "es" | "en" =
+  /^es|^latam|spanish/i.test(steamLanguage || navigator.language) ? "es" : "en";
 export const locale = lang === "es" ? "es-ES" : "en-US";
 
 export const num = (n: number, digits = 0) =>

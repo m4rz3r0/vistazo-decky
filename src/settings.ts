@@ -1,3 +1,4 @@
+import { safe } from "./safe";
 import { useEffect, useState } from "react";
 
 // User choices, kept in the Steam UI's own local storage (survives restarts, stays on the device).
@@ -12,17 +13,11 @@ const KEY = "vistazo:settings";
 const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true };
 
 function read(): Settings {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULTS };
-    const saved = JSON.parse(raw);
-    const out = { ...DEFAULTS };
-    for (const k of Object.keys(DEFAULTS) as (keyof Settings)[])
-      if (typeof saved?.[k] === "boolean") out[k] = saved[k];
-    return out;
-  } catch {
-    return { ...DEFAULTS };
-  }
+  const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});
+  const out = { ...DEFAULTS };
+  for (const k of Object.keys(DEFAULTS) as (keyof Settings)[])
+    if (typeof saved[k] === "boolean") out[k] = saved[k];
+  return out;
 }
 
 let current = read();
@@ -41,13 +36,13 @@ export function setSetting<K extends keyof Settings>(key: K, value: Settings[K])
   for (const fn of listeners) fn(current);
 }
 
-export function onSettings(fn: (s: Settings) => void): () => void {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
-}
-
 export function useSettings(): Settings {
   const [s, set] = useState(current);
-  useEffect(() => onSettings(set), []);
+  useEffect(() => {
+    listeners.add(set);
+    return () => {
+      listeners.delete(set);
+    };
+  }, []);
   return s;
 }

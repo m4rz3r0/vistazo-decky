@@ -1,49 +1,31 @@
 import { t } from "./i18n";
 import { ButtonItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
-import { setSetting, useSettings } from "./settings";
+import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 
 // Vistazo's settings, in the quick access menu. Plain words, one line of context each.
 export function SettingsPanel() {
   const s = useSettings();
+  const toggle = (key: keyof Settings, label: string, description: string, disabled = false) => (
+    <PanelSectionRow>
+      <ToggleField
+        label={label}
+        description={description}
+        checked={s[key]}
+        disabled={disabled}
+        onChange={(v) => setSetting(key, v)}
+      />
+    </PanelSectionRow>
+  );
   return (
     <>
       <PanelSection title={t.screens}>
-        <PanelSectionRow>
-          <ToggleField
-            label={t.homeLabel}
-            description={t.homeDesc}
-            checked={s.home}
-            onChange={(v) => setSetting("home", v)}
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField
-            label={t.pageLabel}
-            description={t.pageDesc}
-            checked={s.page}
-            onChange={(v) => setSetting("page", v)}
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField
-            label={t.protonLabel}
-            description={t.protonDesc}
-            checked={s.protondb}
-            disabled={!s.page}
-            onChange={(v) => setSetting("protondb", v)}
-          />
-        </PanelSectionRow>
+        {toggle("home", t.homeLabel, t.homeDesc)}
+        {toggle("page", t.pageLabel, t.pageDesc)}
+        {toggle("protondb", t.protonLabel, t.protonDesc, !s.page)}
       </PanelSection>
       <PanelSection title={t.sound}>
-        <PanelSectionRow>
-          <ToggleField
-            label={t.soundsLabel}
-            description={t.soundsDesc}
-            checked={s.sounds}
-            onChange={(v) => setSetting("sounds", v)}
-          />
-        </PanelSectionRow>
+        {toggle("sounds", t.soundsLabel, t.soundsDesc)}
         <PanelSectionRow>
           <ButtonItem layout="below" onClick={playSample}>
             {t.playSample}

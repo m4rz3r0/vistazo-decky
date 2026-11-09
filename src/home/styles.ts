@@ -1,13 +1,9 @@
-let cached: string | null = null;
-
 // Home "Escenario", designed for an OLED screen:
 // - True black wherever nothing is being said: black pixels are off, cost nothing and never age.
 // - The game art is the only large lit area, kept dim, and it fades to black well before the shelf.
 // - No boxes, borders, blur or glow: hierarchy comes from brightness and size alone.
 // - Lime (#B8F35A) only marks what is selected or focused; motion only answers the player's input.
-export function homeCss(): string {
-  if (cached) return cached;
-  cached = `
+export const homeCss = `
 .vh-root {
   --vh-accent: #B8F35A;
   --vh-text: #ececec;
@@ -27,12 +23,18 @@ export function homeCss(): string {
   inset: 0 0 34% 0;
 }
 .vh-hero {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center top;
   filter: brightness(0.62);
 }
+/* A new game's art and logo fade in once loaded: quick enough to keep the speed, no hard cut. */
+.vh-hero, .vh-logo { opacity: 0; transition: opacity 0.3s ease-out; }
+.vh-hero[data-ready], .vh-logo[data-ready] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .vh-hero, .vh-logo { transition: none; } }
 .vh-fade {
   position: absolute;
   inset: 0;
@@ -148,7 +150,6 @@ export function homeCss(): string {
   font-size: 13px;
   font-weight: 600;
   color: var(--vh-muted);
-  background: #000;
 }
 .vh-library.gpfocus { color: var(--vh-text); }
 .vh-lib-icon {
@@ -226,5 +227,3 @@ export function homeCss(): string {
   opacity: 0.6;
 }
 `;
-  return cached;
-}

@@ -1,3 +1,4 @@
+import { safe } from "./safe";
 import { t } from "./i18n";
 import { fetchNoCors } from "@decky/api";
 
@@ -34,30 +35,17 @@ export interface GameFacts {
 export function getFacts(appid: number): GameFacts | null {
   const o = appStore?.GetAppOverviewByAppID?.(appid);
   if (!o) return null;
-  let tags: string[] = [];
-  try {
-    tags = (o.store_tag ?? [])
-      .slice(0, 2)
-      .map((t: number) => appStore.GetLocalizationForStoreTag(t))
-      .filter(
-        (t: unknown): t is string => typeof t === "string" && t.length > 0,
-      );
-  } catch {
-    tags = [];
-  }
-  let year: string | null = null;
-  try {
-    const y = o.GetCanonicalReleaseYear?.();
-    if (y && y !== "0") year = String(y);
-  } catch {
-    year = null;
-  }
-  let snippet = "";
-  try {
-    snippet = appDetailsStore?.GetDescriptions?.(appid)?.strSnippet ?? "";
-  } catch {
-    snippet = "";
-  }
+  const tags: string[] = safe(
+    () =>
+      (o.store_tag ?? [])
+        .slice(0, 2)
+        .map((t: number) => appStore.GetLocalizationForStoreTag(t))
+        .filter((t: unknown) => typeof t === "string" && t.length > 0),
+    [],
+  );
+  const y = safe(() => String(o.GetCanonicalReleaseYear?.() ?? ""), "");
+  const year = y && y !== "0" ? y : null;
+  const snippet: string = safe(() => appDetailsStore.GetDescriptions(appid).strSnippet, "");
   return {
     tags,
     year,
@@ -89,17 +77,14 @@ export async function loadAchievements(
       const min = Number(a.flMinProgress) || 0;
       const max = Number(a.flMaxProgress) || 0;
       const cur = Number(a.flCurrentProgress) || 0;
+      const hidden = !!a.bHidden && !a.bAchieved;
       return {
         id: String(a.strID),
-        name:
-          a.bHidden && !a.bAchieved ? t.hiddenAchievement : String(a.strName ?? ""),
-        description:
-          a.bHidden && !a.bAchieved
-            ? t.hiddenAchievementDesc
-            : String(a.strDescription ?? ""),
+        name: hidden ? t.hiddenAchievement : String(a.strName ?? ""),
+        description: hidden ? t.hiddenAchievementDesc : String(a.strDescription ?? ""),
         image: String(a.strImage ?? ""),
         achieved: !!a.bAchieved,
-        hidden: !!a.bHidden && !a.bAchieved,
+        hidden,
         globalPercent: Number(a.flAchieved) || 0,
         progress:
           max > min
@@ -129,9 +114,8 @@ export async function loadAchievements(
   }
 }
 
-export type ProtonTier =
-  "platinum" | "gold" | "silver" | "bronze" | "borked" | "pending" | "native";
-const TIERS: string[] = ["platinum", "gold", "silver", "bronze", "borked", "pending", "native"];
+const TIERS = ["platinum", "gold", "silver", "bronze", "borked", "pending", "native"] as const;
+export type ProtonTier = (typeof TIERS)[number];
 const protonCache = new Map<number, ProtonTier | null>();
 
 export function cachedProton(appid: number) {
@@ -142,16 +126,14 @@ export async function loadProton(appid: number): Promise<ProtonTier | null> {
   try {
     const r = await fetchNoCors(
       `https://www.protondb.com/api/v1/reports/summaries/${appid}.json`,
-      {
-        method: "GET",
-      },
+      { method: "GET" },
     );
     if (!r.ok) {
       protonCache.set(appid, null);
       return null;
     }
     const j = await r.json();
-    const tier = TIERS.includes(j?.tier) ? (j.tier as ProtonTier) : null;
+    const tier = (TIERS as readonly unknown[]).includes(j?.tier) ? (j.tier as ProtonTier) : null;
     protonCache.set(appid, tier);
     return tier;
   } catch {

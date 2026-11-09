@@ -1,3 +1,4 @@
+import { safe } from "../safe";
 import { t } from "../i18n";
 declare const collectionStore: any;
 declare const appStore: any;
@@ -65,13 +66,7 @@ export function loadShelf(id: ShelfId): Game[] {
 }
 
 // Images: the user's own custom art first, then Steam's cache, then the CDN.
-function custom(kind: string, o: any): string[] {
-  try {
-    return appStore[kind](o) ?? [];
-  } catch {
-    return [];
-  }
-}
+const custom = (kind: string, o: any): string[] => safe(() => appStore[kind](o), []);
 const cdn = (id: number, file: string) =>
   `https://shared.steamstatic.com/store_item_assets/steam/apps/${id}/${file}`;
 
@@ -79,39 +74,21 @@ export function portraitUrls(g: Game): string[] {
   const o = appStore.GetAppOverviewByAppID(g.appid);
   const list = [...custom("GetCustomVerticalCapsuleURLs", o)];
   if (g.steam) {
-    try {
-      list.push(...(appStore.GetCachedVerticalCapsuleURL(o) ?? []));
-    } catch {
-      /* ignore */
-    }
+    list.push(...safe(() => appStore.GetCachedVerticalCapsuleURL(o), []));
     list.push(cdn(g.appid, "library_600x900.jpg"));
   }
   return list;
 }
 
-export function heroUrls(g: Game): string[] {
-  const o = appStore.GetAppOverviewByAppID(g.appid);
-  const list = [...custom("GetCustomHeroImageURLs", o)];
+function steamArt(g: Game, kind: string, file: string): string[] {
+  const list = [...custom(kind, appStore.GetAppOverviewByAppID(g.appid))];
   if (g.steam)
-    list.push(
-      `/assets/${g.appid}/library_hero.jpg`,
-      `/assets/${g.appid}_library_hero.jpg`,
-      cdn(g.appid, "library_hero.jpg"),
-    );
+    list.push(`/assets/${g.appid}/${file}`, `/assets/${g.appid}_${file}`, cdn(g.appid, file));
   return list;
 }
 
-export function logoUrls(g: Game): string[] {
-  const o = appStore.GetAppOverviewByAppID(g.appid);
-  const list = [...custom("GetCustomLogoImageURLs", o)];
-  if (g.steam)
-    list.push(
-      `/assets/${g.appid}/logo.png`,
-      `/assets/${g.appid}_logo.png`,
-      cdn(g.appid, "logo.png"),
-    );
-  return list;
-}
+export const heroUrls = (g: Game) => steamArt(g, "GetCustomHeroImageURLs", "library_hero.jpg");
+export const logoUrls = (g: Game) => steamArt(g, "GetCustomLogoImageURLs", "logo.png");
 
 export function launch(g: Game) {
   SteamClient.Apps.RunGame(String(g.appid), "", -1, 100);
@@ -126,12 +103,8 @@ export interface StatusOption {
 }
 
 const loc = (token: string, fallback: string) => {
-  try {
-    const s = LocalizationManager?.LocalizeString?.(token);
-    return typeof s === "string" && s && !s.startsWith("#") ? s : fallback;
-  } catch {
-    return fallback;
-  }
+  const s = safe(() => LocalizationManager.LocalizeString(token), "");
+  return typeof s === "string" && s && !s.startsWith("#") ? s : fallback;
 };
 
 export function statusOptions(): StatusOption[] {
@@ -168,11 +141,7 @@ const ui = () => friendStore?.m_FriendsUIFriendStore;
 export function currentStatus(): string {
   const f = ui();
   if (!f) return "offline";
-  try {
-    if (f.GetUserDoNotDisturb?.()) return "dnd";
-  } catch {
-    /* ignore */
-  }
+  if (safe(() => f.GetUserDoNotDisturb(), false)) return "dnd";
   const s = Number(
     f.m_eUserPersonaState ?? f.self?.persona?.m_ePersonaState ?? 0,
   );
@@ -198,10 +167,4 @@ export function setStatus(id: string) {
   }
 }
 
-export function onlineFriends(): number {
-  try {
-    return Number(ui()?.GetOnlineFriendCount?.() ?? 0) || 0;
-  } catch {
-    return 0;
-  }
-}
+export const onlineFriends = () => safe(() => Number(ui().GetOnlineFriendCount()) || 0, 0);

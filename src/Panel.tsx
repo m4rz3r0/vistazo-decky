@@ -1,4 +1,5 @@
 import { lang, num, t } from "./i18n";
+import { navFocus } from "./focus";
 import {
   Focusable,
   Navigation,
@@ -16,7 +17,6 @@ import {
   loadProton,
 } from "./data";
 import { useSettings } from "./settings";
-import { tabsFiltered } from "./tabs";
 import { pageCss } from "./styles";
 
 type Tone = "good" | "ok" | "bad" | "muted";
@@ -64,23 +64,17 @@ function ProtonIcon() {
   return (
     <svg className="vz-badge-icon" viewBox="0 0 16 16" aria-hidden="true">
       <circle cx="8" cy="8" r="1.7" className="vz-atom-core" />
-      <ellipse cx="8" cy="8" rx="7" ry="2.8" className="vz-atom-orbit" />
-      <ellipse
-        cx="8"
-        cy="8"
-        rx="7"
-        ry="2.8"
-        className="vz-atom-orbit"
-        transform="rotate(60 8 8)"
-      />
-      <ellipse
-        cx="8"
-        cy="8"
-        rx="7"
-        ry="2.8"
-        className="vz-atom-orbit"
-        transform="rotate(120 8 8)"
-      />
+      {[0, 60, 120].map((a) => (
+        <ellipse
+          key={a}
+          cx="8"
+          cy="8"
+          rx="7"
+          ry="2.8"
+          className="vz-atom-orbit"
+          transform={a ? `rotate(${a} 8 8)` : undefined}
+        />
+      ))}
     </svg>
   );
 }
@@ -95,6 +89,13 @@ function StuffIcon() {
   );
 }
 
+// Set while Steam renders a game page whose tab strip was reduced to "Tus cosas". If Steam ever renames
+// that tab, the filter does nothing and the strip stays visible, so the page never dead-ends.
+let tabsFiltered = false;
+export const setTabsFiltered = (v: boolean) => {
+  tabsFiltered = v;
+};
+
 const footerReserve = 44; // Steam's button-hint bar overlays the bottom of the page.
 const td = gamepadTabbedPageClasses as Record<string, string>;
 const ad = appDetailsClasses as Record<string, string>;
@@ -102,8 +103,7 @@ const ad = appDetailsClasses as Record<string, string>;
 function formatSize(bytes: number): string | null {
   if (!bytes) return null;
   const gb = bytes / 1024 ** 3;
-  if (gb >= 1)
-    return `${num(gb, 1)} GB`;
+  if (gb >= 1) return `${num(gb, 1)} GB`;
   return `${num(Math.round(bytes / 1024 ** 2))} MB`;
 }
 
@@ -142,7 +142,7 @@ function Ring({ share }: { share: number }) {
         dominantBaseline="central"
         textAnchor="middle"
       >
-        {done ? "✓" : `${Math.floor(share)}%`}
+        {done ? "✓" : pct(Math.floor(share))}
       </text>
     </svg>
   );
@@ -176,16 +176,11 @@ function fitPanel(el: HTMLElement) {
 
 // The page and the panel's parent get marker attributes, so the page CSS needs no :has() lookups.
 // Attributes, not classes: Steam rewrites those elements' class lists as focus moves.
-function mark(node: Element | null | undefined, name: string, on: boolean) {
-  if (!node) return;
-  if (on) node.setAttribute(name, "");
-  else node.removeAttribute(name);
-}
 function markPage(el: HTMLElement, on: boolean) {
   const page = pageOf(el);
-  mark(page, "data-vz-page", on);
-  mark(page, "data-vz-tabs-hidden", on && tabsFiltered());
-  mark(el.parentElement, "data-vz-host", on);
+  page?.toggleAttribute("data-vz-page", on);
+  page?.toggleAttribute("data-vz-tabs-hidden", on && tabsFiltered);
+  el.parentElement?.toggleAttribute("data-vz-host", on);
 }
 
 export const Panel = memo(function Panel({ appid }: { appid: number }) {
@@ -209,8 +204,7 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
   useLayoutEffect(() => {
     const el = root.current;
     const page = el && pageOf(el);
-    if (!el || !page) return;
-    markPage(el, true);
+    if (!el || !page) return; // the effect above has already marked the page
     const ro = new ResizeObserver(() => fitPanel(el));
     ro.observe(page);
     if (el.parentElement?.firstElementChild)
@@ -223,24 +217,28 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
 
   const openStuff = () => {
     const page = root.current && pageOf(root.current);
-    const target = page?.querySelector(
-      `.${td.TabContents}`,
-    ) as HTMLElement | null;
+    const target = page?.querySelector(`.${td.TabContents}`) as HTMLElement | null;
     if (!target) return;
     // Hand the focus to the first control in "Tus cosas", then bring the section's top into view.
-    (target.querySelector("[tabindex]") as HTMLElement | null)?.focus({
-      preventScroll: true,
-    });
+    navFocus(target.querySelector("[tabindex]"));
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // A failed refresh keeps what is already on screen.
   useEffect(() => {
     let alive = true;
     loadAchievements(appid).then((a) => {
       if (!alive) return;
-      setAch(a);
-      setAchFailed(a === undefined);
+      if (a !== undefined) setAch(a);
+      setAchFailed(a === undefined && cachedAchievements(appid) === undefined);
     });
+    return () => {
+      alive = false;
+    };
+  }, [appid]);
+
+  useEffect(() => {
+    let alive = true;
     if (protondb && cachedProton(appid) === undefined)
       loadProton(appid).then((p) => alive && setProton(p));
     return () => {

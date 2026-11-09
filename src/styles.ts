@@ -283,9 +283,9 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   color: var(--vz-muted);
 }
 /* Steam Deck compatibility, Valve's palette. */
-.vz-deck.vz-good { --vz-tone: #59bf40; --vz-tone-line: rgba(89, 191, 64, 0.35); }
-.vz-deck.vz-ok { --vz-tone: #ffc82c; --vz-tone-line: rgba(255, 200, 44, 0.35); }
-.vz-deck.vz-bad { --vz-tone: #a3a3a3; --vz-tone-line: rgba(255, 255, 255, 0.18); }
+.vz-deck.vz-good { --vz-tone: #59bf40; }
+.vz-deck.vz-ok { --vz-tone: #ffc82c; }
+.vz-deck.vz-bad { --vz-tone: #a3a3a3; }
 .vz-deck-disc { fill: var(--vz-tone); }
 .vz-deck-mark {
   fill: none;
@@ -296,13 +296,13 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 .vz-deck-dot { fill: #0a0a0a; }
 /* ProtonDB tiers, ProtonDB's palette. */
-.vz-tier-platinum { --vz-tone: #b4c7dc; --vz-tone-line: rgba(180, 199, 220, 0.35); }
-.vz-tier-gold { --vz-tone: #cfb53b; --vz-tone-line: rgba(207, 181, 59, 0.35); }
-.vz-tier-silver { --vz-tone: #a6a6a6; --vz-tone-line: rgba(166, 166, 166, 0.35); }
-.vz-tier-bronze { --vz-tone: #cd7f32; --vz-tone-line: rgba(205, 127, 50, 0.35); }
-.vz-tier-borked { --vz-tone: #ff4d4d; --vz-tone-line: rgba(255, 77, 77, 0.35); }
-.vz-tier-native { --vz-tone: #59bf40; --vz-tone-line: rgba(89, 191, 64, 0.35); }
-.vz-tier-pending { --vz-tone: var(--vz-muted); --vz-tone-line: rgba(255, 255, 255, 0.14); }
+.vz-tier-platinum { --vz-tone: #b4c7dc; }
+.vz-tier-gold { --vz-tone: #cfb53b; }
+.vz-tier-silver { --vz-tone: #a6a6a6; }
+.vz-tier-bronze { --vz-tone: #cd7f32; }
+.vz-tier-borked { --vz-tone: #ff4d4d; }
+.vz-tier-native { --vz-tone: #59bf40; }
+.vz-tier-pending { --vz-tone: var(--vz-muted); }
 .vz-atom-core { fill: var(--vz-tone); }
 .vz-atom-orbit {
   fill: none;
@@ -344,7 +344,6 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.vz-stuff.gpfocus .vz-stuff-icon { stroke: var(--vz-accent); }
 .vz-desc {
   margin: 0;
   max-width: min(72ch, calc(100% - 64px));
