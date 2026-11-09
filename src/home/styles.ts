@@ -2,10 +2,12 @@
 // - True black wherever nothing is being said: black pixels are off, cost nothing and never age.
 // - The game art is the only large lit area, kept dim, and it fades to black well before the shelf.
 // - No boxes, borders, blur or glow: hierarchy comes from brightness and size alone.
-// - Lime (#B8F35A) only marks what is selected or focused; motion only answers the player's input.
+// - One accent (lime, or the Obsidiana theme's colour) marks what is focused; the open shelf is white.
+// - Motion only answers the player's input.
 export const homeCss = `
 .vh-root {
-  --vh-accent: #B8F35A;
+  /* Follows the Obsidiana theme's colour when it is installed; lime on its own. */
+  --vh-accent: var(--obs-accent, #B8F35A);
   --vh-text: #ececec;
   --vh-muted: rgba(255, 255, 255, 0.5);
   --vh-dim: rgba(255, 255, 255, 0.3);
@@ -83,14 +85,14 @@ export const homeCss = `
   font-weight: 600;
 }
 .vh-shelf { color: var(--vh-dim); }
-.vh-shelf.vh-on { color: var(--vh-accent); }
+.vh-shelf.vh-on { color: var(--vh-text); }
 .vh-glyph {
   font-size: 13px;
   font-weight: 700;
   color: var(--vh-dim);
 }
 
-/* Covers: the art is the object; focus is a thin lime line, nothing else moves. */
+/* Covers: the art is the object; focus is a thin accent line, nothing else moves. */
 .vh-row {
   position: absolute;
   left: 0;
@@ -115,7 +117,7 @@ export const homeCss = `
   outline: none;
 }
 .vh-cover.gpfocus {
-  box-shadow: 0 0 0 2px var(--vh-accent);
+  box-shadow: 0 0 0 1.5px var(--vh-accent);
 }
 /* Only the focused cover is at full brightness; on black, opacity dims for free (no filter pass). */
 .vh-cover:not(.gpfocus):not(.vh-library) {

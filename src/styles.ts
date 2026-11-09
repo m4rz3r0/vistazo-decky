@@ -120,7 +120,9 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 
 .vz-root {
-  --vz-accent: #B8F35A;
+  /* Follows the Obsidiana theme's colour when it is installed; lime on its own. */
+  --vz-accent: var(--obs-accent, #B8F35A);
+  --vz-accent-rgb: var(--obs-accent-rgb, 184, 243, 90);
   --vz-text: #f4f4f4;
   --vz-muted: rgba(255, 255, 255, 0.62);
   --vz-faint: rgba(255, 255, 255, 0.14);
@@ -134,7 +136,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 
 /* Achievements: ring, count, then what to go for next. No box: at rest the ring and count are
-   white; with the focus they light up in lime, the same signal as the home's corners. */
+   white; with the focus they light up in the accent, the same signal as the home's covers. */
 .vz-ach {
   display: flex;
   align-items: center;
@@ -324,7 +326,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 .vz-stuff.gpfocus {
   color: var(--vz-accent);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--vz-accent-rgb), 0.16);
 }
 .vz-stuff-label {
   display: none;
