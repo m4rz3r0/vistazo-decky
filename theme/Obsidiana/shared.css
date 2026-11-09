@@ -1004,3 +1004,27 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   font-weight: 500 !important;
   color: rgba(255, 255, 255, 0.55) !important;
 }
+
+/* Quick access, Performance: the last caps labels. The section title's inner span keeps its own
+   caps and slate color; "Battery left" was 10 px caps. Both take the quiet label voice. */
+[class*="1bIiM99nyensOmPZL_As0"] [class*="a7zm3SIpPh5wOw8mT0Cqa"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}
+[class*="1N4s22rd7ItJQ2XqqyOzBK"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Quick access, Soundtracks: its button sat 8 px wider on each side than every other full-width
+   button in the menu (Help, Performance). Same inset everywhere. */
+.tab_Soundtrack [class*="3_y7MnBlyjFABsF-mcbxMf"] {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
