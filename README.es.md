@@ -10,11 +10,11 @@ inicio por estanterías, la ficha de cada juego de un vistazo y sonidos suaves.
 ## Inicio
 
 El juego elegido llena la pantalla con su arte. Debajo, tus juegos en estanterías: instalados, retro y
-cualquiera de tus colecciones de Steam. L1 y R1 pasan de una a otra, A juega, X abre la ficha, Y la biblioteca.
+cualquiera de tus colecciones de Steam. <kbd>L1</kbd> <kbd>R1</kbd> pasan de una a otra, <kbd>A</kbd> juega, <kbd>X</kbd> abre la ficha y <kbd>Y</kbd> la biblioteca.
 
 ## Ficha
 
-Logros, datos y los veredictos de Deck y ProtonDB en la primera pantalla, sin pestañas. A sobre los logros abre
+Logros, datos y los veredictos de Deck y ProtonDB en la primera pantalla, sin pestañas. <kbd>A</kbd> sobre los logros abre
 la lista completa.
 
 ## Sonidos
@@ -24,13 +24,13 @@ Steam.
 
 ## Ajustes
 
-Menú de acceso rápido → Decky → Vistazo. Activa o desactiva cada parte, intercambia A y X y elige tus
+Pulsa <img src="docs/icons/menu.svg" height="16" alt="···"> y abre <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, luego **Vistazo**. Activa o desactiva cada parte, intercambia <kbd>A</kbd> y <kbd>X</kbd> y elige tus
 estanterías. Los cambios se aplican al momento.
 
 ## Instalar
 
-1. Decky → engranaje → General → activa el modo desarrollador.
-2. Desarrollador → Instalar plugin desde URL:
+1. Pulsa <img src="docs/icons/menu.svg" height="16" alt="···">, abre <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky** y toca <img src="docs/icons/gear.svg" height="16" alt="⚙">. En **General**, activa **Modo desarrollador**.
+2. En **Desarrollador**, elige **Instalar plugin desde URL** y escribe:
 
    ```
    https://github.com/m4rz3r0/vistazo-decky/releases/latest/download/Vistazo.zip
@@ -38,7 +38,7 @@ estanterías. Los cambios se aplican al momento.
 
 3. Confirma. El nuevo inicio aparece la próxima vez que vuelvas a Inicio.
 
-Repite el paso 2 para actualizar. Se desinstala desde Decky → engranaje → Plugins.
+Para actualizar, repite el paso 2. Para quitarlo, entra en <img src="docs/icons/gear.svg" height="16" alt="⚙"> **Plugins**.
 
 ## Privacidad
 
