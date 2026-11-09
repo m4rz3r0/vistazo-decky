@@ -53,10 +53,11 @@ through Steam's own audio output and follow its settings: volume, output device,
 
 Open them from the quick access menu: **⋯ → Decky (plug icon) → Vistazo**. They are grouped by screen:
 
-- **Home**: the home screen on or off, and whether **A** opens the game page and **X** launches the game
-  (off: the other way round)
-- **Game page**: the compact game page, and the ProtonDB rating (off means no requests leave the Deck)
-- **Sound**: the calm sounds, with a button to hear a sample
+- **Home**: **Full-screen home** replaces Steam's home screen; **Swap A and X** makes A open the game page
+  and X play
+- **Game page**: **One-screen game page** replaces Steam's game page; **ProtonDB rating** shows the
+  community's rating (off: no requests leave the Deck)
+- **Sound**: **Soft sounds** replaces Steam's menu sounds, with a button to hear them
 
 Changes apply right away and are kept on the Deck.
 
