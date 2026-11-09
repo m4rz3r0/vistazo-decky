@@ -8,6 +8,8 @@ export const homeCss = `
 .vh-root {
   /* Follows the Obsidiana theme's colour when it is installed; lime on its own. */
   --vh-accent: var(--obs-accent, #B8F35A);
+  /* 1 = motion on. Obsidiana's "Motion" option sets --obs-motion; without the theme it's on. */
+  --vh-motion: var(--obs-motion, 1);
   --vh-text: #ececec;
   --vh-muted: rgba(255, 255, 255, 0.5);
   --vh-dim: rgba(255, 255, 255, 0.3);
@@ -118,6 +120,16 @@ export const homeCss = `
 }
 .vh-cover.gpfocus {
   box-shadow: 0 0 0 1.5px var(--vh-accent);
+  /* The focused cover grows 4 %, the same as Steam's covers under Obsidiana. */
+  transform: scale(calc(1 + 0.04 * var(--vh-motion)));
+  z-index: 1;
+}
+.vh-cover {
+  transition: transform calc(180ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity calc(180ms * var(--vh-motion)) ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vh-cover { --vh-motion: 0; }
 }
 /* Only the focused cover is at full brightness; on black, opacity dims for free (no filter pass). */
 .vh-cover:not(.gpfocus):not(.vh-library) {

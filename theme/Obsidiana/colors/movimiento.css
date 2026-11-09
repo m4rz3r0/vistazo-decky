@@ -4,6 +4,8 @@
    - Un botón pulsado se hunde un poco.
    Si el sistema pide reducir el movimiento, no se aplica nada. */
 @media (prefers-reduced-motion: no-preference) {
+  /* Tells Vistazo (and anything else) that motion is on. */
+  :root:root { --obs-motion: 1; }
   .gamepaddialog_Field_S-_La,
   button.DialogButton,
   .gamepadcontextmenu_contextMenuItem_1sdvo,
