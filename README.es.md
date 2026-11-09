@@ -1,115 +1,83 @@
 # Vistazo
 
-**Una Steam Deck más tranquila.** Vistazo es un plugin de [Decky Loader](https://decky.xyz) que rediseña el
-inicio y la ficha de cada juego pensando en la pantalla OLED, y cambia los sonidos de los menús por otros más
-suaves.
+**Una Steam Deck más tranquila.** Un plugin de [Decky Loader](https://decky.xyz) que rediseña el inicio y la
+ficha de cada juego para la pantalla OLED y suaviza los sonidos de los menús.
 
-![Vistazo en una Steam Deck: el inicio, la ficha de un juego, sus logros y los ajustes](docs/screenshots/vistazo-es.jpg)
+[Read in English](README.md)
 
-- **Negro real** donde no hay nada que mostrar, que en una OLED son píxeles apagados.
-- **Sin cajas, bordes, brillos ni desenfoques.** La jerarquía sale del brillo y el tamaño.
-- **Un solo color de acento**, lima, y solo para lo seleccionado o enfocado.
-- **En español o en inglés**, según el idioma de Steam.
+![Vistazo en una Steam Deck: el inicio, la ficha de un juego, sus logros y los ajustes](docs/screenshots/vistazo-es.webp)
 
-## Qué cambia
-
-### Inicio
-
-El arte del juego enfocado llena la pantalla y se funde a negro, con su logo, las horas jugadas y la última
-partida. Debajo, una fila de portadas:
-
-- **L1 / R1** cambian de estantería: **Instalados** (juegos de Steam, del más reciente al más antiguo),
-  **Retro** (juegos de RomM que añade el plugin Tender, si los hay) y cualquiera de tus colecciones de Steam,
-  como Favoritos. En los ajustes eliges cuáles se ven.
-- **A** juega, **X** abre la ficha, **Y** abre la biblioteca completa. El pie de pantalla siempre lo indica.
-  A y X se pueden intercambiar en los ajustes.
-- **Amigos**, en la esquina superior izquierda: un punto con el color de tu estado y cuántos amigos hay
-  conectados. **A** cambia tu estado; **X** abre amigos y chat.
-
-Fuera Novedades, Amigos como pestaña y Recomendados. Al volver de un juego recuerda la estantería y la portada.
-
-### Ficha del juego
-
-Todo en la primera pantalla, sin cambiar de pestaña:
-
-- **Logros**: anillo de progreso, cuántos llevas y los tres próximos (primero los que tienen progreso parcial;
-  si no, los más comunes). **A** abre la lista completa.
-- **Datos**: etiquetas de la tienda, año, tamaño instalado y tiempo de las últimas dos semanas.
-- **Veredictos**: compatibilidad con Steam Deck con los colores de Valve y nivel de
-  [ProtonDB](https://www.protondb.com) con los suyos.
-- **Descripción**: tantas líneas como quepan.
-- **Tus cosas** (capturas, notas, DLC), a un botón, en la esquina inferior derecha.
-
-Los accesos directos que no son de Steam, como los juegos retro, conservan su propia ficha.
-
-### Sonidos
-
-Todos los sonidos de los menús (moverse, confirmar, abrir menús, interruptores, lanzar un juego, avisos) pasan
-a ser tonos cortos y suaves que genera el propio plugin, sin archivos de audio. Suenan por la salida de audio
-de Steam y respetan sus ajustes: volumen, dispositivo de salida y el interruptor que apaga los sonidos de la interfaz.
-
-### Ajustes
-
-Están en el menú de acceso rápido: **⋯ → Decky (icono del enchufe) → Vistazo**, agrupados por pantalla:
-
-- **Inicio**: **Portadas y arte del juego** cambia el inicio de Steam por el de Vistazo; **Intercambiar A y X** hace que A
-  abra la ficha y X juegue
-- **Estanterías**: un interruptor por estantería: Instalados, Retro si tienes juegos de RomM y cada una de
-  tus colecciones de Steam, sacadas de tu Deck
-- **Ficha del juego**: **Logros y datos** cambia la ficha de Steam por la de Vistazo; **Nota de ProtonDB** añade la
-  nota de la comunidad (desactivada, no sale ninguna consulta de la Deck)
-- **Sonido**: **Tonos suaves** cambia los sonidos de Steam por tonos suaves, con un botón para escucharlos
-
-Los cambios se aplican al momento y se guardan en la Deck.
+| | |
+|---|---|
+| **Inicio** | Tus juegos en estanterías sobre el arte del elegido. L1 / R1 cambian de estantería. |
+| **Ficha** | Logros, datos y veredictos de Deck y ProtonDB en la primera pantalla, sin pestañas. |
+| **Sonidos** | Tonos cortos y suaves en lugar de los de Steam. |
+| **Estilo** | Negro real, sin cajas ni brillos, lima solo donde está el foco. |
 
 ## Instalar
 
-Hace falta [Decky Loader](https://decky.xyz) en la Steam Deck.
-
-1. En los ajustes de Decky (menú de acceso rápido → Decky → engranaje), en **General**, activa el **modo
-   desarrollador**.
-2. Abre **Desarrollador** → **Instalar plugin desde URL** y escribe:
+1. Decky → engranaje → **General** → activa el **modo desarrollador**.
+2. **Desarrollador** → **Instalar plugin desde URL**:
 
    ```
    https://github.com/m4rz3r0/vistazo-decky/releases/latest/download/Vistazo.zip
    ```
 
-   También puedes descargar `Vistazo.zip` de la [página de versiones](https://github.com/m4rz3r0/vistazo-decky/releases),
-   copiarlo a la Deck y usar **Instalar plugin desde un archivo ZIP**.
 3. Confirma. El nuevo inicio aparece la próxima vez que vuelvas a Inicio.
 
-Para actualizar, repite el paso 2. Para desinstalar: Decky → engranaje → **Plugins** → **⋯** junto a Vistazo
-→ **Desinstalar**. Las pantallas y los sonidos de Steam vuelven en el acto.
+Para actualizar, repite el paso 2. Para quitarlo: Decky → engranaje → **Plugins** → **⋯** → **Desinstalar**.
 
-## Privacidad
+## Ajustes
 
-Todo sale del cliente de Steam de la Deck, con dos excepciones:
+Menú de acceso rápido → **Decky** → **Vistazo**. Cada cambio se aplica al momento.
 
-- La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, sin cuenta ni datos personales. Se
-  puede desactivar.
-- Las portadas que el cliente no tiene guardadas se cargan del servidor de imágenes de Steam.
+| Ajuste | Activado |
+|---|---|
+| Portadas y arte del juego | El inicio de Vistazo en lugar del de Steam |
+| Intercambiar A y X | A abre la ficha y X juega |
+| Estanterías | Una por interruptor: Instalados, Retro (juegos de RomM, si los hay) y tus colecciones de Steam |
+| Logros y datos | La ficha de Vistazo en lugar de la de Steam |
+| Nota de ProtonDB | Cómo va cada juego en Linux |
+| Tonos suaves | Sonidos suaves en lugar de los de Steam |
 
-No hay telemetría. Lo único que se guarda son tus ajustes, en la propia Deck.
+<details>
+<summary><b>Controles en el inicio</b></summary>
 
-## Compatibilidad
+- **L1 / R1**: estantería siguiente o anterior. Cada una recuerda su portada.
+- **A** juega, **X** abre la ficha (o al revés), **Y** abre la biblioteca completa.
+- **Amigos**, en la esquina superior izquierda: **A** cambia tu estado, **X** abre amigos y chat.
 
-Luce más con un tema oscuro de CSS Loader, pero funciona solo. No toca las páginas de otros plugins; está
-probado junto a Tender, CSS Loader y PlayTime. Si una actualización de Steam cambia las pantallas en las que se
-apoya, Vistazo se aparta y se ve la pantalla normal de Steam.
+</details>
 
-## Compilar
+<details>
+<summary><b>Privacidad</b></summary>
+
+Todo sale de Steam en la Deck. La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, y se
+puede desactivar. Las portadas que faltan vienen del servidor de imágenes de Steam. Sin telemetría; solo se
+guardan tus ajustes, en la Deck.
+
+</details>
+
+<details>
+<summary><b>Compatibilidad</b></summary>
+
+Luce más con un tema oscuro de CSS Loader, pero funciona solo. Probado con Tender, CSS Loader y PlayTime. Los
+accesos directos que no son de Steam conservan su ficha. Si una actualización de Steam cambia una pantalla en la
+que se apoya Vistazo, se ve la de Steam.
+
+</details>
+
+<details>
+<summary><b>Compilar</b></summary>
 
 ```bash
 pnpm install
 ./pack.sh        # deja out/Vistazo.zip
 ```
 
-Al subir una etiqueta como `v0.7.0` (debe coincidir con `package.json`), GitHub Actions compila el plugin y
-adjunta `Vistazo.zip` a una versión.
+Una etiqueta como `v0.7.0` (igual que en `package.json`) hace que GitHub Actions adjunte `Vistazo.zip` a una
+versión.
 
-## Licencia
+</details>
 
-BSD de 3 cláusulas, ver [LICENSE](LICENSE). El archivo compilado incluye `@decky/ui` y `@decky/api`, con
-licencia LGPL-2.1.
-
-[Read in English](README.md)
+BSD de 3 cláusulas, ver [LICENSE](LICENSE). El archivo compilado incluye `@decky/ui` y `@decky/api` (LGPL-2.1).
