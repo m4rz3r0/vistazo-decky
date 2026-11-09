@@ -3,14 +3,13 @@ import { ButtonItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/u
 import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 
-// Vistazo's settings, in the quick access menu. Plain words, one line of context each.
+// Vistazo's settings, in the quick access menu. A short name per option; the README explains each one.
 export function SettingsPanel() {
   const s = useSettings();
-  const toggle = (key: keyof Settings, label: string, description: string, disabled = false) => (
+  const toggle = (key: keyof Settings, label: string, disabled = false) => (
     <PanelSectionRow>
       <ToggleField
         label={label}
-        description={description}
         checked={s[key]}
         disabled={disabled}
         onChange={(v) => setSetting(key, v)}
@@ -20,15 +19,15 @@ export function SettingsPanel() {
   return (
     <>
       <PanelSection title={t.homeSection}>
-        {toggle("home", t.homeLabel, t.homeDesc)}
-        {toggle("aOpensPage", t.aOpensPageLabel, t.aOpensPageDesc, !s.home)}
+        {toggle("home", t.homeLabel)}
+        {toggle("aOpensPage", t.aOpensPageLabel, !s.home)}
       </PanelSection>
       <PanelSection title={t.pageSection}>
-        {toggle("page", t.pageLabel, t.pageDesc)}
-        {toggle("protondb", t.protonLabel, t.protonDesc, !s.page)}
+        {toggle("page", t.pageLabel)}
+        {toggle("protondb", t.protonLabel, !s.page)}
       </PanelSection>
       <PanelSection title={t.sound}>
-        {toggle("sounds", t.soundsLabel, t.soundsDesc)}
+        {toggle("sounds", t.soundsLabel)}
         <PanelSectionRow>
           <ButtonItem layout="below" onClick={playSample}>
             {t.playSample}

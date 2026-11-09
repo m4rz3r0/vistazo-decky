@@ -69,18 +69,13 @@ const es = {
   // Settings
   homeSection: "Inicio",
   pageSection: "Ficha del juego",
-  homeLabel: "Inicio con tus juegos",
-  homeDesc: "Arte a pantalla completa, estanterías de instalados y retro, y amigos en la esquina.",
-  pageLabel: "Ficha de juego resumida",
-  pageDesc: "Logros, datos y descripción nada más abrir un juego de Steam. Los juegos retro conservan su ficha.",
+  homeLabel: "Inicio de Vistazo",
+  pageLabel: "Ficha resumida",
   aOpensPageLabel: "A abre la ficha",
-  aOpensPageDesc: "En el inicio, A abre la ficha del juego y X lo lanza. Desactivado, A lo lanza y X abre la ficha.",
   protonLabel: "Nota de ProtonDB",
-  protonDesc: "Pregunta a protondb.com qué tal funciona cada juego. Desactívalo para no consultar nada fuera.",
   sound: "Sonido",
-  soundsLabel: "Sonidos tranquilos",
-  soundsDesc: "Cambia los sonidos de los menús por tonos suaves y cortos. Desactívalo para volver a los de Steam.",
-  playSample: "Escuchar una muestra",
+  soundsLabel: "Sonidos suaves",
+  playSample: "Escuchar",
 };
 
 const en: typeof es = {
@@ -138,18 +133,13 @@ const en: typeof es = {
   offline: "Offline",
   homeSection: "Home",
   pageSection: "Game page",
-  homeLabel: "Home with your games",
-  homeDesc: "Full-screen art, installed and retro shelves, and friends in the corner.",
-  pageLabel: "Compact game page",
-  pageDesc: "Achievements, facts and description as soon as you open a Steam game. Retro games keep their own page.",
-  aOpensPageLabel: "A opens the game page",
-  aOpensPageDesc: "On the home screen, A opens the game page and X launches the game. Off: A launches it and X opens the page.",
+  homeLabel: "Vistazo home",
+  pageLabel: "Compact page",
+  aOpensPageLabel: "A opens the page",
   protonLabel: "ProtonDB rating",
-  protonDesc: "Asks protondb.com how well each game runs. Turn it off to keep everything on the Deck.",
   sound: "Sound",
-  soundsLabel: "Calm sounds",
-  soundsDesc: "Replaces the menu sounds with short, soft tones. Turn it off to bring back Steam's sounds.",
-  playSample: "Play a sample",
+  soundsLabel: "Soft sounds",
+  playSample: "Listen",
 };
 
 export const t = lang === "es" ? es : en;

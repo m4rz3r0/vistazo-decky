@@ -66,7 +66,7 @@ export const homeCss = `
   flex-wrap: wrap;
   gap: 4px 16px;
   margin-top: 10px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--vh-muted);
 }
 .vh-meta span:first-child { color: var(--vh-text); }
@@ -85,7 +85,7 @@ export const homeCss = `
 .vh-shelf { color: var(--vh-dim); }
 .vh-shelf.vh-on { color: var(--vh-accent); }
 .vh-glyph {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--vh-dim);
 }
@@ -133,7 +133,7 @@ export const homeCss = `
   display: flex;
   align-items: flex-end;
   padding: 10px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--vh-muted);
@@ -147,7 +147,7 @@ export const homeCss = `
   padding: 10px;
   box-sizing: border-box;
   text-align: center;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--vh-muted);
 }
@@ -162,7 +162,7 @@ export const homeCss = `
 }
 .vh-library.gpfocus .vh-lib-icon { stroke: var(--vh-accent); }
 .vh-library-sub {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--vh-dim);
 }
@@ -170,7 +170,7 @@ export const homeCss = `
   align-self: center;
   padding: 0 12px;
   color: var(--vh-muted);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 /* Friends, top-left: my status as a solid dot, then how many friends are online. */
@@ -214,7 +214,7 @@ export const homeCss = `
 }
 .vh-status-label {
   display: none;
-  font-size: 13px;
+  font-size: 15px;
 }
 .vh-friends.gpfocus .vh-status-label { display: inline; }
 .vh-menu-row {
@@ -223,7 +223,7 @@ export const homeCss = `
   gap: 12px;
 }
 .vh-menu-now {
-  font-size: 12px;
+  font-size: 14px;
   opacity: 0.6;
 }
 `;

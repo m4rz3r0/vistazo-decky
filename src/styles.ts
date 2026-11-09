@@ -105,7 +105,7 @@ ${page} ${c(ps.SharedLibrary)} * {
   height: auto !important;
   min-height: 0 !important;
   margin-top: 0 !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   line-height: 1.3 !important;
 }
 
@@ -133,7 +133,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   color: var(--vz-text);
 }
 
-/* Achievements: ring, count, then what to go for next. No boxes; focus is a thin lime line. */
+/* Achievements: ring, count, then what to go for next. No boxes; focus lifts the whole row a little. */
 .vz-ach {
   display: flex;
   align-items: center;
@@ -144,12 +144,11 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   outline: none;
 }
 .vz-ach.gpfocus {
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: inset 2px 0 0 var(--vz-accent);
+  background: rgba(255, 255, 255, 0.1);
 }
 .vz-ach-quiet {
   color: var(--vz-muted);
-  font-size: 14px;
+  font-size: 16px;
 }
 .vz-ring {
   width: 54px;
@@ -192,7 +191,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 .vz-ach-label {
   margin-top: 3px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--vz-muted);
 }
 .vz-next {
@@ -231,11 +230,11 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   text-overflow: ellipsis;
 }
 .vz-next-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 .vz-next-sub {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--vz-muted);
 }
 
@@ -245,7 +244,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   align-items: baseline;
   gap: 14px;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 16px;
 }
 .vz-tags {
   min-width: 0;
@@ -269,7 +268,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--vz-tone);
 }
@@ -331,7 +330,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 .vz-stuff-label {
   display: none;
   padding-left: 5px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 .vz-stuff.gpfocus .vz-stuff-label { display: inline; }
@@ -347,7 +346,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 .vz-desc {
   margin: 0;
   max-width: min(72ch, calc(100% - 64px));
-  font-size: 13.5px;
+  font-size: 15.5px;
   line-height: 1.45;
   color: var(--vz-muted);
   display: -webkit-box;
