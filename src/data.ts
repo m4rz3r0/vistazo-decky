@@ -58,6 +58,45 @@ export function getFacts(appid: number): GameFacts | null {
 
 const achCache = new Map<number, AchievementSummary | null>();
 
+// Achievement counts kept on the Deck between sessions, so the home shows them the moment a cover
+// is selected. They only change while playing: they are refreshed when a game closes, when a game
+// page reads its achievements, and in the background for games not seen yet or not read for a day.
+export interface AchievementCount {
+  achieved: number;
+  total: number; // 0: the game has no achievements
+  savedAt: number; // ms
+}
+const COUNTS_KEY = "vistazo:achievement-counts";
+let counts: Record<string, [number, number, number]> | null = null;
+function countStore() {
+  if (counts) return counts;
+  try {
+    counts = JSON.parse(localStorage.getItem(COUNTS_KEY) ?? "{}") ?? {};
+  } catch {
+    counts = {};
+  }
+  return counts!;
+}
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+function saveCount(appid: number, summary: AchievementSummary | null) {
+  countStore()[appid] = [summary?.achieved ?? 0, summary?.total ?? 0, Date.now()];
+  // One write for a burst of updates (the background fill reads many games in a row).
+  if (!saveTimer)
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      try {
+        localStorage.setItem(COUNTS_KEY, JSON.stringify(counts));
+      } catch {
+        /* storage full or unavailable: counts stay for this session */
+      }
+    }, 1000);
+}
+export function savedCount(appid: number): AchievementCount | null {
+  const c = countStore()[appid];
+  return c ? { achieved: c[0], total: c[1], savedAt: c[2] } : null;
+}
+export const DAY = 24 * 60 * 60 * 1000;
+
 export function cachedAchievements(appid: number) {
   return achCache.get(appid);
 }
@@ -71,6 +110,7 @@ export async function loadAchievements(
     const list: any[] = res?.data?.rgAchievements ?? [];
     if (!list.length) {
       achCache.set(appid, null);
+      saveCount(appid, null);
       return null;
     }
     const all: Achievement[] = list.map((a) => {
@@ -108,6 +148,7 @@ export async function loadAchievements(
       next: pending.slice(0, 3),
     };
     achCache.set(appid, summary);
+    saveCount(appid, summary);
     return summary;
   } catch {
     return undefined;
@@ -139,4 +180,19 @@ export async function loadProton(appid: number): Promise<ProtonTier | null> {
   } catch {
     return null;
   }
+}
+
+// A game just closed: its achievements may have changed. Steam writes them a moment after exit.
+export function watchGameExits(): () => void {
+  const reg = safe(
+    () =>
+      SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: any) => {
+        if (n?.bRunning === false && n.unAppID) {
+          achCache.delete(n.unAppID);
+          setTimeout(() => loadAchievements(n.unAppID), 5000);
+        }
+      }),
+    null as any,
+  );
+  return () => safe(() => reg?.unregister(), undefined);
 }

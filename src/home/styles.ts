@@ -4,6 +4,25 @@
 // - No boxes, borders, blur or glow: hierarchy comes from brightness and size alone.
 // - One accent (lime, or the Obsidiana theme's colour) marks what is focused; the open shelf is white.
 // - Motion only answers the player's input.
+import { findClassModule } from "@decky/ui";
+import { safe } from "../safe";
+
+// Steam's top bar (clock, battery, search, avatar) gets a black veil, solid under Obsidiana. While the
+// home is on screen the veil goes, so the art runs to the top edge and the icons sit on it.
+let header: string | null = null;
+export function headerCss(): string {
+  if (header === null) {
+    const cls = safe(
+      () => (findClassModule((m: any) => m.Header && m.BatteryIcon && m.CurrentUserAvatar) as any)?.Header,
+      "",
+    );
+    header = cls
+      ? `html:has(.vh-root) .${cls}::before { background: transparent !important; backdrop-filter: none !important; }`
+      : "";
+  }
+  return header;
+}
+
 export const homeCss = `
 .vh-root {
   /* Follows the Obsidiana theme's colour when it is installed; lime on its own. */
@@ -76,7 +95,10 @@ export const homeCss = `
   inset: 0;
   background:
     linear-gradient(to right, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.62) 32%, rgba(0, 0, 0, 0) 58%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0) 45%, #000 100%);
+    linear-gradient(to bottom, rgba(0, 0, 0, 0) 45%, #000 100%),
+    /* Steam's clock, battery and avatar sit on the art: a soft shade at the very top keeps them
+       readable without bringing back a bar. */
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0, rgba(0, 0, 0, 0) 72px);
 }
 
 .vh-title {
@@ -147,32 +169,55 @@ export const homeCss = `
   bottom: 46px;
   display: flex;
   gap: 14px;
-  padding: 14px 28px;
+  padding: 18px 28px 24px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
+  /* A shallow perspective: the covers lean towards the one you're on, like a shelf seen in a room. */
+  perspective: 900px;
 }
 .vh-row::-webkit-scrollbar { display: none; }
 .vh-cover {
+  --vh-tilt: 0deg;
   position: relative;
   flex: none;
   width: calc(var(--vh-cover-h) * 2 / 3);
   height: var(--vh-cover-h);
   border-radius: 12px;
-  overflow: hidden;
   background: #000;
   outline: none;
+  transform: rotateY(var(--vh-tilt));
+  transform-origin: center center;
+  transition: transform calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity calc(240ms * var(--vh-motion)) ease-out;
 }
-.vh-cover.gpfocus {
-  box-shadow: 0 0 0 1.5px var(--vh-accent);
-  /* The focused cover grows 4 %, the same as Steam's covers under Obsidiana. */
-  transform: scale(calc(1 + 0.04 * var(--vh-motion)));
+/* While the shelf has the focus, covers before the selected one lean right and those after lean
+   left: all of them turn a little towards the game you're on. */
+.vh-row:has(.vh-cover.gpfocus) .vh-cover { --vh-tilt: 12deg; }
+.vh-row .vh-cover.gpfocus ~ .vh-cover { --vh-tilt: -12deg; }
+/* The selected cover faces you, steps forward and gets the theme's mark: a short bar of the accent
+   under it that opens out as the focus arrives. No frame around the art. */
+.vh-row .vh-cover.gpfocus {
+  --vh-tilt: 0deg;
+  transform: translateY(calc(-6px * var(--vh-motion))) scale(calc(1 + 0.1 * var(--vh-motion)));
   z-index: 1;
 }
-.vh-cover {
-  transition: transform calc(180ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity calc(180ms * var(--vh-motion)) ease-out;
+.vh-cover::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: var(--vh-accent);
+  transform: scaleX(0);
+  opacity: 0;
+  transition: transform calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity calc(160ms * var(--vh-motion)) ease-out;
 }
+.vh-cover.gpfocus::after { transform: scaleX(1); opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .vh-cover { --vh-motion: 0; }
 }
@@ -186,9 +231,11 @@ export const homeCss = `
   height: 100%;
   object-fit: cover;
   border-radius: 12px;
+  overflow: hidden;
 }
 .vh-noart {
   box-sizing: border-box;
+  border-radius: 12px;
   display: flex;
   align-items: flex-end;
   padding: 10px;

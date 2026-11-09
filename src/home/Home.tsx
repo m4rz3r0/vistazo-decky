@@ -25,9 +25,9 @@ import {
   setStatus,
   statusOptions,
 } from "./data";
-import { homeCss } from "./styles";
+import { homeCss, headerCss } from "./styles";
 import { useSettings } from "../settings";
-import { AchievementSummary, cachedAchievements, loadAchievements } from "../data";
+import { AchievementCount, DAY, loadAchievements, savedCount } from "../data";
 
 // Image with fallbacks: tries each URL in turn, then shows `fallback`. Callers give it a key per
 // game, so a new game starts again from the first URL.
@@ -174,24 +174,52 @@ function Hero({ game }: { game: Game | null }) {
   );
 }
 
-// Achievements of the game on show, read a moment after the focus settles (scrolling past covers
-// doesn't ask Steam for each one) and kept in the game page's cache.
-function useAchievements(game: Game | null): AchievementSummary | null {
+// Achievements of the game on show: the saved count at once, then a fresh read in the background
+// when there is none yet or it is more than a day old (the count only changes while playing, and a
+// game closing refreshes it anyway).
+function useAchievements(game: Game | null): AchievementCount | null {
   const id = game?.steam ? game.appid : 0;
-  const [sum, setSum] = useState<AchievementSummary | null>(() => (id && cachedAchievements(id)) || null);
+  const [count, setCount] = useState<AchievementCount | null>(() => (id ? savedCount(id) : null));
   useEffect(() => {
-    setSum((id && cachedAchievements(id)) || null);
-    if (!id || cachedAchievements(id) !== undefined) return;
+    const saved = id ? savedCount(id) : null;
+    setCount(saved);
+    if (!id || (saved && Date.now() - saved.savedAt < DAY)) return;
     let live = true;
     const timer = setTimeout(() => {
-      loadAchievements(id).then((s) => live && setSum(s ?? null));
+      loadAchievements(id).then(() => live && setCount(savedCount(id)));
     }, 300);
     return () => {
       live = false;
       clearTimeout(timer);
     };
   }, [id]);
-  return sum;
+  return count;
+}
+
+// Fills the saved counts for the shelf's games that have none, one at a time while the home is on
+// screen, so the first time a cover is selected its achievements are already there.
+function useAchievementFill(games: Game[]) {
+  useEffect(() => {
+    const todo = games.filter((g) => g.steam && !savedCount(g.appid)).map((g) => g.appid);
+    if (!todo.length) return;
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const next = () => {
+      if (stop || !todo.length) return;
+      if (document.hidden) {
+        timer = setTimeout(next, 5000); // a game is running or the screen is off: wait
+        return;
+      }
+      loadAchievements(todo.shift()!).finally(() => {
+        if (!stop) timer = setTimeout(next, 250);
+      });
+    };
+    timer = setTimeout(next, 1500); // after the home has settled
+    return () => {
+      stop = true;
+      clearTimeout(timer);
+    };
+  }, [games]);
 }
 
 declare const SteamUIStore: any;
@@ -306,6 +334,7 @@ export function Home() {
   };
   const openLibrary = () => Navigation.Navigate("/library");
   const achievements = useAchievements(focused);
+  useAchievementFill(games);
   // Each fact keeps its meaning's color: mint while the game is running, gold for achievements.
   const meta: { text: string; tone?: "playing" | "reward" }[] = focused
     ? [
@@ -325,7 +354,7 @@ export function Home() {
 
   return (
     <Focusable className="vh-root" flow-children="column" onButtonDown={onButtonDown}>
-      <style>{homeCss}</style>
+      <style>{homeCss + headerCss()}</style>
       <Friends />
 
       <div className="vh-stage" aria-hidden="true">
