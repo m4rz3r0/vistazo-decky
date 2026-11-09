@@ -107,7 +107,7 @@ export const homeCss = `
 .vh-title {
   position: absolute;
   left: 28px;
-  bottom: calc(var(--vh-cover-h) + 120px);
+  bottom: calc(var(--vh-cover-h) + 136px);
   max-width: 46%;
 }
 .vh-logo {
@@ -149,7 +149,7 @@ export const homeCss = `
 .vh-shelves {
   position: absolute;
   left: 28px;
-  bottom: calc(var(--vh-cover-h) + 80px);
+  bottom: calc(var(--vh-cover-h) + 96px);
   display: flex;
   align-items: baseline;
   gap: 18px;
@@ -176,8 +176,6 @@ export const homeCss = `
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  /* A shallow perspective: the covers lean towards the one you're on, like a shelf seen in a room. */
-  perspective: 900px;
 }
 .vh-row::-webkit-scrollbar { display: none; }
 .vh-cover {
@@ -189,10 +187,13 @@ export const homeCss = `
   border-radius: 12px;
   background: #000;
   outline: none;
-  transform: rotateY(var(--vh-tilt));
+  /* Each cover has its own perspective, so a lean looks the same wherever it sits on the shelf
+     and every gap stays the same (a shared perspective foreshortens covers far from the middle). */
+  transform: perspective(700px) rotateY(var(--vh-tilt));
   transform-origin: center center;
   transition: transform calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity calc(240ms * var(--vh-motion)) ease-out;
+    opacity calc(240ms * var(--vh-motion)) ease-out,
+    margin calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 /* While the shelf has the focus, covers before the selected one lean right and those after lean
    left: all of them turn a little towards the game you're on. */
@@ -202,7 +203,9 @@ export const homeCss = `
    forward and stays at full brightness while the rest lean towards it in the half-light. */
 .vh-row .vh-cover.gpfocus {
   --vh-tilt: 0deg;
-  transform: translateY(calc(-6px * var(--vh-motion))) scale(calc(1 + 0.12 * var(--vh-motion)));
+  transform: perspective(700px) scale(calc(1 + 0.1 * var(--vh-motion)));
+  /* It grows 10 %: margins of half that growth keep its gaps the same as everyone else's. */
+  margin: 0 calc(var(--vh-cover-h) * 2 / 3 * 0.05 * var(--vh-motion));
   z-index: 1;
 }
 @media (prefers-reduced-motion: reduce) {
