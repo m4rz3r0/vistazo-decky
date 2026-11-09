@@ -7,17 +7,30 @@ inicio por estanterías, la ficha de cada juego de un vistazo y sonidos suaves.
 
 ![Vistazo en una Steam Deck: el inicio, la ficha de un juego, sus logros y los ajustes](docs/screenshots/vistazo-es.webp)
 
-| | |
-|---|---|
-| **Inicio** | Tus juegos en estanterías sobre el arte del elegido. L1 / R1 cambian de estantería. |
-| **Ficha** | Logros, datos y veredictos de Deck y ProtonDB en la primera pantalla, sin pestañas. |
-| **Sonidos** | Tonos cortos y suaves en lugar de los de Steam. |
-| **Estilo** | Negro real, sin cajas ni brillos, lima solo donde está el foco. |
+## Inicio
+
+El juego elegido llena la pantalla con su arte. Debajo, tus juegos en estanterías: instalados, retro y
+cualquiera de tus colecciones de Steam. L1 y R1 pasan de una a otra, A juega, X abre la ficha, Y la biblioteca.
+
+## Ficha
+
+Logros, datos y los veredictos de Deck y ProtonDB en la primera pantalla, sin pestañas. A sobre los logros abre
+la lista completa.
+
+## Sonidos
+
+Cada sonido de los menús pasa a ser un tono corto y suave, generado por el plugin y reproducido por la salida de
+Steam.
+
+## Ajustes
+
+Menú de acceso rápido → Decky → Vistazo. Activa o desactiva cada parte, intercambia A y X y elige tus
+estanterías. Los cambios se aplican al momento.
 
 ## Instalar
 
-1. Decky → engranaje → **General** → activa el **modo desarrollador**.
-2. **Desarrollador** → **Instalar plugin desde URL**:
+1. Decky → engranaje → General → activa el modo desarrollador.
+2. Desarrollador → Instalar plugin desde URL:
 
    ```
    https://github.com/m4rz3r0/vistazo-decky/releases/latest/download/Vistazo.zip
@@ -25,59 +38,17 @@ inicio por estanterías, la ficha de cada juego de un vistazo y sonidos suaves.
 
 3. Confirma. El nuevo inicio aparece la próxima vez que vuelvas a Inicio.
 
-Para actualizar, repite el paso 2. Para quitarlo: Decky → engranaje → **Plugins** → **⋯** → **Desinstalar**.
+Repite el paso 2 para actualizar. Se desinstala desde Decky → engranaje → Plugins.
 
-## Ajustes
-
-Menú de acceso rápido → **Decky** → **Vistazo**. Cada cambio se aplica al momento.
-
-| Ajuste | Activado |
-|---|---|
-| Portadas y arte del juego | El inicio de Vistazo en lugar del de Steam |
-| Intercambiar A y X | A abre la ficha y X juega |
-| Estanterías | Una por interruptor: Instalados, Retro (juegos de RomM, si los hay) y tus colecciones de Steam |
-| Logros y datos | La ficha de Vistazo en lugar de la de Steam |
-| Nota de ProtonDB | Cómo va cada juego en Linux |
-| Tonos suaves | Sonidos suaves en lugar de los de Steam |
-
-<details>
-<summary><b>Controles en el inicio</b></summary>
-
-- **L1 / R1**: estantería siguiente o anterior. Cada una recuerda su portada.
-- **A** juega, **X** abre la ficha (o al revés), **Y** abre la biblioteca completa.
-- **Amigos**, en la esquina superior izquierda: **A** cambia tu estado, **X** abre amigos y chat.
-
-</details>
-
-<details>
-<summary><b>Privacidad</b></summary>
+## Privacidad
 
 Todo sale de Steam en la Deck. La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, y se
-puede desactivar. Las portadas que faltan vienen del servidor de imágenes de Steam. Sin telemetría; solo se
-guardan tus ajustes, en la Deck.
+puede desactivar. Sin telemetría.
 
-</details>
-
-<details>
-<summary><b>Compatibilidad</b></summary>
-
-Luce más con un tema oscuro de CSS Loader, pero funciona solo. Probado con Tender, CSS Loader y PlayTime. Los
-accesos directos que no son de Steam conservan su ficha. Si una actualización de Steam cambia una pantalla en la
-que se apoya Vistazo, se ve la de Steam.
-
-</details>
-
-<details>
-<summary><b>Compilar</b></summary>
+## Compilar
 
 ```bash
-pnpm install
-./pack.sh        # deja out/Vistazo.zip
+pnpm install && ./pack.sh    # out/Vistazo.zip
 ```
 
-Una etiqueta como `v0.7.0` (igual que en `package.json`) hace que GitHub Actions adjunte `Vistazo.zip` a una
-versión.
-
-</details>
-
-BSD de 3 cláusulas, ver [LICENSE](LICENSE). El archivo compilado incluye `@decky/ui` y `@decky/api` (LGPL-2.1).
+BSD de 3 cláusulas. El compilado incluye `@decky/ui` y `@decky/api` (LGPL-2.1).
