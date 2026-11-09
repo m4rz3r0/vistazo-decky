@@ -41,8 +41,16 @@ function publish(next: Status) {
 }
 
 async function refresh(): Promise<void> {
+  let themes: any[];
   try {
-    const themes: any[] = await cssLoader("get_themes");
+    themes = await cssLoader("get_themes");
+  } catch (e) {
+    // Only a missing CSS Loader means "needs CSS Loader"; any other failure keeps what we knew.
+    if (/KeyError/.test(String(e)) || !status) publish({ loader: false });
+    console.warn("Vistazo: CSS Loader themes unreadable", e);
+    return;
+  }
+  try {
     const t = themes.find((x) => x.name === THEME);
     const patch = (name: string) => t?.patches?.find((p: any) => p.name === name)?.value;
     publish({
@@ -56,8 +64,8 @@ async function refresh(): Promise<void> {
           }
         : null,
     });
-  } catch {
-    publish({ loader: false });
+  } catch (e) {
+    console.warn("Vistazo: unexpected CSS Loader reply", e);
   }
 }
 
@@ -70,16 +78,35 @@ export async function setupTheme(): Promise<void> {
   } catch {
     /* backend unavailable: still report what CSS Loader has */
   }
-  for (let tries = 0; tries < 10; tries++) {
-    try {
-      if (result === "fresh" || result === "updated") await cssLoader("reset");
-      if (result === "fresh") await cssLoader("set_theme_state", { name: THEME, state: true });
-      break;
-    } catch {
-      await new Promise((r) => setTimeout(r, 3000));
+  // The first turn-on is remembered until CSS Loader confirms it, so a slow start never loses it.
+  if (result === "fresh") store(ENABLE_PENDING, "1");
+  const enable = store(ENABLE_PENDING) === "1";
+  if (result === "fresh" || result === "updated" || enable) {
+    for (let tries = 0; tries < 10; tries++) {
+      try {
+        if (result === "fresh" || result === "updated") await cssLoader("reset");
+        if (enable) await cssLoader("set_theme_state", { name: THEME, state: true });
+        store(ENABLE_PENDING, null);
+        break;
+      } catch (e) {
+        if (tries === 9) console.warn("Vistazo: CSS Loader didn't answer; trying again next start", e);
+        else await new Promise((r) => setTimeout(r, 3000));
+      }
     }
   }
   await refresh();
+}
+
+const ENABLE_PENDING = "vistazo:theme-enable-pending";
+function store(key: string, value?: string | null): string | null {
+  try {
+    if (value === undefined) return localStorage.getItem(key);
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable */
+  }
+  return null;
 }
 
 export async function setThemeEnabled(on: boolean): Promise<void> {

@@ -42,13 +42,18 @@ class Plugin:
                 return "no-loader"
             target = os.path.join(THEMES, THEME)
             installed = _manifest(target)
+            if os.path.exists(target) and installed is None:
+                return "foreign"  # a folder with that name that isn't a readable theme: leave it
             if installed is not None and installed.get("author") != bundled.get("author"):
                 return "foreign"
             if installed is not None and _version(installed) >= _version(bundled):
                 return "current"
             # Copy file by file over the old version: config_USER.json, where CSS Loader keeps
-            # the options the user chose, stays untouched.
-            shutil.copytree(BUNDLED, target, dirs_exist_ok=True)
+            # the options the user chose, stays untouched. theme.json goes last, so a copy cut
+            # short keeps the old version number and is tried again on the next start.
+            shutil.copytree(BUNDLED, target, dirs_exist_ok=True,
+                            ignore=lambda folder, names: ["theme.json"] if folder == BUNDLED else [])
+            shutil.copy2(os.path.join(BUNDLED, "theme.json"), os.path.join(target, "theme.json"))
             decky.logger.info("Obsidiana %s installed", bundled.get("version"))
             return "fresh" if installed is None else "updated"
         except Exception as e:  # never break the plugin over the theme
