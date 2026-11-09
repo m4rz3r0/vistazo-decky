@@ -1,0 +1,8 @@
+/* Obsidiana · Texto grande: la misma escala, un paso más grande para leer con la Deck lejos. */
+:root:root {
+  --obs-fs-title: 28px;
+  --obs-fs-label: 19px;
+  --obs-fs-section: 15px;
+  --obs-fs-desc: 15px;
+  --obs-fs-button: 17px;
+}

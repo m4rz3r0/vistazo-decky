@@ -22,6 +22,13 @@ la lista completa.
 Cada sonido de los menús pasa a ser un tono corto y suave, generado por el plugin y reproducido por la salida de
 Steam.
 
+## Tema
+
+Vistazo trae **Obsidiana**, un tema para toda la consola: negro puro para la pantalla OLED, un color vivo
+para lo que se puede pulsar y movimiento que sigue al mando. Con [CSS Loader](https://deckthemes.com) de la
+tienda de Decky instalado, Vistazo lo añade y lo activa la primera vez. Elige lima, fucsia, azul o blanco,
+texto grande y movimiento en los ajustes de Vistazo.
+
 ## Ajustes
 
 Pulsa <img src="docs/icons/menu.svg" height="16" alt="···"> y abre <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, luego **Vistazo**. Activa o desactiva cada parte, intercambia <kbd>A</kbd> y <kbd>X</kbd> y elige tus

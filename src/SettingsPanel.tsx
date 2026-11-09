@@ -1,8 +1,9 @@
 import { t } from "./i18n";
-import { ButtonItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
+import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 import { availableShelves } from "./home/data";
+import { COLOR, COLORS, MOTION, TEXT, setThemeEnabled, setThemeOption, useTheme } from "./theme";
 
 // Vistazo's settings, in the quick access menu. Following the Apple, Android and Windows guidelines:
 // short labels that name what you get, never repeating the section title; one line that says what
@@ -59,6 +60,7 @@ export function SettingsPanel() {
         {toggle("page", t.pageLabel, t.pageDesc)}
         {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
       </PanelSection>
+      <ThemeSection />
       <PanelSection title={t.sound}>
         {toggle("sounds", t.soundsLabel, t.soundsDesc)}
         <PanelSectionRow>
@@ -68,5 +70,56 @@ export function SettingsPanel() {
         </PanelSectionRow>
       </PanelSection>
     </>
+  );
+}
+
+// The Obsidiana theme, applied by CSS Loader. Its three options only show while it is on.
+function ThemeSection() {
+  const status = useTheme();
+  if (!status) return null;
+  const theme = status.loader ? status.theme : null;
+  const blockedBy = !status.loader ? t.needsLoader : !theme ? t.themeMissing : undefined;
+  const on = !!theme?.enabled;
+  return (
+    <PanelSection title={t.themeSection}>
+      <PanelSectionRow>
+        <ToggleField
+          label={t.themeLabel}
+          description={blockedBy ?? t.themeDesc}
+          checked={on}
+          disabled={!!blockedBy}
+          onChange={setThemeEnabled}
+        />
+      </PanelSectionRow>
+      {theme && on && (
+        <>
+          <PanelSectionRow>
+            <DropdownItem
+              label={t.colorLabel}
+              description={t.colorDesc}
+              rgOptions={COLORS.map((c) => ({ data: c, label: t.colorNames[c] }))}
+              selectedOption={theme.color}
+              onChange={(o) => setThemeOption(COLOR, o.data)}
+            />
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <ToggleField
+              label={t.largeTextLabel}
+              description={t.largeTextDesc}
+              checked={theme.largeText}
+              onChange={(v) => setThemeOption(TEXT, v ? "Grande" : "Normal")}
+            />
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <ToggleField
+              label={t.motionLabel}
+              description={t.motionDesc}
+              checked={theme.motion}
+              onChange={(v) => setThemeOption(MOTION, v ? "Yes" : "No")}
+            />
+          </PanelSectionRow>
+        </>
+      )}
+    </PanelSection>
   );
 }

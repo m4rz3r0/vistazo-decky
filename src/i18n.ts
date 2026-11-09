@@ -89,6 +89,18 @@ const es = {
   soundsLabel: "Tonos suaves",
   soundsDesc: "En lugar de los sonidos de Steam.",
   playSample: "Escuchar",
+  themeSection: "Tema",
+  themeLabel: "Obsidiana en toda la consola",
+  themeDesc: "Negro puro y un tono vivo en lo que se puede pulsar.",
+  colorLabel: "Color",
+  colorDesc: "De la selección y los botones principales.",
+  colorNames: { Lima: "Lima", Fucsia: "Fucsia", Azul: "Azul", Sobrio: "Blanco" } as Record<string, string>,
+  largeTextLabel: "Texto grande",
+  largeTextDesc: "Ajustes y menús más fáciles de leer.",
+  motionLabel: "Movimiento",
+  motionDesc: "La selección se desliza y las portadas crecen al elegirlas.",
+  needsLoader: "Necesita CSS Loader, de la tienda de Decky.",
+  themeMissing: "No se pudo instalar. Reinicia Decky para reintentarlo.",
 };
 
 const en: typeof es = {
@@ -166,6 +178,18 @@ const en: typeof es = {
   soundsLabel: "Soft tones",
   soundsDesc: "Instead of Steam's menu sounds.",
   playSample: "Listen",
+  themeSection: "Theme",
+  themeLabel: "Obsidiana everywhere",
+  themeDesc: "True black, and one vivid color for what you can press.",
+  colorLabel: "Color",
+  colorDesc: "For the selection and main buttons.",
+  colorNames: { Lima: "Lime", Fucsia: "Fuchsia", Azul: "Blue", Sobrio: "White" },
+  largeTextLabel: "Larger text",
+  largeTextDesc: "Settings and menus easier to read.",
+  motionLabel: "Motion",
+  motionDesc: "The selection glides and covers grow when chosen.",
+  needsLoader: "Needs CSS Loader, from the Decky store.",
+  themeMissing: "Couldn't be installed. Restart Decky to try again.",
 };
 
 export const t = lang === "es" ? es : en;

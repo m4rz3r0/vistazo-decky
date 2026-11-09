@@ -9,6 +9,7 @@ import { createElement } from "react";
 import { Panel, setTabsFiltered } from "./Panel";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
+import { setupTheme } from "./theme";
 import { settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
 
@@ -309,6 +310,7 @@ export default definePlugin(() => {
   const patch = patchAppPage();
   const homePatch = patchHome();
   const removeSounds = installSounds(() => settings().sounds);
+  setupTheme();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,

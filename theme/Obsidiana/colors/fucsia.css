@@ -1,0 +1,7 @@
+/* Obsidiana · Fucsia: el tono del tema en fucsia. Solo cambia las variables; el resto del tema es el mismo. */
+:root:root {
+  --obs-accent: #ff5fae;
+  --obs-accent-rgb: 255, 95, 174;
+  --obs-accent-2: #e8449a;
+  --obs-on-accent: #1a0510;
+}

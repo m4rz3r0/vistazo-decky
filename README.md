@@ -21,6 +21,13 @@ achievements for the full list.
 
 Every menu sound becomes a short, soft tone, made by the plugin and played through Steam's own output.
 
+## Theme
+
+Vistazo brings **Obsidiana**, a theme for the whole console: true black for the OLED screen, one vivid color
+for what you can press, and motion that follows the controller. With [CSS Loader](https://deckthemes.com)
+from the Decky store installed, Vistazo adds it and turns it on the first time. Pick lime, fuchsia, blue or
+white, larger text and motion in Vistazo's settings.
+
 ## Settings
 
 Press <img src="docs/icons/menu.svg" height="16" alt="···">, open <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, then **Vistazo**. Turn each part on or off, swap <kbd>A</kbd> and <kbd>X</kbd>, and pick your shelves. Changes

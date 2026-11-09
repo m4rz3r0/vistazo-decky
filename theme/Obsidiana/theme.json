@@ -1,0 +1,73 @@
+{
+  "name": "Obsidiana",
+  "author": "m4rz3r0",
+  "version": "v1.2",
+  "target": "System-Wide",
+  "description": "Negro puro para OLED, un tono vivo para lo que se puede pulsar y movimiento que responde al mando. Tema propio.",
+  "manifest_version": 9,
+  "inject": {
+    "shared.css": [
+      "SP",
+      "QuickAccess",
+      "MainMenu"
+    ]
+  },
+  "patches": {
+    "Color": {
+      "default": "Lima",
+      "type": "dropdown",
+      "values": {
+        "Lima": {},
+        "Fucsia": {
+          "colors/fucsia.css": [
+            "SP",
+            "QuickAccess",
+            "MainMenu"
+          ]
+        },
+        "Azul": {
+          "colors/azul.css": [
+            "SP",
+            "QuickAccess",
+            "MainMenu"
+          ]
+        },
+        "Sobrio": {
+          "colors/sobrio.css": [
+            "SP",
+            "QuickAccess",
+            "MainMenu"
+          ]
+        }
+      }
+    },
+    "Tamaño del texto": {
+      "default": "Normal",
+      "type": "dropdown",
+      "values": {
+        "Normal": {},
+        "Grande": {
+          "colors/texto-grande.css": [
+            "SP",
+            "QuickAccess",
+            "MainMenu"
+          ]
+        }
+      }
+    },
+    "Movimiento": {
+      "default": "Yes",
+      "type": "checkbox",
+      "values": {
+        "Yes": {
+          "colors/movimiento.css": [
+            "SP",
+            "QuickAccess",
+            "MainMenu"
+          ]
+        },
+        "No": {}
+      }
+    }
+  }
+}

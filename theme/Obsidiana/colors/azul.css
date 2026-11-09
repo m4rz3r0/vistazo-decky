@@ -1,0 +1,7 @@
+/* Obsidiana · Azul: el tono del tema en azul eléctrico. Solo cambia las variables. */
+:root:root {
+  --obs-accent: #5c9bff;
+  --obs-accent-rgb: 92, 155, 255;
+  --obs-accent-2: #3f7fef;
+  --obs-on-accent: #050a1a;
+}

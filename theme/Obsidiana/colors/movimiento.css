@@ -1,0 +1,28 @@
+/* Obsidiana · Movimiento: solo responde a lo que haces con el mando; nada se mueve por su cuenta.
+   - El foco entra y sale con suavidad (160 ms) en filas, botones, menús y amigos.
+   - La portada enfocada crece un 4 % (la guía de foco de TV recomienda entre 2,5 % y 10 %).
+   - Un botón pulsado se hunde un poco.
+   Si el sistema pide reducir el movimiento, no se aplica nada. */
+@media (prefers-reduced-motion: no-preference) {
+  .gamepaddialog_Field_S-_La,
+  button.DialogButton,
+  .gamepadcontextmenu_contextMenuItem_1sdvo,
+  .friend,
+  [class*="2mL2HfT5AkDXRi1YBnRW"],
+  [class*="2w9TpQwxU7vcwaAbf3"],
+  [class*="34o03-8cUc3fQX1u650"],
+  [class*="lgme24Fp_HWt"] {
+    transition: background-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1), color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+  .appportrait_LibraryItemBox_WYgDg,
+  .allcollections_Collection_3IWn- {
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+  .appportrait_LibraryItemBox_WYgDg.gpfocus,
+  .allcollections_Collection_3IWn-.gpfocus {
+    transform: scale(1.04) !important;
+    z-index: 2;
+  }
+  button.DialogButton:active { transform: scale(0.97) !important; }
+}
