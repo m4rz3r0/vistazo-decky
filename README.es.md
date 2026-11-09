@@ -4,7 +4,7 @@
 inicio y la ficha de cada juego pensando en la pantalla OLED, y cambia los sonidos de los menús por otros más
 suaves.
 
-![Vistazo en una Steam Deck: el inicio, la ficha de un juego y los ajustes](docs/screenshots/vistazo-es.jpg)
+![Vistazo en una Steam Deck: el inicio, la ficha de un juego, sus logros y los ajustes](docs/screenshots/vistazo-es.jpg)
 
 - **Negro real** donde no hay nada que mostrar, que en una OLED son píxeles apagados.
 - **Sin cajas, bordes, brillos ni desenfoques.** La jerarquía sale del brillo y el tamaño.

@@ -5,7 +5,7 @@ and the game pages for the OLED screen, and swaps the menu sounds for quieter on
 
 *Vistazo* is Spanish for "a glance": everything you need about a game, at a glance.
 
-![Vistazo on a Steam Deck: the home screen, a game page and the settings](docs/screenshots/vistazo-en.jpg)
+![Vistazo on a Steam Deck: the home screen, a game page, its achievements and the settings](docs/screenshots/vistazo-en.jpg)
 
 - **Real black** wherever there is nothing to show, which on an OLED screen means pixels that are off.
 - **No boxes, borders, glows or blur.** Hierarchy comes from brightness and size.
