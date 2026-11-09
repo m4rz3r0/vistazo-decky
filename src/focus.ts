@@ -30,11 +30,14 @@ export function navFocus(el: Element | null | undefined): void {
   (el as HTMLElement).focus?.({ preventScroll: true });
 }
 
-// Right after Steam starts no navigation context is active until the first press, so nothing can
-// be selected and the footer shows Steam's defaults. On that press Steam calls FindAnActiveContext;
-// calling it ourselves wakes the selection the same way. Returns whether a context is active.
+// Right after Steam starts nothing shows as selected until the first press: after a client restart
+// no navigation context is active (the footer keeps Steam's defaults), and after the Deck boots the
+// last input counts as touch, which hides the focus. On that press Steam wakes a context and switches
+// the input source to the gamepad; do both the same way. Returns whether a context is active.
 export function wakeNavigation(): boolean {
   try {
+    if (!FocusNavController.NavigationSourceSupportsFocus?.Value)
+      FocusNavController.UpdateSourceToGamepad(true);
     if (FocusNavController.m_ActiveContext) return true;
     return !!FocusNavController.FindAnActiveContext();
   } catch {
