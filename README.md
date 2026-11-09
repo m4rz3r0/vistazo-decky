@@ -5,7 +5,7 @@ shelves, every game page at a glance, and soft menu sounds.
 
 [Leer en español](README.es.md)
 
-![Vistazo on a Steam Deck: the home screen, a game page, its achievements and the settings](docs/screenshots/vistazo-en.jpg)
+![Vistazo on a Steam Deck: the home screen, a game page, its achievements and the settings](docs/screenshots/vistazo-en.webp)
 
 ## Home
 
