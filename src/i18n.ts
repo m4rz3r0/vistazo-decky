@@ -1,0 +1,156 @@
+// Interface text in Spanish or English, following Steam's own interface language
+// (Spanish for any Spanish locale, English for everything else).
+declare const LocalizationManager: any;
+
+function steamLanguage(): string {
+  try {
+    const l = LocalizationManager?.m_rgLocalesToUse?.[0];
+    if (typeof l === "string" && l) return l;
+  } catch {
+    /* fall through */
+  }
+  return navigator.language || "en";
+}
+
+export const lang: "es" | "en" = /^es|^latam|spanish/i.test(steamLanguage()) ? "es" : "en";
+export const locale = lang === "es" ? "es-ES" : "en-US";
+
+export const num = (n: number, digits = 0) =>
+  n.toLocaleString(locale, { maximumFractionDigits: digits });
+
+const es = {
+  // Game page
+  deckVerified: "Verificado",
+  deckPlayable: "Jugable",
+  deckUnsupported: "No compatible",
+  tierNative: "Nativo",
+  tierPlatinum: "Platino",
+  tierGold: "Oro",
+  tierSilver: "Plata",
+  tierBronze: "Bronce",
+  tierBorked: "Roto",
+  tierPending: "Sin datos",
+  seeAllAchievements: "Ver todos los logros",
+  allAchievements: "Todos los logros",
+  achievements: "logros",
+  progressSoFar: (p: string) => `Llevas el ${p}`,
+  ofPlayers: (p: string) => `${p} de jugadores`,
+  noAchievements: "Sin logros de Steam",
+  achievementsUnavailable: "Los logros no se pueden leer ahora",
+  loadingAchievements: "Cargando logros…",
+  lastTwoWeeks: (t: string) => `${t} estas 2 semanas`,
+  yourStuff: "Tus cosas",
+  seeYourStuff: "Ver tus cosas",
+  hiddenAchievement: "Logro oculto",
+  hiddenAchievementDesc: "Se desvela al conseguirlo.",
+  // Home
+  installed: "Instalados",
+  retro: "Retro",
+  notPlayedYet: "Sin jugar todavía",
+  minutesPlayed: (m: number) => `${m} min ${m === 1 ? "jugado" : "jugados"}`,
+  hoursPlayed: (h: string) => `${h} h ${h === "1" ? "jugada" : "jugadas"}`,
+  playedToday: "Jugado hoy",
+  playedYesterday: "Jugado ayer",
+  playedDaysAgo: (d: number) => `Jugado hace ${d} días`,
+  lastPlayed: (date: string) => `Última vez: ${date}`,
+  yourStatus: "Tu estado",
+  current: "actual",
+  friendsAndChat: "Ver amigos y chat",
+  changeStatus: "Cambiar tu estado",
+  friends: "Amigos",
+  open: "Abrir",
+  backToGame: "Volver al juego",
+  play: "Jugar",
+  gamePage: "Ficha del juego",
+  fullLibrary: "Biblioteca completa",
+  openLibrary: "Abrir la biblioteca",
+  wholeLibrary: "Toda la biblioteca",
+  installNewGames: "Instalar juegos nuevos",
+  noRetroGames: "Aún no hay juegos retro en la Deck.",
+  noInstalledGames: "No hay juegos instalados.",
+  online: "Conectado",
+  away: "Ausente",
+  doNotDisturb: "No molestar",
+  invisible: "Invisible",
+  offline: "Desconectado",
+  // Settings
+  screens: "Pantallas",
+  homeLabel: "Inicio con tus juegos",
+  homeDesc: "Arte a pantalla completa, estanterías de instalados y retro, y amigos en la esquina.",
+  pageLabel: "Ficha de juego resumida",
+  pageDesc: "Logros, datos y descripción nada más abrir un juego de Steam. Los juegos retro conservan su ficha.",
+  protonLabel: "Nota de ProtonDB",
+  protonDesc: "Pregunta a protondb.com qué tal funciona cada juego. Desactívalo para no consultar nada fuera.",
+  sound: "Sonido",
+  soundsLabel: "Sonidos tranquilos",
+  soundsDesc: "Cambia los sonidos de los menús por tonos suaves y cortos. Desactívalo para volver a los de Steam.",
+  playSample: "Escuchar una muestra",
+};
+
+const en: typeof es = {
+  deckVerified: "Verified",
+  deckPlayable: "Playable",
+  deckUnsupported: "Unsupported",
+  tierNative: "Native",
+  tierPlatinum: "Platinum",
+  tierGold: "Gold",
+  tierSilver: "Silver",
+  tierBronze: "Bronze",
+  tierBorked: "Borked",
+  tierPending: "Pending",
+  seeAllAchievements: "See all achievements",
+  allAchievements: "All achievements",
+  achievements: "achievements",
+  progressSoFar: (p) => `${p} done`,
+  ofPlayers: (p) => `${p} of players`,
+  noAchievements: "No Steam achievements",
+  achievementsUnavailable: "Achievements can't be read right now",
+  loadingAchievements: "Loading achievements…",
+  lastTwoWeeks: (t) => `${t} in the last 2 weeks`,
+  yourStuff: "Your stuff",
+  seeYourStuff: "See your stuff",
+  hiddenAchievement: "Hidden achievement",
+  hiddenAchievementDesc: "Revealed once you earn it.",
+  installed: "Installed",
+  retro: "Retro",
+  notPlayedYet: "Not played yet",
+  minutesPlayed: (m) => `${m} min played`,
+  hoursPlayed: (h) => `${h} h played`,
+  playedToday: "Played today",
+  playedYesterday: "Played yesterday",
+  playedDaysAgo: (d) => `Played ${d} days ago`,
+  lastPlayed: (date) => `Last played ${date}`,
+  yourStatus: "Your status",
+  current: "current",
+  friendsAndChat: "Friends and chat",
+  changeStatus: "Change your status",
+  friends: "Friends",
+  open: "Open",
+  backToGame: "Back to game",
+  play: "Play",
+  gamePage: "Game page",
+  fullLibrary: "Full library",
+  openLibrary: "Open the library",
+  wholeLibrary: "Full library",
+  installNewGames: "Install new games",
+  noRetroGames: "No retro games on this Deck yet.",
+  noInstalledGames: "No games installed.",
+  online: "Online",
+  away: "Away",
+  doNotDisturb: "Do not disturb",
+  invisible: "Invisible",
+  offline: "Offline",
+  screens: "Screens",
+  homeLabel: "Home with your games",
+  homeDesc: "Full-screen art, installed and retro shelves, and friends in the corner.",
+  pageLabel: "Compact game page",
+  pageDesc: "Achievements, facts and description as soon as you open a Steam game. Retro games keep their own page.",
+  protonLabel: "ProtonDB rating",
+  protonDesc: "Asks protondb.com how well each game runs. Turn it off to keep everything on the Deck.",
+  sound: "Sound",
+  soundsLabel: "Calm sounds",
+  soundsDesc: "Replaces the menu sounds with short, soft tones. Turn it off to bring back Steam's sounds.",
+  playSample: "Play a sample",
+};
+
+export const t = lang === "es" ? es : en;

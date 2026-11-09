@@ -1,0 +1,16 @@
+{
+  "name": "Vistazo",
+  "author": "m4rz3r0",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": [
+      "library",
+      "home",
+      "oled",
+      "sounds"
+    ],
+    "description": "Calm OLED home screen, one-glance game pages and quiet menu sounds.",
+    "image": ""
+  }
+}

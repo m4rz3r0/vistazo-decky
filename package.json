@@ -1,0 +1,40 @@
+{
+  "name": "vistazo",
+  "version": "0.7.0",
+  "description": "Calm OLED home screen and one-glance game pages for the Steam Deck, with quiet menu sounds.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@decky/rollup": "^1.0.2",
+    "@decky/ui": "^4.11.0",
+    "@types/react": "19.1.1",
+    "@types/react-dom": "19.1.1",
+    "rollup": "^4.53.3",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@decky/api": "^1.1.3",
+    "tslib": "^2.7.0"
+  },
+  "author": "m4rz3r0",
+  "keywords": [
+    "decky",
+    "plugin",
+    "steam-deck",
+    "oled"
+  ],
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ]
+    }
+  },
+  "packageManager": "pnpm@9.15.9"
+}
