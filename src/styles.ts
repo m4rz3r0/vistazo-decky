@@ -99,7 +99,8 @@ ${page} ${c(ps.ControllerConfigButton)} {
   box-shadow: none !important;
 }
 
-/* "From your family library" note: one small line instead of a tall row. */
+/* "From your family library" note: one small quiet line instead of a tall row, with room
+   between it and the play bar so it doesn't read as part of the Play button. */
 ${page} ${c(ps.SharedLibrary)},
 ${page} ${c(ps.SharedLibrary)} * {
   height: auto !important;
@@ -107,6 +108,10 @@ ${page} ${c(ps.SharedLibrary)} * {
   margin-top: 0 !important;
   font-size: 15px !important;
   line-height: 1.3 !important;
+  color: rgba(255, 255, 255, 0.62) !important; /* --vz-muted isn't defined on Steam's page */
+}
+${page} ${c(ps.SharedLibrary)} {
+  margin-top: 12px !important;
 }
 
 /* Steam's tab strip (only "Tus cosas" is left) gives way to the panel's corner button. */
