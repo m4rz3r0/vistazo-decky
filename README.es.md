@@ -51,11 +51,11 @@ de Steam y respetan sus ajustes: volumen, dispositivo de salida y el interruptor
 
 Están en el menú de acceso rápido: **⋯ → Decky (icono del enchufe) → Vistazo**, agrupados por pantalla:
 
-- **Inicio**: **Inicio a pantalla completa** sustituye el inicio de Steam; **Intercambiar A y X** hace que A
+- **Inicio**: **Sustituir el inicio** cambia el inicio de Steam por el de Vistazo; **Intercambiar A y X** hace que A
   abra la ficha y X juegue
-- **Ficha del juego**: **Ficha en una pantalla** sustituye la ficha de Steam; **Nota de ProtonDB** muestra la
+- **Ficha del juego**: **Sustituir la ficha** cambia la ficha de Steam por la de Vistazo; **Mostrar nota de ProtonDB** añade la
   nota de la comunidad (desactivada, no sale ninguna consulta de la Deck)
-- **Sonido**: **Sonidos suaves** sustituye los sonidos de Steam, con un botón para escucharlos
+- **Sonido**: **Sustituir los sonidos** cambia los sonidos de Steam por tonos suaves, con un botón para escucharlos
 
 Los cambios se aplican al momento y se guardan en la Deck.
 

@@ -53,11 +53,11 @@ through Steam's own audio output and follow its settings: volume, output device,
 
 Open them from the quick access menu: **⋯ → Decky (plug icon) → Vistazo**. They are grouped by screen:
 
-- **Home**: **Full-screen home** replaces Steam's home screen; **Swap A and X** makes A open the game page
+- **Home**: **Replace the home screen** swaps Steam's home for Vistazo's; **Swap A and X** makes A open the game page
   and X play
-- **Game page**: **One-screen game page** replaces Steam's game page; **ProtonDB rating** shows the
+- **Game page**: **Replace the game page** swaps Steam's game page for Vistazo's; **Show ProtonDB rating** adds the
   community's rating (off: no requests leave the Deck)
-- **Sound**: **Soft sounds** replaces Steam's menu sounds, with a button to hear them
+- **Sound**: **Replace menu sounds** swaps Steam's menu sounds for soft tones, with a button to hear them
 
 Changes apply right away and are kept on the Deck.
 
