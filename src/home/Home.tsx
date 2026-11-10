@@ -254,6 +254,22 @@ let lastShelf: ShelfId = "installed";
 const lastFocus: Partial<Record<ShelfId, number>> = {};
 let wokeOnce = false;
 
+
+// Keeps the focused cover centred. A held stick repeats faster than a smooth scroll finishes, and
+// each new smooth scroll restarts the last one, so the selection outran the row and left the
+// screen: while focus moves quickly, jump straight there; a single press still glides.
+let lastRowMove = 0;
+function centerInRow(e: any): void {
+  const now = performance.now();
+  const quick = now - lastRowMove < 250;
+  lastRowMove = now;
+  ((e?.currentTarget ?? e?.target) as HTMLElement | null)?.scrollIntoView?.({
+    behavior: quick ? "auto" : "smooth",
+    inline: "center",
+    block: "nearest",
+  });
+}
+
 export function Home() {
   const shelves = activeShelves(useSettings().shelves);
   const [shelf, setShelf] = useState<ShelfId>(() =>
@@ -437,11 +453,7 @@ export function Home() {
             onGamepadFocus={(e: any) => {
               setFocusedId(g.appid);
               lastFocus[shelf] = g.appid;
-              ((e?.currentTarget ?? e?.target) as HTMLElement | null)?.scrollIntoView?.({
-                behavior: "smooth",
-                inline: "center",
-                block: "nearest",
-              });
+              centerInRow(e);
             }}
             {...buttons(g)}
             onOptionsButton={openLibrary}
@@ -463,8 +475,9 @@ export function Home() {
         <Focusable
           className="vh-cover vh-library"
           noFocusRing
-          onGamepadFocus={() => {
+          onGamepadFocus={(e: any) => {
             setFocusedId(null);
+            centerInRow(e);
           }}
           onActivate={openLibrary}
           onOKActionDescription={t.openLibrary}
