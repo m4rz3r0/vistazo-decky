@@ -1,7 +1,5 @@
-/* Obsidiana · Sobrio: el foco en blanco (superficie clara, texto blanco, anillo fino);
-   el lima queda solo para la acción principal y lo activado. Para quien quiera la pantalla más tranquila. */
+/* Obsidiana · Sobrio: el anillo del foco en blanco; el lima queda solo para la acción principal y
+   lo activado. Para quien quiera la pantalla más tranquila. */
 :root:root {
-  --obs-focus-fg: #ffffff;
-  --obs-focus-bg: rgba(255, 255, 255, 0.11);
-  --obs-ring: rgba(255, 255, 255, 0.85);
+  --obs-ring: rgba(255, 255, 255, 0.9);
 }

@@ -343,14 +343,17 @@ export const homeCss = `
   padding: 0 12px 0 10px;
   border-radius: 14px;
   color: var(--vh-muted);
-  outline: none;
+  outline: 1.5px solid transparent;
+  outline-offset: 7px;
   z-index: 5;
-  transition: background-color calc(160ms * var(--vh-motion)) ease-out;
+  transition: outline-color calc(160ms * var(--vh-motion)) ease-out,
+    outline-offset calc(200ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-/* Selected: the theme's tinted surface, the same focus as a settings row. */
+/* Selected: a fine ring in the theme's tone, the same focus as a settings row. */
 .vh-friends.gpfocus {
   color: var(--vh-text);
-  background: rgba(var(--obs-accent-rgb, 184, 243, 90), 0.16);
+  outline: 1.5px solid var(--obs-ring, var(--vh-accent));
+  outline-offset: 3px;
 }
 .vh-dot {
   display: inline-block;

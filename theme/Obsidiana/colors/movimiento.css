@@ -1,5 +1,5 @@
 /* Obsidiana · Movimiento: solo responde a lo que haces con el mando; nada se mueve por su cuenta.
-   - El foco entra y sale con suavidad (160 ms) en filas, botones, menús y amigos.
+   - El foco entra y sale con suavidad (160 ms) en filas, botones, menús y amigos; el anillo se cierra sobre lo elegido.
    - La portada enfocada crece un 4 % (la guía de foco de TV recomienda entre 2,5 % y 10 %).
    - Un botón pulsado se hunde un poco.
    Si el sistema pide reducir el movimiento, no se aplica nada. */
@@ -14,8 +14,13 @@
   [class*="2w9TpQwxU7vcwaAbf3"],
   [class*="34o03-8cUc3fQX1u650"],
   [class*="lgme24Fp_HWt"] {
+    /* The ring waits a little further out and see-through, so on focus it fades in while closing
+       onto the element. */
+    outline: 1.5px solid transparent;
+    outline-offset: 7px;
     transition: background-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1), color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+      box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      outline-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1), outline-offset 200ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   }
   .appportrait_LibraryItemBox_WYgDg,
   .allcollections_Collection_3IWn- {

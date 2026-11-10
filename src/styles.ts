@@ -373,12 +373,24 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   height: 40px;
   padding: 0 9px;
   border-radius: 12px;
-  color: var(--vz-muted);
-  outline: none;
 }
+/* Focus is a fine ring in the theme's tone, a little apart from the element (the same as the
+   Obsidiana theme draws everywhere else); the text stays white. With motion on it fades in while
+   closing onto the element. */
+.vz-stuff,
+.vz-desc-box {
+  outline: 1.5px solid transparent;
+  outline-offset: 7px;
+  transition: outline-color calc(160ms * var(--obs-motion, 0)) ease-out,
+    outline-offset calc(200ms * var(--obs-motion, 0)) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.vz-stuff { color: var(--vz-muted); }
+/* The whole outline again, not just its color: Steam's own "div:focus { outline: none }" outranks
+   the resting rule above. */
 .vz-stuff.gpfocus {
-  color: var(--vz-accent);
-  background: rgba(var(--vz-accent-rgb), 0.16);
+  color: var(--vz-text);
+  outline: 1.5px solid var(--obs-ring, var(--vz-accent));
+  outline-offset: 3px;
 }
 .vz-stuff-label {
   padding-left: 5px;
@@ -400,11 +412,15 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   margin: -6px -10px;
   padding: 6px 10px;
   border-radius: 12px;
-  outline: none;
 }
 /* Opened, the text runs down to where the "Tus cosas" corner sits: the corner goes below it. */
 .vz-reading .vz-about { padding-bottom: 44px; }
-.vz-desc-box.gpfocus { background: rgba(var(--vz-accent-rgb), 0.16); }
+/* The box already stands clear of the text, so its ring sits on the box's own edge. */
+.vz-desc-box { outline-offset: 4px; }
+.vz-desc-box.gpfocus {
+  outline: 1.5px solid var(--obs-ring, var(--vz-accent));
+  outline-offset: 0;
+}
 .vz-desc-box.gpfocus .vz-desc { color: var(--vz-text); }
 .vz-desc.vz-open {
   display: block;

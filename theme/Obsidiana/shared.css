@@ -1185,3 +1185,79 @@ button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap
   border-radius: 14px !important;
   margin: 6px 0 0 8px !important;
 }
+
+
+/* ===== Foco con anillo (2026-11-10) =====
+   El foco deja de teñir el fondo: lo marca un anillo fino del tono del tema, separado 3 px del
+   elemento y con sus mismas esquinas, como en PS5. El texto se queda en blanco y la superficie
+   apenas se aclara. El anillo va en `outline`, que se ajusta al píxel físico y sale nítido a
+   escala 1,5 (una sombra interior no lo hace).
+   El anillo rodea justo lo que A va a accionar: la fila entera si es ella la que responde, o el
+   control de dentro (un desplegable, un botón) si la fila tiene varios. */
+:root {
+  --obs-focus-fg: #ffffff;
+  --obs-focus-bg: #1a1a1a;
+  --obs-ring-gap: 3px;
+}
+[class*="2w9TpQwxU7vcwaAbf3"].gpfocus,
+button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary),
+.gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus,
+.gamepadcontextmenu_contextMenuItem_1sdvo.gamepadcontextmenu_Focused_X813r,
+.oneOnOneVoiceChatButton.gpfocus,
+.inviteAnotherFriendButton.gpfocus,
+#quickaccess_content_999 .quickaccessmenu_Title_34nl5 .gamepaddialog_Button_1kn70.gpfocus,
+button.DialogButton.gamepaddialog_Button_1kn70.gpfocus:has(> div[style*="min-width: 180px"]),
+button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][style*="flex-direction: column"],
+.gamepaddialog_Field_S-_La.gpfocus,
+.friend.gpfocus,
+[class*="34o03-8cUc3fQX1u650"].gpfocus,
+[class*="7EGqd8bdiXJBd2fj5Hh8"].gpfocus,
+[class*="2LyGIHuQ8SFKb5T262YU"].gpfocus,
+[class*="1VNuYHM6BPBOJspC6zPf"].gpfocus,
+[class*="2KuyUWI6jn_gZf4DzlU"] > [class*="lgme24Fp_HWt"].gpfocus,
+[class*="3oKFhPrh1lbp-WtA72Q2Y"].gpfocus,
+[class*="30fVm4Rsel-4nUKEiPJg"].gpfocus,
+.gpfocus > [class*="gDkIgrqhJq-FtbuR9wJi"],
+.gamepaddialog_Field_S-_La.gpfocuswithin:not(:has(button.DialogButton.gpfocus)),
+[class*="1VNuYHM6BPBOJspC6zPf"].gpfocuswithin,
+[class*="2KuyUWI6jn_gZf4DzlU"] > [class*="lgme24Fp_HWt"].gpfocuswithin {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: var(--obs-ring-gap) !important;
+}
+/* Sin sitio alrededor (pestañas del menú rápido): el anillo va por dentro. */
+.quickaccessmenu_Tab_1S76C.gpfocus {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+/* El lateral de Ajustes y el botón de ordenar (que Steam enfocaba en blanco) llevan el mismo anillo. */
+[class*="2mL2HfT5AkDXRi1YBnRW"][class*="2mL2HfT5AkDXRi1YBnRW"].gpfocus.gpfocuswithin,
+[class*="17SQWViInfB-hmYYLoK4Yw"].gpfocus {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: var(--obs-ring-gap) !important;
+}
+[class*="17SQWViInfB-hmYYLoK4Yw"].gpfocus,
+[class*="17SQWViInfB-hmYYLoK4Yw"].gpfocus * {
+  background: var(--obs-focus-bg) !important;
+  color: var(--obs-focus-fg) !important;
+  fill: var(--obs-focus-fg) !important;
+}
+/* Listas que recortan lo que sobresale (menú de Steam, amigos): el anillo va por dentro. */
+[class*="2w9TpQwxU7vcwaAbf3"].gpfocus,
+.friend.gpfocus {
+  outline-offset: -1.5px !important;
+}
+/* Gravedad: el anillo y el texto llevan el color del riesgo (ámbar, rojo, violeta); el fondo no se tiñe. */
+[tone="destructive"].gpfocus {
+  background: var(--obs-focus-bg) !important;
+  outline-color: var(--obs-warn) !important;
+}
+[role="menu"] > :not([tone]):not([role="separator"]) + [tone="destructive"].gpfocus {
+  background: var(--obs-focus-bg) !important;
+  outline-color: var(--obs-danger) !important;
+}
+[role="menu"]:has(> [role="separator"] ~ [role="separator"] ~ [role="separator"])
+  > [tone="destructive"]:not(:has(~ [tone="destructive"])).gpfocus {
+  background: var(--obs-focus-bg) !important;
+  outline-color: var(--obs-mode) !important;
+}
+[class*="17SQWViInfB-hmYYLoK4Yw"] { border-radius: 10px !important; }
