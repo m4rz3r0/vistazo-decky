@@ -1327,8 +1327,79 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 }
 /* Diálogos de Steam que aún traían su caja azulada con marco (filtros de Multimedia). */
 .DialogContent.GenericConfirmDialog { background: #000 !important; border: 0 !important; }
-.Shared_Radio_Group { background: var(--obs-surface) !important; }
-.Shared_Radio_Group .RadioButton.gpfocus {
+/* Selector de opciones (filtros de Multimedia): la elegida va en blanco sobre gris y el resto atenuado,
+   como las pestañas; el tono del tema queda solo para el anillo del foco. Esquinas redondas. */
+.Shared_Radio_Group {
+  background: var(--obs-surface) !important;
+  border-radius: 14px !important;
+  padding: 4px !important;
+  gap: 4px !important;
+}
+.Shared_Radio_Group .RadioButton {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.Shared_Radio_Group .RadioButton[class*="3-_jME_xsuvgT3Dvq4bw"] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+/* El anillo lo pone el propio Steam (.focusring_FocusRing), ya con el estilo del tema. */
+.Shared_Radio_Group .RadioButton.gpfocus { color: #fff !important; }
+/* Multimedia: la miniatura enfocada lleva el anillo, separado y con esquinas redondas, en lugar del
+   marco blanco de Steam. */
+[class*="2-7fqz03LhYHKEBI-HwIPq"] { border-radius: 10px !important; overflow: hidden !important; }
+[class*="2-7fqz03LhYHKEBI-HwIPq"].gpfocus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: var(--obs-ring-gap) !important;
+}
+/* Sin el resplandor desenfocado que Steam pone tras la miniatura enfocada. */
+[class*="2eM3gFnue51wDs1za_fdyJ"] { display: none !important; }
+/* Diálogos y menús: el fondo se oscurece, sin desenfocarlo. */
+.ModalOverlayContent.ModalOverlayBackground {
+  backdrop-filter: none !important;
+  background: rgba(0, 0, 0, 0.82) !important;
+}
+/* Barra superior: la búsqueda y la campana enfocadas llevan el anillo (la campana se ponía en blanco). */
+[class*="17M8gvakqjyaw_cLo6ntdl"]:has(input.gpfocus) {
+  border-radius: 16px !important;
   outline: 1.5px solid var(--obs-ring) !important;
   outline-offset: -1.5px !important;
+}
+[class*="2HnVd7wV6yVaTiXfrBe3gq"].gpfocus {
+  background: var(--obs-focus-bg) !important;
+  color: var(--obs-focus-fg) !important;
+  border-radius: 10px !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+[class*="2HnVd7wV6yVaTiXfrBe3gq"].gpfocus svg,
+[class*="2HnVd7wV6yVaTiXfrBe3gq"].gpfocus svg * { color: var(--obs-focus-fg) !important; fill: var(--obs-focus-fg) !important; }
+/* Resultados de búsqueda: el banner lleva las mismas esquinas redondas que su anillo. */
+[class*="3K3BxF9C7wIjPeECKwAMFj"],
+[class*="3K3BxF9C7wIjPeECKwAMFj"] [class*="3vyTQYwBNtW_e953TTBg9D"],
+[class*="3K3BxF9C7wIjPeECKwAMFj"] [class*="1R9r2OBCxAmtuUVrgBEUBw"],
+[class*="3K3BxF9C7wIjPeECKwAMFj"] img {
+  border-radius: 10px !important;
+}
+[class*="3K3BxF9C7wIjPeECKwAMFj"] [class*="1R9r2OBCxAmtuUVrgBEUBw"] { overflow: hidden !important; }
+[class*="3K3BxF9C7wIjPeECKwAMFj"] [class*="1R9r2OBCxAmtuUVrgBEUBw"]::after,
+[class*="3K3BxF9C7wIjPeECKwAMFj"] [class*="1R9r2OBCxAmtuUVrgBEUBw"]::before { display: none !important; }
+[class*="3K3BxF9C7wIjPeECKwAMFj"].gpfocus { box-shadow: none !important; }
+/* El anillo propio de Steam (carátulas, banners) también va separado, como el resto. */
+.focusring_FocusRing_1IZrQ {
+  outline-offset: var(--obs-ring-gap) !important;
+  border-radius: 10px !important;
+}
+/* Multimedia: cada miniatura llena su celda redondeada (antes las de otra proporción quedaban cuadradas). */
+[class*="2-7fqz03LhYHKEBI-HwIPq"] img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 10px !important;
+  background: transparent !important;
 }
