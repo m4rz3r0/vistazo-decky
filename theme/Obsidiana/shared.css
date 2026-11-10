@@ -1128,3 +1128,46 @@ div[style*="height: 10px"][style*="background-color: rgb(76, 76, 76)"] {
 button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap"][style*="padding: 0px"] {
   padding: 0 16px !important;
 }
+
+/* Tender, descarga en curso (también en pausa y al extraer). Traía un relleno azul→verde que crece,
+   un halo que late y el texto oscuro de «Jugar» sobre el tinte del foco. Ahora: botón carbón con el
+   progreso en blanco y una línea del tono del tema de 4 px abajo que avanza; sin halo ni destellos. */
+.romm-play-section-row .romm-dl-active-group {
+  animation: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+.romm-play-section-row button.romm-btn-download:not(.romm-btn-download-idle).DialogButton {
+  background: var(--obs-surface-2) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  filter: none !important;
+  min-width: 200px;
+}
+.romm-play-section-row button.romm-btn-download:not(.romm-btn-download-idle).DialogButton .romm-dl-label {
+  color: #fff !important;
+  font-variant-numeric: tabular-nums;
+}
+.romm-play-section-row button.romm-btn-download:not(.romm-btn-download-idle).DialogButton.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: 3px !important;
+}
+.romm-play-section-row button.romm-btn-download:not(.romm-btn-download-idle).DialogButton.gpfocus .romm-dl-label {
+  color: var(--obs-focus-fg) !important;
+}
+.romm-play-section-row .romm-dl-fill {
+  top: auto !important;
+  bottom: 0;
+  height: 4px !important;
+  background: var(--obs-accent) !important;
+  border-radius: 0 2px 2px 0;
+}
+.romm-play-section-row .romm-btn-cancel.DialogButton {
+  border-radius: 12px !important;
+  margin-left: 8px !important;
+}
+.romm-dl-complete-flash,
+.romm-dl-uninstall-flash {
+  animation: none !important;
+}
