@@ -1,6 +1,7 @@
 import { safe } from "./safe";
 import { t } from "./i18n";
 import { fetchNoCors } from "@decky/api";
+import { isUnloaded } from "./lifecycle";
 
 declare const appStore: any;
 declare const appDetailsStore: any;
@@ -33,7 +34,7 @@ export interface GameFacts {
 }
 
 export function getFacts(appid: number): GameFacts | null {
-  const o = appStore?.GetAppOverviewByAppID?.(appid);
+  const o: any = safe(() => appStore.GetAppOverviewByAppID(appid), null);
   if (!o) return null;
   const tags: string[] = safe(
     () =>
@@ -70,12 +71,18 @@ const COUNTS_KEY = "vistazo:achievement-counts";
 let counts: Record<string, [number, number, number]> | null = null;
 function countStore() {
   if (counts) return counts;
+  counts = {};
   try {
-    counts = JSON.parse(localStorage.getItem(COUNTS_KEY) ?? "{}") ?? {};
+    // Only what we wrote ourselves: anything else in there (an edited or damaged value) is dropped.
+    const stored = JSON.parse(localStorage.getItem(COUNTS_KEY) ?? "{}");
+    if (stored && typeof stored === "object" && !Array.isArray(stored))
+      for (const [id, c] of Object.entries(stored))
+        if (/^\d+$/.test(id) && Array.isArray(c) && c.length === 3 && c.every((n) => Number.isFinite(n)))
+          counts[id] = c as [number, number, number];
   } catch {
-    counts = {};
+    /* unreadable: start empty */
   }
-  return counts!;
+  return counts;
 }
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function saveCount(appid: number, achieved: number, total: number) {
@@ -115,11 +122,11 @@ export const isShortcut = (appid: number) => appid >= 0x80000000;
 declare const DeckyBackend: any;
 const tender = (method: string, ...args: unknown[]): Promise<any> =>
   DeckyBackend.call("loader/call_plugin_method", "Tender", method, ...args);
-let retroOff = false; // Tender isn't installed: nothing to ask this session
 let retroPauseUntil = 0;
 const RETRO_PAUSE = 2 * 60 * 1000;
+const TENDER_PAUSE = 10 * 60 * 1000;
 async function loadRetroCount(appid: number): Promise<void> {
-  if (retroOff || Date.now() < retroPauseUntil) return;
+  if (Date.now() < retroPauseUntil) return;
   try {
     const game = await tender("get_cached_game_detail", appid);
     if (!game?.rom_id) return;
@@ -129,7 +136,9 @@ async function loadRetroCount(appid: number): Promise<void> {
     // as "no RetroAchievements username", so no failure is final: pause, then ask again.
     else retroPauseUntil = Date.now() + RETRO_PAUSE;
   } catch {
-    retroOff = true; // Tender isn't there
+    // Tender isn't installed, or hasn't loaded yet (after boot it may start after Vistazo): ask
+    // again later instead of giving up for the session.
+    retroPauseUntil = Date.now() + TENDER_PAUSE;
   }
 }
 
@@ -143,9 +152,18 @@ export function cachedAchievements(appid: number) {
 }
 
 // null: the game has no achievements; undefined: they couldn't be read this time (try again later).
-export async function loadAchievements(
-  appid: number,
-): Promise<AchievementSummary | null | undefined> {
+// The game page, the home and the background fill may ask for the same game at once: one read.
+const reading = new Map<number, Promise<AchievementSummary | null | undefined>>();
+export function loadAchievements(appid: number): Promise<AchievementSummary | null | undefined> {
+  let p = reading.get(appid);
+  if (!p) {
+    p = readAchievements(appid).finally(() => reading.delete(appid));
+    reading.set(appid, p);
+  }
+  return p;
+}
+
+async function readAchievements(appid: number): Promise<AchievementSummary | null | undefined> {
   try {
     const res = await SteamClient.Apps.GetMyAchievementsForApp(String(appid));
     const list: any[] = res?.data?.rgAchievements ?? [];
@@ -211,7 +229,9 @@ export async function loadProton(appid: number): Promise<ProtonTier | null> {
       { method: "GET" },
     );
     if (!r.ok) {
-      protonCache.set(appid, null);
+      // 404: ProtonDB has no reports for this game. Anything else (busy, down) is worth asking
+      // again the next time the page opens.
+      if (r.status === 404) protonCache.set(appid, null);
       return null;
     }
     const j = await r.json();
@@ -230,10 +250,21 @@ export async function loadProton(appid: number): Promise<ProtonTier | null> {
 // Make the move the Play button makes, once Steam lists the game as running: on that page with no
 // game running, Steam goes straight back.
 declare const SteamUIStore: any;
-function showRunningGame(appid: number, tries = 40): void {
-  const running = safe(() => SteamUIStore.RunningApps.some((a: any) => a.appid === appid), false);
-  if (running) safe(() => SteamUIStore.NavigateToRunningApp(), undefined);
-  else if (tries > 0) setTimeout(() => showRunningGame(appid, tries - 1), 250);
+export const runningAppIds = (): Set<number> =>
+  safe(() => new Set<number>(SteamUIStore.RunningApps.map((a: any) => Number(a.appid))), new Set<number>());
+
+const awaited = new Set<number>(); // Steam may announce one launch more than once: one wait per game
+function showRunningGame(appid: number): void {
+  if (awaited.has(appid)) return;
+  awaited.add(appid);
+  let tries = 40;
+  const check = () => {
+    if (isUnloaded() || tries-- <= 0) return void awaited.delete(appid);
+    if (!runningAppIds().has(appid)) return void setTimeout(check, 250);
+    awaited.delete(appid);
+    safe(() => SteamUIStore.NavigateToRunningApp(), undefined);
+  };
+  check();
 }
 
 // Games starting and closing. A closed game may have new achievements, which Steam writes a moment

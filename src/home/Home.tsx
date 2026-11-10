@@ -10,7 +10,7 @@ import {
   Router,
   showContextMenu,
 } from "@decky/ui";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Game,
   activeShelves,
@@ -27,7 +27,7 @@ import {
 } from "./data";
 import { homeCss, headerCss } from "./styles";
 import { useSettings } from "../settings";
-import { AchievementCount, DAY, Medal, loadCount, medal, savedCount } from "../data";
+import { AchievementCount, DAY, Medal, loadCount, medal, runningAppIds, savedCount } from "../data";
 import { PlatinumIcon } from "../gem";
 
 // Image with fallbacks: tries each URL in turn, then shows `fallback`. Callers give it a key per
@@ -103,12 +103,26 @@ function LibraryIcon() {
   );
 }
 
-function Friends() {
-  const [status, setSt] = useState(currentStatus());
-  const [online, setOnline] = useState(onlineFriends());
+// The home's own document. Plugins run in another window's context, whose `document` says nothing
+// about whether the home is on screen.
+let homeDoc: Document | null = null;
+declare const SteamUIStore: any;
+// Nobody is looking: the screen is off, or a game is on top (Steam hides its own window then).
+const away = () =>
+  (homeDoc ?? document).hidden ||
+  safe(
+    () =>
+      SteamUIStore.WindowStore.GamepadUIMainWindowInstance.m_CompositionStateStore.GetCompositionState() === 0,
+    false,
+  );
+
+// Memoised: it has no props, so moving along the covers doesn't draw it again.
+const Friends = memo(function Friends() {
+  const [status, setSt] = useState(currentStatus);
+  const [online, setOnline] = useState(onlineFriends);
   useEffect(() => {
     const t = setInterval(() => {
-      if (document.hidden) return; // nobody is looking (game running, screen off)
+      if (away()) return;
       setSt(currentStatus());
       setOnline(onlineFriends());
     }, 15000);
@@ -168,7 +182,7 @@ function Friends() {
       <span className="vh-online">{online}</span>
     </Focusable>
   );
-}
+});
 
 // Crossfade: the new art fades in over the previous one, which stays underneath until replaced.
 function Hero({ game }: { game: Game | null }) {
@@ -229,7 +243,7 @@ function useAchievementFill(games: Game[]) {
     let timer: ReturnType<typeof setTimeout>;
     const next = () => {
       if (stop || !todo.length) return;
-      if (document.hidden) {
+      if (away()) {
         timer = setTimeout(next, 5000); // a game is running or the screen is off: wait
         return;
       }
@@ -244,10 +258,6 @@ function useAchievementFill(games: Game[]) {
     };
   }, [games]);
 }
-
-declare const SteamUIStore: any;
-const isRunning = (g: Game) =>
-  safe(() => SteamUIStore.RunningApps.some((a: any) => a.appid === g.appid), false);
 
 // Remembered while Steam runs: coming back from a game page lands on the same shelf and cover.
 let lastShelf: ShelfId = "installed";
@@ -270,12 +280,73 @@ function centerInRow(e: any): void {
   });
 }
 
+const openPage = (appid: number) => Navigation.Navigate(`/library/app/${appid}`);
+const openLibrary = () => Navigation.Navigate("/library");
+
+// One cover. Memoised: moving along the row changes which game is on show, not the covers, so a
+// held stick draws nothing but the game that was reached.
+// A and X: Steam games play (or go back to the running game) and open their page, swapped if the
+// player chose so. Retro games have no Steam page to open: A opens theirs, X does nothing.
+const Cover = memo(
+  function Cover({
+    game,
+    first,
+    running,
+    aOpensPage,
+    onShow,
+  }: {
+    game: Game;
+    first: boolean;
+    running: boolean;
+    aOpensPage: boolean;
+    onShow: (appid: number, e: any) => void;
+  }) {
+    const page = { run: () => openPage(game.appid), label: game.steam ? t.gamePage : t.open };
+    const play = running
+      ? { run: page.run, label: t.backToGame }
+      : { run: () => launch(game), label: t.play };
+    const [a, x] = !game.steam ? [page, null] : aOpensPage ? [page, play] : [play, page];
+    return (
+      <Focusable
+        autoFocus={first}
+        className="vh-cover"
+        noFocusRing
+        // Steam's own focus event: the browser's onFocus doesn't fire while the window isn't
+        // browser-focused, but the gamepad selection still moves.
+        onGamepadFocus={(e: any) => onShow(game.appid, e)}
+        onActivate={a.run}
+        onOKActionDescription={a.label}
+        onSecondaryButton={x?.run}
+        onSecondaryActionDescription={x?.label}
+        onOptionsButton={openLibrary}
+        onOptionsActionDescription={t.fullLibrary}
+      >
+        <Img
+          srcs={portraitUrls(game)}
+          className="vh-art"
+          lazy
+          fallback={<span className="vh-art vh-noart">{game.name}</span>}
+        />
+      </Focusable>
+    );
+  },
+  (a, b) =>
+    a.game.appid === b.game.appid &&
+    a.game.name === b.game.name &&
+    a.game.steam === b.game.steam &&
+    a.first === b.first &&
+    a.running === b.running &&
+    a.aOpensPage === b.aOpensPage &&
+    a.onShow === b.onShow,
+);
+
 export function Home() {
   const shelves = activeShelves(useSettings().shelves);
   const [shelf, setShelf] = useState<ShelfId>(() =>
     shelves.some((s) => s.id === lastShelf) ? lastShelf : shelves[0].id,
   );
   const [games, setGames] = useState<Game[]>(() => loadShelf(shelf));
+  const titleRef = useRef<HTMLDivElement>(null);
   // Which way the last L1/R1 went: the new shelf slides in from that side.
   const [slide, setSlide] = useState<"" | "vh-from-left" | "vh-from-right">("");
   // Tender builds its retro collections a few seconds after boot, and games get installed or removed
@@ -292,16 +363,23 @@ export function Home() {
       reload().length === 0
         ? [setTimeout(reload, 3000), setTimeout(reload, 10000)]
         : [];
-    const onVisible = () => !document.hidden && reload();
-    document.addEventListener("visibilitychange", onVisible);
+    const doc = titleRef.current?.ownerDocument ?? document;
+    const onVisible = () => !doc.hidden && reload();
+    doc.addEventListener("visibilitychange", onVisible);
     return () => {
       timers.forEach(clearTimeout);
-      document.removeEventListener("visibilitychange", onVisible);
+      doc.removeEventListener("visibilitychange", onVisible);
     };
   }, [shelf]);
-  const startAt = Math.max(
-    0,
-    games.findIndex((g) => g.appid === lastFocus[shelf]),
+  // The cover a shelf opens on: the one it was left on. Worked out when the shelf is read, not on
+  // every move, so moving doesn't hand the "start here" mark from cover to cover.
+  const startAt = useMemo(
+    () =>
+      Math.max(
+        0,
+        games.findIndex((g) => g.appid === lastFocus[shelf]),
+      ),
+    [games, shelf],
   );
   // The game on show is looked up by appid, so a refresh keeps it (with its fresh playtime) and a game
   // that is gone, or a new shelf, hands over to the first cover. null: the "full library" tile is selected.
@@ -313,7 +391,18 @@ export function Home() {
   // the cover the home starts on. Once per client session, and never while a game is running (its
   // input must not be taken).
   const hasGames = games.length > 0;
-  const titleRef = useRef<HTMLDivElement>(null);
+  // While the home is up: its document is the one to ask whether it is on screen, and Steam's top
+  // bar goes clear over the art (a mark on the page instead of a :has() rule, which the browser
+  // would re-check on every change anywhere in the page).
+  useLayoutEffect(() => {
+    const doc = titleRef.current?.ownerDocument ?? document;
+    homeDoc = doc;
+    doc.documentElement.setAttribute("data-vh-home", "");
+    return () => {
+      doc.documentElement.removeAttribute("data-vh-home");
+      if (homeDoc === doc) homeDoc = null;
+    };
+  }, []);
   useEffect(() => {
     if (!hasGames || wokeOnce || Router.MainRunningApp) return;
     const timer = setTimeout(() => {
@@ -353,25 +442,18 @@ export function Home() {
     else if (b === GamepadButton.BUMPER_RIGHT) cycle(1);
   };
 
-  const openPage = (g: Game) => Navigation.Navigate(`/library/app/${g.appid}`);
-  // A and X on a cover. Steam games: play (or back to the running game) and game page, swapped if the
-  // player chose so. Retro games have no Steam page to open: A opens theirs, X does nothing.
   const { aOpensPage } = useSettings();
-  const buttons = (g: Game) => {
-    const page = { run: () => openPage(g), label: g.steam ? t.gamePage : t.open };
-    if (!g.steam) return { onActivate: page.run, onOKActionDescription: page.label };
-    const play = isRunning(g)
-      ? { run: page.run, label: t.backToGame }
-      : { run: () => launch(g), label: t.play };
-    const [a, x] = aOpensPage ? [page, play] : [play, page];
-    return {
-      onActivate: a.run,
-      onOKActionDescription: a.label,
-      onSecondaryButton: x.run,
-      onSecondaryActionDescription: x.label,
-    };
-  };
-  const openLibrary = () => Navigation.Navigate("/library");
+  const onShow = useCallback(
+    (appid: number, e: any) => {
+      setFocusedId(appid);
+      lastFocus[shelf] = appid;
+      centerInRow(e);
+    },
+    [shelf],
+  );
+  const running = runningAppIds();
+  const playing = !!focused && running.has(focused.appid);
+  const ago = focused ? since(focused.lastPlayed) : null;
   const achievements = useAchievements(focused);
   useAchievementFill(games);
   // Each fact keeps its meaning's color: mint while the game is running; achievements take the
@@ -380,7 +462,7 @@ export function Home() {
   type Fact = { text: string; tone?: "playing" | Medal };
   const meta: Fact[] = focused
     ? [
-        isRunning(focused) ? { text: t.playingNow, tone: "playing" as const } : null,
+        playing ? { text: t.playingNow, tone: "playing" as const } : null,
         focused.platform ? { text: focused.platform } : null,
         { text: hours(focused.minutes) },
         achievements?.total
@@ -392,7 +474,7 @@ export function Home() {
               tone: won ?? undefined,
             }
           : null,
-        since(focused.lastPlayed) && !isRunning(focused) ? { text: since(focused.lastPlayed)! } : null,
+        ago && !playing ? { text: ago } : null,
       ].filter((m): m is Fact => !!m)
     : [];
 
@@ -443,29 +525,14 @@ export function Home() {
 
       <Focusable key={shelf} className={`vh-row ${slide}`} flow-children="row">
         {games.map((g, i) => (
-          <Focusable
+          <Cover
             key={g.appid}
-            autoFocus={i === startAt}
-            className="vh-cover"
-            noFocusRing
-            // Steam's own focus event: the browser's onFocus doesn't fire while the window isn't
-            // browser-focused, but the gamepad selection still moves.
-            onGamepadFocus={(e: any) => {
-              setFocusedId(g.appid);
-              lastFocus[shelf] = g.appid;
-              centerInRow(e);
-            }}
-            {...buttons(g)}
-            onOptionsButton={openLibrary}
-            onOptionsActionDescription={t.fullLibrary}
-          >
-            <Img
-              srcs={portraitUrls(g)}
-              className="vh-art"
-              lazy
-              fallback={<span className="vh-art vh-noart">{g.name}</span>}
-            />
-          </Focusable>
+            game={g}
+            first={i === startAt}
+            running={running.has(g.appid)}
+            aOpensPage={aOpensPage}
+            onShow={onShow}
+          />
         ))}
         {games.length === 0 && (
           <div className="vh-empty">

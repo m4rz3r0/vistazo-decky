@@ -1,4 +1,5 @@
 import { lang, num, t } from "./i18n";
+import { GemShape } from "./gem";
 import { navFocus } from "./focus";
 import {
   Focusable,
@@ -140,8 +141,7 @@ function Ring({ share }: { share: number }) {
       )}
       {done ? (
         <g className="vz-ring-gem" transform="translate(10.2 10.2) scale(1.4)">
-          <path d="M7 4h10l4 5-9 11L3 9z" />
-          <path d="M3 9h18M9.5 4 8 9l4 11 4-11-1.5-5" />
+          <GemShape />
         </g>
       ) : (
         <text

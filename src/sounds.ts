@@ -1,4 +1,5 @@
 import { safe } from "./safe";
+import { isUnloaded } from "./lifecycle";
 import { findModuleChild } from "@decky/ui";
 
 // Calm menu sounds. Every UI sound in Steam goes through one player that fetches "/sounds/<name>.wav";
@@ -240,12 +241,31 @@ const findManager = () =>
   );
 
 // Swap Steam's sound for ours while `on`; uninstall restores whatever was there before.
+// Right after boot Steam may not have set its sound player up yet: look again a few times.
 export function installSounds(isOn: () => boolean): () => void {
+  let uninstall: (() => void) | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let tries = 0;
+  const attempt = () => {
+    if (isUnloaded()) return;
+    uninstall = hookSounds(isOn);
+    if (uninstall) return;
+    if (++tries < 4) timer = setTimeout(attempt, 5000 * tries);
+    else console.warn("[Vistazo] sound player not found; Steam's sounds stay");
+  };
+  attempt();
+  return () => {
+    clearTimeout(timer);
+    uninstall?.();
+  };
+}
+
+function hookSounds(isOn: () => boolean): (() => void) | null {
   manager = findManager();
   // Everything play() needs: if a Steam update renames any of it, Steam keeps its own sounds.
   if (typeof manager?.PlayAudioURLWithRepeats !== "function" || typeof manager.GetActiveDestination !== "function") {
-    console.warn("[Vistazo] sound player not found; Steam's sounds stay");
-    return () => {};
+    manager = null;
+    return null;
   }
   const previous = Object.getOwnPropertyDescriptor(manager, "PlayAudioURLWithRepeats");
   const orig = manager.PlayAudioURLWithRepeats;

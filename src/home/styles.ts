@@ -17,7 +17,7 @@ export function headerCss(): string {
       "",
     );
     header = cls
-      ? `html:has(.vh-root) .${cls}::before { background: transparent !important; backdrop-filter: none !important; }`
+      ? `html[data-vh-home] .${cls}::before { background: transparent !important; backdrop-filter: none !important; }`
       : "";
   }
   return header;

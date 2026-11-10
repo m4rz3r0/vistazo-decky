@@ -13,6 +13,8 @@ import { setupTheme } from "./theme";
 import { watchGames } from "./data";
 import { settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
+import { Guard } from "./Guard";
+import { markUnloaded } from "./lifecycle";
 
 const ROUTE = "/library/app/:appid";
 const HOME = "/library/home";
@@ -257,12 +259,17 @@ const isHomeFrame = (x: any) =>
   x?.props?.headerVisibility !== undefined && x?.props?.children;
 
 // Both switches keep Steam's own content at hand, so turning a setting off shows Steam's screen at once.
+// If our screen fails to draw (a Steam update moved something it reads), Steam's own shows instead.
 function HomeSwitch({ steam }: { steam: any }) {
-  return useSettings().home ? createElement(Home) : steam;
+  return useSettings().home
+    ? createElement(Guard, { name: "home", fallback: steam }, createElement(Home))
+    : steam;
 }
 // Keyed by appid: a new game starts with fresh state.
 function PagePanel({ appid }: { appid: number }) {
-  return useSettings().page ? createElement(Panel, { appid, key: appid }) : null;
+  return useSettings().page
+    ? createElement(Guard, { name: "page", key: appid }, createElement(Panel, { appid }))
+    : null;
 }
 
 function afterHome(_: any, out: any) {
@@ -320,6 +327,7 @@ export default definePlugin(() => {
     icon: <GlanceIcon />,
     onDismount() {
       active = false;
+      markUnloaded();
       removeSounds();
       stopWatching();
       routerHook.removePatch(ROUTE, patch);

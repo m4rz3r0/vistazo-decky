@@ -1,5 +1,6 @@
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
+import { isUnloaded } from "./lifecycle";
 
 // Vistazo ships the Obsidiana theme and installs it through CSS Loader, which keeps the theme's
 // class names working across Steam updates. Its options live in CSS Loader (config_USER.json);
@@ -81,10 +82,13 @@ export async function setupTheme(): Promise<void> {
   // The first turn-on is remembered until CSS Loader confirms it, so a slow start never loses it.
   if (result === "fresh") store(ENABLE_PENDING, "1");
   const enable = store(ENABLE_PENDING) === "1";
-  if (result === "fresh" || result === "updated" || enable) {
-    for (let tries = 0; tries < 10; tries++) {
+  // Each step once: a retry after CSS Loader answered the first must not make it reload again.
+  let reload = result === "fresh" || result === "updated";
+  if (reload || enable) {
+    for (let tries = 0; tries < 10 && !isUnloaded(); tries++) {
       try {
-        if (result === "fresh" || result === "updated") await cssLoader("reset");
+        if (reload) await cssLoader("reset");
+        reload = false;
         if (enable) await cssLoader("set_theme_state", { name: THEME, state: true });
         store(ENABLE_PENDING, null);
         break;
@@ -94,7 +98,7 @@ export async function setupTheme(): Promise<void> {
       }
     }
   }
-  await refresh();
+  if (!isUnloaded()) await refresh();
 }
 
 const ENABLE_PENDING = "vistazo:theme-enable-pending";

@@ -1,5 +1,5 @@
 import { safe } from "../safe";
-import { t } from "../i18n";
+import { locale, t } from "../i18n";
 declare const collectionStore: any;
 declare const appStore: any;
 declare const friendStore: any;
@@ -62,11 +62,20 @@ const toGame = (
 });
 
 const byRecent = (a: Game, b: Game) =>
-  b.lastPlayed - a.lastPlayed || a.name.localeCompare(b.name, "es");
+  b.lastPlayed - a.lastPlayed || a.name.localeCompare(b.name, locale);
+
+// The row shows the most recent games; the rest are one press away in the full library. A cover is
+// a node in Steam's navigation tree and an image to decode, so a library of hundreds stays light.
+const SHELF_MAX = 60;
 
 const isSteamApp = (o: any) => o.app_type === 1 && !o.BIsShortcut?.();
 
 export function loadShelf(id: ShelfId): Game[] {
+  portraits.clear(); // custom art may have changed since the last read
+  return readShelf(id).slice(0, SHELF_MAX);
+}
+
+function readShelf(id: ShelfId): Game[] {
   try {
     if (id === "installed") {
       return (collectionStore.localGamesCollection?.allApps ?? [])
@@ -99,22 +108,30 @@ export function loadShelf(id: ShelfId): Game[] {
 }
 
 // Images: the user's own custom art first, then Steam's cache, then the CDN.
+const overview = (appid: number): any => safe(() => appStore.GetAppOverviewByAppID(appid), null);
 const custom = (kind: string, o: any): string[] => safe(() => appStore[kind](o), []);
 const cdn = (id: number, file: string) =>
   `https://shared.steamstatic.com/store_item_assets/steam/apps/${id}/${file}`;
 
+// Kept per game until the shelf is read again: the same list (same identity) on every render, so a
+// cover that hasn't changed isn't drawn again.
+const portraits = new Map<number, string[]>();
 export function portraitUrls(g: Game): string[] {
-  const o = appStore.GetAppOverviewByAppID(g.appid);
-  const list = [...custom("GetCustomVerticalCapsuleURLs", o)];
-  if (g.steam) {
-    list.push(...safe(() => appStore.GetCachedVerticalCapsuleURL(o), []));
-    list.push(cdn(g.appid, "library_600x900.jpg"));
+  let list = portraits.get(g.appid);
+  if (!list) {
+    const o = overview(g.appid);
+    list = [...custom("GetCustomVerticalCapsuleURLs", o)];
+    if (g.steam) {
+      list.push(...safe(() => appStore.GetCachedVerticalCapsuleURL(o), []));
+      list.push(cdn(g.appid, "library_600x900.jpg"));
+    }
+    portraits.set(g.appid, list);
   }
   return list;
 }
 
 function steamArt(g: Game, kind: string, file: string): string[] {
-  const list = [...custom(kind, appStore.GetAppOverviewByAppID(g.appid))];
+  const list = [...custom(kind, overview(g.appid))];
   if (g.steam)
     list.push(`/assets/${g.appid}/${file}`, `/assets/${g.appid}_${file}`, cdn(g.appid, file));
   return list;
@@ -124,7 +141,11 @@ export const heroUrls = (g: Game) => steamArt(g, "GetCustomHeroImageURLs", "libr
 export const logoUrls = (g: Game) => steamArt(g, "GetCustomLogoImageURLs", "logo.png");
 
 export function launch(g: Game) {
-  SteamClient.Apps.RunGame(String(g.appid), "", -1, 100);
+  try {
+    SteamClient.Apps.RunGame(String(g.appid), "", -1, 100);
+  } catch (e) {
+    console.error("[Vistazo] launch", e);
+  }
 }
 
 // ---------- Friends and own status ----------
@@ -140,8 +161,10 @@ const loc = (token: string, fallback: string) => {
   return typeof s === "string" && s && !s.startsWith("#") ? s : fallback;
 };
 
+// Built once: the labels come from Steam's translations, which don't change while it runs.
+let options: StatusOption[] | null = null;
 export function statusOptions(): StatusOption[] {
-  return [
+  return (options ??= [
     {
       id: "online",
       label: loc("#PersonaStateOnline", t.online),
@@ -159,7 +182,7 @@ export function statusOptions(): StatusOption[] {
       label: loc("#PersonaStateOffline", t.offline),
       tone: "#3d3d3d",
     },
-  ];
+  ]);
 }
 
 const STATE_OF: Record<string, number> = {
@@ -169,15 +192,13 @@ const STATE_OF: Record<string, number> = {
   offline: 0,
 };
 
-const ui = () => friendStore?.m_FriendsUIFriendStore;
+const ui = (): any => safe(() => friendStore.m_FriendsUIFriendStore, null);
 
 export function currentStatus(): string {
   const f = ui();
   if (!f) return "offline";
   if (safe(() => f.GetUserDoNotDisturb(), false)) return "dnd";
-  const s = Number(
-    f.m_eUserPersonaState ?? f.self?.persona?.m_ePersonaState ?? 0,
-  );
+  const s = safe(() => Number(f.m_eUserPersonaState ?? f.self?.persona?.m_ePersonaState ?? 0), 0);
   if (s === 7) return "invisible";
   if (s === 0) return "offline";
   if (s === 3 || s === 4) return "away";
