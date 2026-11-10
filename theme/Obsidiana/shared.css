@@ -1171,3 +1171,8 @@ button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap
 .romm-dl-uninstall-flash {
   animation: none !important;
 }
+
+/* Opciones con título y descripción (estado en Cuenta y otros desplegables): Steam oscurece ambos
+   textos con foco porque espera un fondo blanco; sobre la superficie teñida quedaban casi invisibles. */
+.gpfocus [class*="3g-QHB82IGz91Hsk1Hw4lh"] { color: var(--obs-focus-fg) !important; }
+.gpfocus [class*="cbinvNOoQE045ZV5gCk_N"] { color: rgba(255, 255, 255, 0.72) !important; }
