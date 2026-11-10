@@ -157,17 +157,14 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 .vz-ach.vz-silver { --vz-reward: #b9c7d8; }
 .vz-ach.vz-platinum { --vz-reward: #c4ecff; }
 .vz-ach.vz-platinum .vz-ach-label { color: var(--vz-reward); font-weight: 600; }
-.vz-ach.vz-platinum .vz-ring-text { fill: var(--vz-reward); }
-.vz-gem {
-  width: 15px;
-  height: 15px;
-  margin-right: 6px;
-  vertical-align: -2px;
-  fill: rgba(196, 236, 255, 0.18);
-  stroke: currentColor;
-  stroke-width: 1.6;
+.vz-ring-gem {
+  fill: rgba(196, 236, 255, 0.2);
+  stroke: var(--vz-reward);
+  stroke-width: 1.15;
   stroke-linejoin: round;
 }
+.vz-ach.vz-platinum .vz-ring-track { stroke: rgba(196, 236, 255, 0.16); }
+.vz-ach.gpfocus .vz-ring-gem { stroke: var(--vz-accent); }
 .vz-ach.gpfocus .vz-ring-fill { stroke: var(--vz-accent); }
 .vz-ach.gpfocus .vz-ach-n,
 .vz-ach.gpfocus .vz-ach-label { color: var(--vz-accent); }

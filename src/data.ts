@@ -111,21 +111,23 @@ export function medal(achieved: number, total: number): Medal | null {
 export const isShortcut = (appid: number) => appid >= 0x80000000;
 
 // RetroAchievements of a RomM game, through Tender: it knows which RomM game a shortcut is, and RomM
-// keeps the player's progress once their RetroAchievements username is in their RomM profile. Off for
-// the rest of the session when Tender isn't installed or that username is missing.
+// keeps the player's progress once their RetroAchievements username is in their RomM profile.
 declare const DeckyBackend: any;
 const tender = (method: string, ...args: unknown[]): Promise<any> =>
   DeckyBackend.call("loader/call_plugin_method", "Tender", method, ...args);
-let retroOff = false;
+let retroOff = false; // Tender isn't installed: nothing to ask this session
+let retroPauseUntil = 0;
+const RETRO_PAUSE = 2 * 60 * 1000;
 async function loadRetroCount(appid: number): Promise<void> {
-  if (retroOff) return;
+  if (retroOff || Date.now() < retroPauseUntil) return;
   try {
     const game = await tender("get_cached_game_detail", appid);
     if (!game?.rom_id) return;
     const p = await tender("get_achievement_progress", game.rom_id);
     if (p?.success) saveCount(appid, Number(p.earned) || 0, Number(p.total) || 0);
-    else if (p?.reason === "no_ra_username") retroOff = true;
-    // Anything else (RomM asleep, network): try again another time.
+    // RomM didn't answer. An on-demand RomM still waking up answers 503, which Tender also reports
+    // as "no RetroAchievements username", so no failure is final: pause, then ask again.
+    else retroPauseUntil = Date.now() + RETRO_PAUSE;
   } catch {
     retroOff = true; // Tender isn't there
   }

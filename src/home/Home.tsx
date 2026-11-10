@@ -37,11 +37,13 @@ function Img({
   className,
   fallback,
   lazy,
+  onGiveUp,
 }: {
   srcs: string[];
   className: string;
   fallback?: any;
   lazy?: boolean;
+  onGiveUp?: () => void; // none of the sources loaded
 }) {
   const [i, setI] = useState(0);
   if (i >= srcs.length) return fallback ?? null;
@@ -52,7 +54,10 @@ function Img({
       alt=""
       decoding="async"
       loading={lazy ? "lazy" : undefined}
-      onError={() => setI(i + 1)}
+      onError={() => {
+        if (i + 1 >= srcs.length) onGiveUp?.();
+        setI(i + 1);
+      }}
       onLoad={(e) => (e.currentTarget.dataset.ready = "")} // fades in once it has loaded
     />
   );
@@ -170,13 +175,23 @@ function Hero({ game }: { game: Game | null }) {
   const [layers, setLayers] = useState<Game[]>([]);
   useEffect(() => {
     setLayers((l) =>
-      !game ? [] : l[l.length - 1]?.appid === game.appid ? l : [...l.slice(-1), game],
+      !game
+        ? []
+        : l[l.length - 1]?.appid === game.appid
+          ? l
+          : // The previous art stays under the new one while it loads; a game without art clears it.
+            heroUrls(game).length
+            ? [...l.slice(-1), game]
+            : [game],
     );
   }, [game]);
+  // The new art didn't load at all: don't leave the previous game's art on show.
+  const giveUp = (appid: number) =>
+    setLayers((l) => (l[l.length - 1]?.appid === appid ? l.slice(-1) : l));
   return (
     <>
       {layers.map((g) => (
-        <Img key={g.appid} className="vh-hero" srcs={heroUrls(g)} />
+        <Img key={g.appid} className="vh-hero" srcs={heroUrls(g)} onGiveUp={() => giveUp(g.appid)} />
       ))}
     </>
   );

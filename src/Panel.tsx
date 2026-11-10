@@ -19,7 +19,6 @@ import {
 } from "./data";
 import { useSettings } from "./settings";
 import { pageCss } from "./styles";
-import { PlatinumIcon } from "./gem";
 
 type Tone = "good" | "ok" | "bad" | "muted";
 
@@ -120,6 +119,8 @@ function pct(n: number): string {
 }
 
 // Progress ring: 54px, 5px stroke. The share sits in the middle; the count goes beside it.
+// All achievements: the ring closes in platinum around a cut gem, the one thing on the page that
+// only a finished game gets.
 function Ring({ share }: { share: number }) {
   const r = 24;
   const c = 2 * Math.PI * r;
@@ -137,15 +138,22 @@ function Ring({ share }: { share: number }) {
           transform="rotate(-90 27 27)"
         />
       )}
-      <text
-        x="27"
-        y="27"
-        className="vz-ring-text"
-        dominantBaseline="central"
-        textAnchor="middle"
-      >
-        {done ? "✓" : pct(Math.floor(share))}
-      </text>
+      {done ? (
+        <g className="vz-ring-gem" transform="translate(10.2 10.2) scale(1.4)">
+          <path d="M7 4h10l4 5-9 11L3 9z" />
+          <path d="M3 9h18M9.5 4 8 9l4 11 4-11-1.5-5" />
+        </g>
+      ) : (
+        <text
+          x="27"
+          y="27"
+          className="vz-ring-text"
+          dominantBaseline="central"
+          textAnchor="middle"
+        >
+          {pct(Math.floor(share))}
+        </text>
+      )}
     </svg>
   );
 }
@@ -275,14 +283,7 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
               <span className="vz-ach-of">/{ach.total}</span>
             </div>
             <div className="vz-ach-label">
-              {ach.achieved === ach.total ? (
-                <>
-                  <PlatinumIcon />
-                  {t.platinum}
-                </>
-              ) : (
-                t.achievements
-              )}
+              {ach.achieved === ach.total ? t.platinum : t.achievements}
             </div>
           </div>
           {ach.next.length > 0 && (
