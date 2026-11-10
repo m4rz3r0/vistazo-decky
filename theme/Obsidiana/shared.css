@@ -1319,3 +1319,16 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   background: transparent !important;
 }
 #quickaccess_content_999 .gamepaddialog_Field_S-_La button.DialogButton.gpfocus { background: var(--obs-focus-bg) !important; }
+/* Descargas: la fila enfocada no se distinguía cuando no tiene botón (las completadas). */
+[class*="21P7c4MWmsU2QSZeL-uyZo"].gpfocus [class*="1VNuYHM6BPBOJspC6zPf"] {
+  background: var(--obs-focus-bg) !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+/* Diálogos de Steam que aún traían su caja azulada con marco (filtros de Multimedia). */
+.DialogContent.GenericConfirmDialog { background: #000 !important; border: 0 !important; }
+.Shared_Radio_Group { background: var(--obs-surface) !important; }
+.Shared_Radio_Group .RadioButton.gpfocus {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
