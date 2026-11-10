@@ -156,15 +156,21 @@ export interface StatusOption {
   tone: string; // colour of the solid status dot
 }
 
+let translated = true; // false once a label had to fall back to our own text
 const loc = (token: string, fallback: string) => {
   const s = safe(() => LocalizationManager.LocalizeString(token), "");
-  return typeof s === "string" && s && !s.startsWith("#") ? s : fallback;
+  if (typeof s === "string" && s && !s.startsWith("#")) return s;
+  translated = false;
+  return fallback;
 };
 
-// Built once: the labels come from Steam's translations, which don't change while it runs.
+// Kept once built: the labels come from Steam's translations, which don't change while it runs.
+// Not kept while Steam's translations aren't ready yet, so its own labels show as soon as they are.
 let options: StatusOption[] | null = null;
 export function statusOptions(): StatusOption[] {
-  return (options ??= [
+  if (options) return options;
+  translated = true;
+  const list: StatusOption[] = [
     {
       id: "online",
       label: loc("#PersonaStateOnline", t.online),
@@ -182,7 +188,9 @@ export function statusOptions(): StatusOption[] {
       label: loc("#PersonaStateOffline", t.offline),
       tone: "#3d3d3d",
     },
-  ]);
+  ];
+  if (translated) options = list;
+  return list;
 }
 
 const STATE_OF: Record<string, number> = {

@@ -163,9 +163,22 @@ export function loadAchievements(appid: number): Promise<AchievementSummary | nu
   return p;
 }
 
+// A read Steam never answers must not hold the shared read above for the rest of the session.
+const READ_TIMEOUT = 15000;
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("timeout")), ms);
+  });
+  return Promise.race([work, late]).finally(() => clearTimeout(timer));
+}
+
 async function readAchievements(appid: number): Promise<AchievementSummary | null | undefined> {
   try {
-    const res = await SteamClient.Apps.GetMyAchievementsForApp(String(appid));
+    const res: any = await withTimeout(
+      SteamClient.Apps.GetMyAchievementsForApp(String(appid)),
+      READ_TIMEOUT,
+    );
     const list: any[] = res?.data?.rgAchievements ?? [];
     if (!list.length) {
       achCache.set(appid, null);
