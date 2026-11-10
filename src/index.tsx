@@ -10,7 +10,7 @@ import { Panel, setTabsFiltered } from "./Panel";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
-import { watchGameExits } from "./data";
+import { watchGames } from "./data";
 import { settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
 
@@ -312,7 +312,7 @@ export default definePlugin(() => {
   const homePatch = patchHome();
   const removeSounds = installSounds(() => settings().sounds);
   setupTheme();
-  const stopWatching = watchGameExits();
+  const stopWatching = watchGames();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,

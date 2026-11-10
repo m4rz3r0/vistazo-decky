@@ -223,17 +223,33 @@ export async function loadProton(appid: number): Promise<ProtonTier | null> {
   }
 }
 
-// A game just closed: its achievements may have changed. Steam writes them a moment after exit.
-export function watchGameExits(): () => void {
+// A game just started. Steam's own Play button moves Steam's window to its empty "game running"
+// page; a game started by a plugin (Tender's Play button, Vistazo's home) relies on Steam making that
+// move by itself, and sometimes it never does. Steam's window then stays on the game's page, hidden
+// behind the game, and the volume bar or a notification shows that whole page over the game.
+// Make the move the Play button makes, once Steam lists the game as running: on that page with no
+// game running, Steam goes straight back.
+declare const SteamUIStore: any;
+function showRunningGame(appid: number, tries = 40): void {
+  const running = safe(() => SteamUIStore.RunningApps.some((a: any) => a.appid === appid), false);
+  if (running) safe(() => SteamUIStore.NavigateToRunningApp(), undefined);
+  else if (tries > 0) setTimeout(() => showRunningGame(appid, tries - 1), 250);
+}
+
+// Games starting and closing. A closed game may have new achievements, which Steam writes a moment
+// after exit.
+export function watchGames(): () => void {
   const reg = safe(
     () =>
       SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: any) => {
-        if (n?.bRunning === false && n.unAppID) {
-          achCache.delete(n.unAppID);
-          // Steam writes its achievements a moment after exit; Tender syncs RetroAchievements from
-          // RomM after the session, which takes a little longer.
-          setTimeout(() => loadCount(n.unAppID), isShortcut(n.unAppID) ? 20000 : 5000);
+        if (!n?.unAppID) return;
+        if (n.bRunning) {
+          showRunningGame(n.unAppID);
+          return;
         }
+        achCache.delete(n.unAppID);
+        // Tender syncs RetroAchievements from RomM after the session, which takes a little longer.
+        setTimeout(() => loadCount(n.unAppID), isShortcut(n.unAppID) ? 20000 : 5000);
       }),
     null as any,
   );
