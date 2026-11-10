@@ -13,11 +13,13 @@ import {
   cachedAchievements,
   cachedProton,
   getFacts,
+  medal,
   loadAchievements,
   loadProton,
 } from "./data";
 import { useSettings } from "./settings";
 import { pageCss } from "./styles";
+import { PlatinumIcon } from "./gem";
 
 type Tone = "good" | "ok" | "bad" | "muted";
 
@@ -257,7 +259,7 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
 
       {ach ? (
         <Focusable
-          className="vz-ach"
+          className={`vz-ach vz-${medal(ach.achieved, ach.total) ?? "none"}`}
           noFocusRing
           onActivate={() =>
             Navigation.Navigate(
@@ -273,7 +275,14 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
               <span className="vz-ach-of">/{ach.total}</span>
             </div>
             <div className="vz-ach-label">
-              {ach.achieved === ach.total ? t.allAchievements : t.achievements}
+              {ach.achieved === ach.total ? (
+                <>
+                  <PlatinumIcon />
+                  {t.platinum}
+                </>
+              ) : (
+                t.achievements
+              )}
             </div>
           </div>
           {ach.next.length > 0 && (

@@ -132,7 +132,36 @@ export const homeCss = `
   background: currentColor;
   vertical-align: 2px;
 }
-.vh-meta span.vh-reward { color: var(--obs-reward, #f5cf5a); }
+/* Achievements by medal: bronze up to a third, silver up to two thirds, gold beyond, platinum when
+   all are earned (with its gem). Fixed colors, the same in every theme hue. */
+.vh-meta span.vh-bronze { color: #e39463; }
+.vh-meta span.vh-silver { color: #b9c7d8; }
+.vh-meta span.vh-gold { color: var(--obs-reward, #f5cf5a); }
+/* A solid dot in the medal's color, like the playing dot: silver next to white text still reads
+   as a medal. */
+.vh-meta span.vh-bronze::before,
+.vh-meta span.vh-silver::before,
+.vh-meta span.vh-gold::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 2px;
+}
+.vh-meta span.vh-platinum { color: #c4ecff; font-weight: 600; }
+.vz-gem {
+  width: 16px;
+  height: 16px;
+  margin-right: 7px;
+  vertical-align: -2px;
+  fill: rgba(196, 236, 255, 0.18);
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
 
 /* Shelves: plain words. The active one is lime, the rest recede; L1/R1 are quiet hints. */
 .vh-shelves {

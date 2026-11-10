@@ -27,7 +27,8 @@ import {
 } from "./data";
 import { homeCss, headerCss } from "./styles";
 import { useSettings } from "../settings";
-import { AchievementCount, DAY, loadAchievements, savedCount } from "../data";
+import { AchievementCount, DAY, Medal, loadCount, medal, savedCount } from "../data";
+import { PlatinumIcon } from "../gem";
 
 // Image with fallbacks: tries each URL in turn, then shows `fallback`. Callers give it a key per
 // game, so a new game starts again from the first URL.
@@ -185,7 +186,7 @@ function Hero({ game }: { game: Game | null }) {
 // when there is none yet or it is more than a day old (the count only changes while playing, and a
 // game closing refreshes it anyway).
 function useAchievements(game: Game | null): AchievementCount | null {
-  const id = game?.steam ? game.appid : 0;
+  const id = game?.appid ?? 0;
   const [count, setCount] = useState<AchievementCount | null>(() => (id ? savedCount(id) : null));
   useEffect(() => {
     const saved = id ? savedCount(id) : null;
@@ -193,7 +194,7 @@ function useAchievements(game: Game | null): AchievementCount | null {
     if (!id || (saved && Date.now() - saved.savedAt < DAY)) return;
     let live = true;
     const timer = setTimeout(() => {
-      loadAchievements(id).then(() => live && setCount(savedCount(id)));
+      loadCount(id).then(() => live && setCount(savedCount(id)));
     }, 300);
     return () => {
       live = false;
@@ -207,7 +208,7 @@ function useAchievements(game: Game | null): AchievementCount | null {
 // screen, so the first time a cover is selected its achievements are already there.
 function useAchievementFill(games: Game[]) {
   useEffect(() => {
-    const todo = games.filter((g) => g.steam && !savedCount(g.appid)).map((g) => g.appid);
+    const todo = games.filter((g) => !savedCount(g.appid)).map((g) => g.appid);
     if (!todo.length) return;
     let stop = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -217,7 +218,7 @@ function useAchievementFill(games: Game[]) {
         timer = setTimeout(next, 5000); // a game is running or the screen is off: wait
         return;
       }
-      loadAchievements(todo.shift()!).finally(() => {
+      loadCount(todo.shift()!).finally(() => {
         if (!stop) timer = setTimeout(next, 250);
       });
     };
@@ -342,21 +343,26 @@ export function Home() {
   const openLibrary = () => Navigation.Navigate("/library");
   const achievements = useAchievements(focused);
   useAchievementFill(games);
-  // Each fact keeps its meaning's color: mint while the game is running, gold for achievements.
-  const meta: { text: string; tone?: "playing" | "reward" }[] = focused
+  // Each fact keeps its meaning's color: mint while the game is running; achievements take the
+  // color of the medal they have reached, and all of them become a platinum emblem.
+  const won = achievements ? medal(achievements.achieved, achievements.total) : null;
+  type Fact = { text: string; tone?: "playing" | Medal };
+  const meta: Fact[] = focused
     ? [
         isRunning(focused) ? { text: t.playingNow, tone: "playing" as const } : null,
         focused.platform ? { text: focused.platform } : null,
         { text: hours(focused.minutes) },
         achievements?.total
           ? {
-              text: t.achievementsOf(achievements.achieved, achievements.total),
-              // Gold only once there is something earned.
-              tone: achievements.achieved > 0 ? ("reward" as const) : undefined,
+              text:
+                won === "platinum"
+                  ? t.platinum
+                  : t.achievementsOf(achievements.achieved, achievements.total),
+              tone: won ?? undefined,
             }
           : null,
         since(focused.lastPlayed) && !isRunning(focused) ? { text: since(focused.lastPlayed)! } : null,
-      ].filter((m): m is { text: string; tone?: "playing" | "reward" } => !!m)
+      ].filter((m): m is Fact => !!m)
     : [];
 
   return (
@@ -381,6 +387,7 @@ export function Home() {
               <div className="vh-meta">
                 {meta.map((m, i) => (
                   <span key={i} className={m.tone ? `vh-${m.tone}` : undefined}>
+                    {m.tone === "platinum" && <PlatinumIcon />}
                     {m.text}
                   </span>
                 ))}

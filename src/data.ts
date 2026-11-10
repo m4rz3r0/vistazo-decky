@@ -78,8 +78,8 @@ function countStore() {
   return counts!;
 }
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
-function saveCount(appid: number, summary: AchievementSummary | null) {
-  countStore()[appid] = [summary?.achieved ?? 0, summary?.total ?? 0, Date.now()];
+function saveCount(appid: number, achieved: number, total: number) {
+  countStore()[appid] = [achieved, total, Date.now()];
   // One write for a burst of updates (the background fill reads many games in a row).
   if (!saveTimer)
     saveTimer = setTimeout(() => {
@@ -97,6 +97,45 @@ export function savedCount(appid: number): AchievementCount | null {
 }
 export const DAY = 24 * 60 * 60 * 1000;
 
+// Medals: how far a game's achievements have got, the same ladder on the home and the game page.
+// A third, two thirds, almost all, all of them.
+export type Medal = "bronze" | "silver" | "gold" | "platinum";
+export function medal(achieved: number, total: number): Medal | null {
+  if (!total || achieved <= 0) return null;
+  if (achieved >= total) return "platinum";
+  const share = achieved / total;
+  return share < 1 / 3 ? "bronze" : share < 2 / 3 ? "silver" : "gold";
+}
+
+// Non-Steam shortcuts (Tender's RomM games among them) have the high bit of their app id set.
+export const isShortcut = (appid: number) => appid >= 0x80000000;
+
+// RetroAchievements of a RomM game, through Tender: it knows which RomM game a shortcut is, and RomM
+// keeps the player's progress once their RetroAchievements username is in their RomM profile. Off for
+// the rest of the session when Tender isn't installed or that username is missing.
+declare const DeckyBackend: any;
+const tender = (method: string, ...args: unknown[]): Promise<any> =>
+  DeckyBackend.call("loader/call_plugin_method", "Tender", method, ...args);
+let retroOff = false;
+async function loadRetroCount(appid: number): Promise<void> {
+  if (retroOff) return;
+  try {
+    const game = await tender("get_cached_game_detail", appid);
+    if (!game?.rom_id) return;
+    const p = await tender("get_achievement_progress", game.rom_id);
+    if (p?.success) saveCount(appid, Number(p.earned) || 0, Number(p.total) || 0);
+    else if (p?.reason === "no_ra_username") retroOff = true;
+    // Anything else (RomM asleep, network): try again another time.
+  } catch {
+    retroOff = true; // Tender isn't there
+  }
+}
+
+// Refreshes the saved count of any game: Steam's own achievements, or RetroAchievements for RomM.
+export function loadCount(appid: number): Promise<unknown> {
+  return isShortcut(appid) ? loadRetroCount(appid) : loadAchievements(appid);
+}
+
 export function cachedAchievements(appid: number) {
   return achCache.get(appid);
 }
@@ -110,7 +149,7 @@ export async function loadAchievements(
     const list: any[] = res?.data?.rgAchievements ?? [];
     if (!list.length) {
       achCache.set(appid, null);
-      saveCount(appid, null);
+      saveCount(appid, 0, 0);
       return null;
     }
     const all: Achievement[] = list.map((a) => {
@@ -148,7 +187,7 @@ export async function loadAchievements(
       next: pending.slice(0, 3),
     };
     achCache.set(appid, summary);
-    saveCount(appid, summary);
+    saveCount(appid, summary.achieved, summary.total);
     return summary;
   } catch {
     return undefined;
@@ -189,7 +228,9 @@ export function watchGameExits(): () => void {
       SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: any) => {
         if (n?.bRunning === false && n.unAppID) {
           achCache.delete(n.unAppID);
-          setTimeout(() => loadAchievements(n.unAppID), 5000);
+          // Steam writes its achievements a moment after exit; Tender syncs RetroAchievements from
+          // RomM after the session, which takes a little longer.
+          setTimeout(() => loadCount(n.unAppID), isShortcut(n.unAppID) ? 20000 : 5000);
         }
       }),
     null as any,

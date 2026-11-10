@@ -151,6 +151,23 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   padding: 6px 0;
   outline: none;
 }
+/* The ring takes the medal the game has reached: bronze up to a third, silver up to two thirds,
+   gold beyond, platinum with every achievement (and the gem by the label). */
+.vz-ach.vz-bronze { --vz-reward: #e39463; }
+.vz-ach.vz-silver { --vz-reward: #b9c7d8; }
+.vz-ach.vz-platinum { --vz-reward: #c4ecff; }
+.vz-ach.vz-platinum .vz-ach-label { color: var(--vz-reward); font-weight: 600; }
+.vz-ach.vz-platinum .vz-ring-text { fill: var(--vz-reward); }
+.vz-gem {
+  width: 15px;
+  height: 15px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  fill: rgba(196, 236, 255, 0.18);
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
 .vz-ach.gpfocus .vz-ring-fill { stroke: var(--vz-accent); }
 .vz-ach.gpfocus .vz-ach-n,
 .vz-ach.gpfocus .vz-ach-label { color: var(--vz-accent); }
