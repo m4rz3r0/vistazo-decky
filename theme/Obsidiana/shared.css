@@ -1403,3 +1403,11 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   border-radius: 10px !important;
   background: transparent !important;
 }
+/* Muchas capturas traen bandas negras dentro de la propia imagen (juegos en 4:3 o 16:9), y sobre el
+   negro del fondo parecían de otra forma y tamaño. Cada celda es una ficha gris redondeada y la imagen
+   se mezcla aclarando: sus bandas negras toman el gris de la ficha y todas se ven con la misma forma. */
+[class*="2-7fqz03LhYHKEBI-HwIPq"] {
+  background: #161616 !important;
+  isolation: isolate !important;
+}
+[class*="2-7fqz03LhYHKEBI-HwIPq"] img { mix-blend-mode: lighten !important; }
