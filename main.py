@@ -41,6 +41,9 @@ class Plugin:
             if not os.path.isdir(THEMES):
                 return "no-loader"
             target = os.path.join(THEMES, THEME)
+            # A link would make the copy below write somewhere outside CSS Loader's themes folder.
+            if os.path.islink(target):
+                return "foreign"
             installed = _manifest(target)
             if os.path.exists(target) and installed is None:
                 return "foreign"  # a folder with that name that isn't a readable theme: leave it
