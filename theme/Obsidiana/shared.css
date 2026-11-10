@@ -657,6 +657,13 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
    Texto algo mayor para leer de un vistazo y filas que aprovechan el ancho. */
 .quickaccessmenu_Tab_1S76C svg { color: rgba(255, 255, 255, 0.45); }
 .quickaccessmenu_Tab_1S76C.quickaccessmenu_Selected_2QHMu svg { color: #ffffff !important; }
+/* The tab with the focus: Steam paints it solid white and expects a dark icon, but the icons above
+   are light, so it read as a blank block. Same focus as everywhere: tinted surface, icon in the hue. */
+.quickaccessmenu_Tab_1S76C.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  border-radius: 12px;
+}
+.quickaccessmenu_Tab_1S76C.gpfocus svg { color: var(--obs-focus-fg) !important; }
 .quickaccesscontrols_PanelSectionTitle_2iFf9 { font-size: 15px !important; }
 #quickaccess_content_999 .gamepaddialog_Button_1kn70:has(> div[style*="space-between"] > svg:first-child) {
   font-size: 17px !important;
