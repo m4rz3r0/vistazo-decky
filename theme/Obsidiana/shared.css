@@ -1411,3 +1411,12 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   isolation: isolate !important;
 }
 [class*="2-7fqz03LhYHKEBI-HwIPq"] img { mix-blend-mode: lighten !important; }
+/* Pestañas de página (biblioteca, búsqueda, logros): al subir a ellas con el mando, la enfocada lleva el anillo. */
+.gamepadtabbedpage_Tab_3eEbS.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  border-radius: 999px !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+.gamepadtabbedpage_Tab_3eEbS.gpfocus,
+.gamepadtabbedpage_Tab_3eEbS.gpfocus * { color: #fff !important; }
