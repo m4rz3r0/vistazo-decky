@@ -1093,3 +1093,38 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   outline: 1.5px solid var(--obs-ring) !important;
   outline-offset: 3px !important;
 }
+
+/* Pantallas de plugins (repaso 2026-11-10). Decky monta cada pantalla en un contenedor con el fondo que
+   elija el plugin: Flatpak Manager y la tienda de CSS Loader traen el azul marino de Steam, PlayTime un
+   velo gris. Negro puro, como el resto. */
+div[style*="margin-top: 40px"][style*="height: calc(100% - 40px)"][style*="background"] {
+  background: var(--obs-bg) !important;
+}
+/* Campos con fondo propio (Field con bloque debajo): pizarra azulada → superficie carbón. */
+.Panel[class*="2RXNRKWY8jL7xwgGYUfLfU"] [class*="GxgIyq8R5xTOeu4ftGrg"] {
+  background: var(--obs-surface) !important;
+  border-radius: var(--obs-radius) !important;
+}
+/* Tarjetas de la tienda de CSS Loader: sin el gris azulado. */
+.CSSLoader_ThemeCard_Container {
+  background: var(--obs-surface) !important;
+}
+/* PlayTime: las barras son datos, no algo que se pulse; ni azul de Steam ni tono del tema. */
+div[style*="height: 10px"][style*="background-color: rgb(26, 159, 255)"] {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+}
+div[style*="height: 10px"][style*="background-color: rgb(76, 76, 76)"] {
+  background-color: var(--obs-surface-2) !important;
+}
+/* Título de un plugin con cabecera propia (CSS Loader, Punktfunk): la flecha de volver centrada con él. */
+#quickaccess_content_999 .quickaccessmenu_Title_34nl5[style*="sticky"] { align-items: center !important; }
+/* La cabecera propia reutiliza la clase del título y heredaba su margen inferior de 14 px. */
+#quickaccess_content_999 .quickaccessmenu_Title_34nl5 .quickaccessmenu_Title_34nl5 {
+  padding-bottom: 0 !important;
+  align-items: center;
+}
+/* Flatpak Manager: cada aplicación es un botón sin relleno; con la superficie del tema el texto
+   quedaba pegado al borde. */
+button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap"][style*="padding: 0px"] {
+  padding: 0 16px !important;
+}
