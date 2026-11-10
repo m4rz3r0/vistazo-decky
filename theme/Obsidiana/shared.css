@@ -735,9 +735,9 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 #quickaccess_content_999 .gamepaddialog_Button_1kn70::before { box-shadow: none !important; }
 #quickaccess_content_999 .gamepaddialog_Button_1kn70.gpfocus > div[style*="space-between"] > svg:first-child { color: var(--obs-focus-fg); }
 
-/* Jugar: blanco en reposo, lima solo con el foco, como todo lo demás */
-.appactionbutton_PlayButton_3ydig:not(.gpfocus),
-.romm-btn-play:not(.gpfocus) { background: #ececec !important; }
+/* Jugar: la acción principal lleva siempre el relleno del tono; el foco solo le añade el anillo. */
+.appactionbutton_PlayButton_3ydig,
+.romm-btn-play { background: var(--obs-accent) !important; }
 .appactionbutton_PlayButton_3ydig.gpfocus,
 .romm-btn-play.gpfocus { box-shadow: none !important; }
 
@@ -1261,3 +1261,61 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   outline-color: var(--obs-mode) !important;
 }
 [class*="17SQWViInfB-hmYYLoK4Yw"] { border-radius: 10px !important; }
+
+/* ===== Repaso de pantallas (2026-11-10): sitios donde Steam aún enfocaba con su relleno blanco o azulado ===== */
+/* Jugar y la flecha de al lado. Su caja recorta lo que sobresale, así que el anillo de Jugar lo lleva
+   la caja, y el de la flecha va por dentro, con el icono en blanco sobre gris. */
+.appactionbutton_PlayButtonContainer_1FnJ6:has(> .appactionbutton_PlayButton_3ydig.gpfocus) {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: var(--obs-ring-gap) !important;
+}
+.appactionbutton_StreamingSelector_2q-gZ.gpfocus {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+.appactionbutton_StreamingSelector_2q-gZ.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  box-shadow: none !important;
+}
+.appactionbutton_StreamingSelector_2q-gZ.gpfocus svg,
+.appactionbutton_StreamingSelector_2q-gZ.gpfocus svg * {
+  color: var(--obs-focus-fg) !important;
+  fill: var(--obs-focus-fg) !important;
+}
+/* Filtros de la biblioteca: negro, sin marco, filas sin caja y foco con anillo. */
+.steamdeckcompatfilter_CompatFilterDialog_21qvB { background: #000 !important; border: 0 !important; }
+.steamdeckcompatfilter_CompatFilterDialogRow_O7cW3,
+.appfilterpane_FilterBucket_1axoi { background: transparent !important; border-radius: 10px !important; }
+.steamdeckcompatfilter_CompatFilterDialogRow_O7cW3.gpfocus,
+.steamdeckcompatfilter_CompatFilterDialogRow_O7cW3.gpfocus :not(svg):not(svg *) {
+  color: var(--obs-focus-fg) !important;
+}
+.steamdeckcompatfilter_CompatFilterDialogRow_O7cW3.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+.steamdeckcompatfilter_CompatFilterDialogRow_O7cW3 .steamdeckcompatfilter_RadioButton_10D3Y { background: #2a2a2a !important; }
+.steamdeckcompatfilter_CompatFilterDialogRow_O7cW3.steamdeckcompatfilter_Active_2wFsa .steamdeckcompatfilter_RadioButton_10D3Y {
+  background: #000 !important;
+  box-shadow: inset 0 0 0 4px var(--obs-accent) !important;
+}
+/* Ajustes > Almacenamiento: la unidad y cada juego de la lista. */
+.contentmanagement_InstallFolder_12aBP.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  color: var(--obs-focus-fg) !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: var(--obs-ring-gap) !important;
+}
+.contentmanagement_InstallFolder_12aBP.gpfocus * { color: var(--obs-focus-fg) !important; }
+.contentmanagement_AppBody_2RCSU.gpfocus {
+  background: var(--obs-focus-bg) !important;
+  border-radius: 10px !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -1.5px !important;
+}
+/* Lista de plugins de Decky: el gris de la fila no sobresale del anillo, que va en el botón. */
+#quickaccess_content_999 .gamepaddialog_Field_S-_La.gpfocuswithin:has(button.DialogButton.gpfocus) {
+  background: transparent !important;
+}
+#quickaccess_content_999 .gamepaddialog_Field_S-_La button.DialogButton.gpfocus { background: var(--obs-focus-bg) !important; }

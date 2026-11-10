@@ -169,9 +169,9 @@ const Friends = memo(function Friends() {
       onSecondaryActionDescription={t.friends}
       // The corner sits on the same line as Steam's top bar, which is focusable too: up from here
       // would land on its search button. The corner is the top of the home.
-      onGamepadDirection={(evt: any) => {
-        if (evt?.detail?.button === GamepadButton.DIR_UP) evt.preventDefault?.();
-      }}
+      // Steam takes what this returns as "handled": true stops the move, and anything but false
+      // counts as true, so every other direction must say false or the focus is stuck here.
+      onGamepadDirection={(evt: any) => evt?.detail?.button === GamepadButton.DIR_UP}
     >
       <span
         className="vh-dot vh-self"

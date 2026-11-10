@@ -110,6 +110,20 @@ ${page} ${c(ps.ControllerConfigButton)} {
   background: rgba(255, 255, 255, 0.08) !important;
   box-shadow: none !important;
 }
+/* Focused, Steam turns these two white and their icon dark; the surface above stays dark, so the
+   icon stays light too and the focus is the theme's ring. */
+${page} ${c(ps.MenuButton)} svg,
+${page} ${c(ps.MenuButton)} svg *,
+${page} ${c(ps.ControllerConfigButton)} svg,
+${page} ${c(ps.ControllerConfigButton)} svg * {
+  color: #fff !important;
+  fill: #fff !important;
+}
+${page} ${c(ps.MenuButton)}.gpfocus,
+${page} ${c(ps.ControllerConfigButton)}.gpfocus {
+  outline: 1.5px solid var(--obs-ring, var(--obs-accent, #B8F35A)) !important;
+  outline-offset: 3px !important;
+}
 
 /* "From your family library" note: one small quiet line instead of a tall row, with room
    between it and the play bar so it doesn't read as part of the Play button. */
