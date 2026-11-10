@@ -22,6 +22,7 @@ export interface AchievementSummary {
   total: number;
   achieved: number;
   next: Achievement[];
+  rarest: Achievement | null; // of the ones earned, the one fewest players have
 }
 
 export interface GameFacts {
@@ -214,10 +215,14 @@ async function readAchievements(appid: number): Promise<AchievementSummary | nul
       if (pa > 0 || pb > 0) return pb - pa;
       return b.globalPercent - a.globalPercent;
     });
+    const rarest = all
+      .filter((a) => a.achieved && a.globalPercent > 0)
+      .reduce<Achievement | null>((r, a) => (!r || a.globalPercent < r.globalPercent ? a : r), null);
     const summary = {
       total: all.length,
       achieved: all.length - pending.length,
       next: pending.slice(0, 3),
+      rarest,
     };
     achCache.set(appid, summary);
     saveCount(appid, summary.achieved, summary.total);

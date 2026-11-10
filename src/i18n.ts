@@ -28,6 +28,7 @@ const es = {
   platinum: "Platino",
   progressSoFar: (p: string) => `Llevas el ${p}`,
   upNext: "Los siguientes",
+  rarest: "Tu logro más raro",
   players: "Jugadores",
   hiddenLeft: (n: number) =>
     n === 1
@@ -41,8 +42,6 @@ const es = {
   year: "Año",
   onDisk: "En disco",
   lastTwoWeeks: "Últimas 2 semanas",
-  yourStuff: "Tus cosas",
-  seeYourStuff: "Ver tus cosas",
   readAll: "Leer entera",
   readLess: "Recoger",
   hiddenAchievement: "Logro oculto",
@@ -132,6 +131,7 @@ const en: typeof es = {
   platinum: "Platinum",
   progressSoFar: (p) => `${p} done`,
   upNext: "Up next",
+  rarest: "Your rarest one",
   players: "Players",
   hiddenLeft: (n) =>
     n === 1 ? "1 achievement left, hidden until earned" : `${n} achievements left, hidden until earned`,
@@ -143,8 +143,6 @@ const en: typeof es = {
   year: "Year",
   onDisk: "On disk",
   lastTwoWeeks: "Last 2 weeks",
-  yourStuff: "Your stuff",
-  seeYourStuff: "See your stuff",
   readAll: "Read it all",
   readLess: "Fold",
   hiddenAchievement: "Hidden achievement",

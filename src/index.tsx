@@ -6,7 +6,7 @@ import {
   findInReactTree,
 } from "@decky/ui";
 import { createElement } from "react";
-import { Panel, setTabsFiltered } from "./Panel";
+import { Panel } from "./Panel";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
@@ -18,7 +18,6 @@ import { markUnloaded } from "./lifecycle";
 
 const ROUTE = "/library/app/:appid";
 const HOME = "/library/home";
-const KEEP_TABS = new Set(["YourStuff"]);
 
 // Steam store games only: shortcuts (Tender/RomM and other non-Steam apps) keep their own page untouched.
 function isSteamGame(overview: any): boolean {
@@ -124,28 +123,6 @@ function wrapType(el: any, tag: string, after: After) {
   el.type = w;
 }
 
-// Tab strip host: keep only "Tus cosas".
-function afterTabsHost(props: any, out: any) {
-  if (!settings().page || !isSteamGame(props?.overview)) {
-    setTabsFiltered(false);
-    return out;
-  }
-  const tabsEl = findInReactTree(out, (x: any) =>
-    Array.isArray(x?.props?.tabs),
-  );
-  const tabs = tabsEl?.props?.tabs;
-  if (Array.isArray(tabs)) {
-    const keep = tabs.filter((t: any) => KEEP_TABS.has(t?.id));
-    if (keep.length > 0 && keep.length !== tabs.length)
-      tabsEl.props = { ...tabsEl.props, tabs: keep };
-    setTabsFiltered(keep.length > 0);
-  } else {
-    setTabsFiltered(false);
-    missed("tabs");
-  }
-  return out;
-}
-
 // One console line per broken hook, not one per render, so a Steam update that moves things is visible.
 const reported = new Set<string>();
 function missed(what: string) {
@@ -195,9 +172,12 @@ function afterBody(props: any, out: any) {
   const idx = children.findIndex(
     (c: any) => c && findInReactTree(c, isTabsHost),
   );
-  const host = findInReactTree(children[idx], isTabsHost);
-  if (host) wrapType(host, "tabs", afterTabsHost);
-  // The sticky copy (shown while scrolling) only gets the tab filter, never the panel.
+  // Steam's tabs (activity, "Your stuff"…) give way to the panel: the page is one screen with what
+  // matters on it and nothing below to scroll to. Kept inside a switch, so turning the panel off
+  // in the settings brings them back at once.
+  if (children[idx]?.key !== "vistazo-tabs")
+    children[idx] = createElement(TabsSwitch, { key: "vistazo-tabs" }, children[idx]);
+  // The sticky copy (shown while scrolling) never gets the panel.
   if (
     !props?.bStickyHeader &&
     !children.some((c: any) => c?.key === "vistazo-panel")
@@ -264,6 +244,9 @@ function HomeSwitch({ steam }: { steam: any }) {
   return useSettings().home
     ? createElement(Guard, { name: "home", fallback: steam }, createElement(Home))
     : steam;
+}
+function TabsSwitch({ children }: { children?: any }) {
+  return useSettings().page ? null : children;
 }
 // Keyed by appid: a new game starts with fresh state.
 function PagePanel({ appid }: { appid: number }) {

@@ -1,12 +1,6 @@
 import { lang, num, t } from "./i18n";
 import { GemShape } from "./gem";
-import { navFocus } from "./focus";
-import {
-  Focusable,
-  Navigation,
-  appDetailsClasses,
-  gamepadTabbedPageClasses,
-} from "@decky/ui";
+import { Focusable, Navigation, appDetailsClasses } from "@decky/ui";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   AchievementSummary,
@@ -81,25 +75,7 @@ function ProtonIcon() {
   );
 }
 
-// Stacked cards: Steam's "Your stuff" (screenshots, notes, DLC, guides…).
-function StuffIcon() {
-  return (
-    <svg className="vz-stuff-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="9" width="16" height="11" rx="2.5" />
-      <path d="M6.5 6h11M9 3h6" />
-    </svg>
-  );
-}
-
-// Set while Steam renders a game page whose tab strip was reduced to "Tus cosas". If Steam ever renames
-// that tab, the filter does nothing and the strip stays visible, so the page never dead-ends.
-let tabsFiltered = false;
-export const setTabsFiltered = (v: boolean) => {
-  tabsFiltered = v;
-};
-
 const footerReserve = 44; // Steam's button-hint bar overlays the bottom of the page.
-const td = gamepadTabbedPageClasses as Record<string, string>;
 const ad = appDetailsClasses as Record<string, string>;
 
 function formatSize(bytes: number): string | null {
@@ -161,8 +137,8 @@ function Ring({ share }: { share: number }) {
 const pageOf = (el: HTMLElement) =>
   el.closest(`.${ad.ScrollContainer}`) as HTMLElement | null;
 
-// The panel fills the first screen exactly, so "Tus cosas" starts below the fold and the corner
-// button always sits at the bottom right, whatever rows Steam adds above (family library, cloud…).
+// The panel fills the first screen exactly, whatever rows Steam adds above (family library, cloud…):
+// the page is that one screen, with nothing below it to scroll to.
 // Returns whether the description doesn't fit (so it can be opened to read it whole).
 function fitPanel(el: HTMLElement, open: boolean): boolean {
   const page = pageOf(el);
@@ -173,7 +149,7 @@ function fitPanel(el: HTMLElement, open: boolean): boolean {
     page.scrollTop;
   const height = Math.max(0, page.clientHeight - top - footerReserve);
   el.style.minHeight = `${height}px`;
-  // As many description lines as the screen has room for (1 to 4), never a half-cut line.
+  // As many description lines as the screen has room for (1 to 6), never a half-cut line.
   const desc = el.querySelector(".vz-desc") as HTMLElement | null;
   if (!desc) return false;
   // Opened to be read whole: no limit, and it stays openable so it can be folded again.
@@ -183,10 +159,9 @@ function fitPanel(el: HTMLElement, open: boolean): boolean {
   }
   {
     const line = parseFloat(getComputedStyle(desc).lineHeight) || 20;
-    // Room is kept below it for the "Tus cosas" corner, which sits at the bottom right.
     const lines = Math.min(
-      4,
-      Math.max(1, Math.floor((height - desc.offsetTop - 50) / line)),
+      6,
+      Math.max(1, Math.floor((height - desc.offsetTop - 12) / line)),
     );
     desc.style.setProperty("-webkit-line-clamp", String(lines));
   }
@@ -198,7 +173,6 @@ function fitPanel(el: HTMLElement, open: boolean): boolean {
 function markPage(el: HTMLElement, on: boolean) {
   const page = pageOf(el);
   page?.toggleAttribute("data-vz-page", on);
-  page?.toggleAttribute("data-vz-tabs-hidden", on && tabsFiltered);
   el.parentElement?.toggleAttribute("data-vz-host", on);
 }
 
@@ -260,14 +234,6 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
     };
   }, []);
 
-  const openStuff = () => {
-    const page = root.current && pageOf(root.current);
-    const target = page?.querySelector(`.${td.TabContents}`) as HTMLElement | null;
-    if (!target) return;
-    // Hand the focus to the first control in "Tus cosas", then bring the section's top into view.
-    navFocus(target.querySelector("[tabindex]"));
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   // A failed refresh keeps what is already on screen.
   useEffect(() => {
@@ -358,22 +324,27 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
                 </div>
               </div>
             </div>
-            {next.length > 0 ? (
+            {/* Nothing left to point at (all earned, or only hidden ones left): say so, and show
+                the earned one fewest players have instead of leaving the column empty. */}
+            {next.length === 0 && (
+              <div className="vz-ach-note">{left > 0 ? t.hiddenLeft(left) : t.allEarned}</div>
+            )}
+            {(next.length > 0 || ach.rarest) && (
               <ul className="vz-next">
                 <li className="vz-next-cap">
-                  <span>{t.upNext}</span>
+                  <span>{next.length > 0 ? t.upNext : t.rarest}</span>
                   <span>{t.players}</span>
                 </li>
-                {next.map((a) => (
+                {(next.length > 0 ? next : [ach.rarest!]).map((a) => (
                   <li className="vz-next-item" key={a.id}>
                     {a.image ? (
-                      <img className="vz-icon" src={a.image} alt="" />
+                      <img className={`vz-icon${a.achieved ? " vz-earned" : ""}`} src={a.image} alt="" />
                     ) : (
                       <span className="vz-icon" />
                     )}
                     <span className="vz-next-name">{a.name}</span>
                     <span className="vz-next-sub">
-                      {a.progress !== null && a.progress > 0
+                      {!a.achieved && a.progress !== null && a.progress > 0
                         ? t.progressSoFar(pct(a.progress * 100))
                         : a.globalPercent > 0
                           ? pct(a.globalPercent)
@@ -382,8 +353,6 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
                   </li>
                 ))}
               </ul>
-            ) : (
-              <div className="vz-ach-note">{left > 0 ? t.hiddenLeft(left) : t.allEarned}</div>
             )}
           </Focusable>
         ) : ach === null ? null : (
@@ -416,17 +385,6 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
             ))}
           {ach === null && <div className="vz-ach-quiet">{t.noAchievements}</div>}
         </div>
-      </Focusable>
-
-      <Focusable
-        className="vz-stuff"
-        noFocusRing
-        onActivate={openStuff}
-        onOKActionDescription={t.seeYourStuff}
-        aria-label={t.yourStuff}
-      >
-        <span className="vz-stuff-label">{t.yourStuff}</span>
-        <StuffIcon />
       </Focusable>
     </div>
   );

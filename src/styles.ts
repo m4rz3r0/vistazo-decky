@@ -1,7 +1,8 @@
+import { safe } from "./safe";
 import {
   appDetailsClasses,
   appDetailsHeaderClasses,
-  gamepadTabbedPageClasses,
+  findClassModule,
   playSectionClasses,
 } from "@decky/ui";
 
@@ -9,7 +10,6 @@ import {
 const ad = appDetailsClasses as Record<string, string>;
 const hd = appDetailsHeaderClasses as Record<string, string>;
 const ps = playSectionClasses as Record<string, string>;
-const tp = gamepadTabbedPageClasses as Record<string, string>;
 const c = (name: string | undefined) =>
   name ? `.${name}` : ".vz-missing-class";
 
@@ -19,8 +19,8 @@ let cached: string | null = null;
 // Tender) keep Steam's own look. Tokens follow the Obsidiana theme.
 export function pageCss(): string {
   if (cached) return cached;
-  // Panel.tsx marks the page (data-vz-page), the panel's parent (data-vz-host) and, when the tab filter
-  // worked, data-vz-tabs-hidden: plain attributes instead of :has(), which is re-checked on every change.
+  // Panel.tsx marks the page (data-vz-page) and the panel's parent (data-vz-host): plain attributes
+  // instead of :has(), which is re-checked on every change.
   const page = `${c(ad.ScrollContainer)}[data-vz-page]`;
   const art = `${page} ${c(hd.HeaderBackgroundImage)}`;
   const busyCloud = [
@@ -34,7 +34,19 @@ export function pageCss(): string {
     .map((n) => `.${n}`)
     .join(", ");
 
+  // Steam's glass backdrop behind the page body: see-through here, but taller than the screen.
+  const backdrop = safe(
+    () => (findClassModule((m: any) => m.BackdropGlass && m.Backdrop) as any)?.Backdrop as string,
+    "",
+  );
+
   cached = `
+/* The page is one screen: nothing below it and nothing to scroll to. Steam's backdrop would leave
+   it a hundred pixels to scroll into the void. */
+${page} ${c(backdrop)} {
+  display: none !important;
+}
+
 /* Art bleeds behind the first screen: the sharp hero on top, fading to OLED black so the panel reads
    on plain black. Steam's blurred copy of the art is dropped (a full-screen filtered layer for nothing). */
 ${art} {
@@ -114,10 +126,6 @@ ${page} ${c(ps.SharedLibrary)} {
   margin-top: 12px !important;
 }
 
-/* Steam's tab strip (only "Tus cosas" is left) gives way to the panel's corner button. */
-${c(ad.ScrollContainer)}[data-vz-tabs-hidden] ${c(tp.TabHeaderRowWrapper)} {
-  display: none !important;
-}
 
 /* Cloud status only when something needs attention. */
 ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
@@ -270,6 +278,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   background: #000;
   filter: saturate(0.4);
 }
+.vz-icon.vz-earned { filter: none; } /* an earned one keeps its color */
 .vz-next-name {
   min-width: 0;
   white-space: nowrap;
@@ -362,49 +371,15 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   stroke-width: 1.2;
 }
 
-/* "Tus cosas": the way down to Steam's own section, in the bottom-right corner of the first screen. */
-.vz-stuff {
-  position: absolute;
-  right: 24px;
-  bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 40px;
-  padding: 0 9px;
-  border-radius: 12px;
-}
 /* Focus is a fine ring in the theme's tone, a little apart from the element (the same as the
    Obsidiana theme draws everywhere else); the text stays white. With motion on it fades in while
-   closing onto the element. */
-.vz-stuff,
+   closing onto the element. The focused rule sets the whole outline again, not just its color:
+   Steam's own "div:focus { outline: none }" outranks the resting rule. */
 .vz-desc-box {
   outline: 1.5px solid transparent;
-  outline-offset: 7px;
+  outline-offset: 4px;
   transition: outline-color calc(160ms * var(--obs-motion, 0)) ease-out,
     outline-offset calc(200ms * var(--obs-motion, 0)) cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.vz-stuff { color: var(--vz-muted); }
-/* The whole outline again, not just its color: Steam's own "div:focus { outline: none }" outranks
-   the resting rule above. */
-.vz-stuff.gpfocus {
-  color: var(--vz-text);
-  outline: 1.5px solid var(--obs-ring, var(--vz-accent));
-  outline-offset: 3px;
-}
-.vz-stuff-label {
-  padding-left: 5px;
-  font-size: 15px;
-  font-weight: 600;
-}
-.vz-stuff-icon {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 /* A description that doesn't fit can be chosen and opened in place. The box bleeds a little past
    the text so the text itself stays aligned with the facts above. */
@@ -413,10 +388,9 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   padding: 6px 10px;
   border-radius: 12px;
 }
-/* Opened, the text runs down to where the "Tus cosas" corner sits: the corner goes below it. */
-.vz-reading .vz-about { padding-bottom: 44px; }
+/* Opened, the text may run under Steam's button hints: room below, so the page can scroll it clear. */
+.vz-root.vz-reading { margin-bottom: 44px; }
 /* The box already stands clear of the text, so its ring sits on the box's own edge. */
-.vz-desc-box { outline-offset: 4px; }
 .vz-desc-box.gpfocus {
   outline: 1.5px solid var(--obs-ring, var(--vz-accent));
   outline-offset: 0;
