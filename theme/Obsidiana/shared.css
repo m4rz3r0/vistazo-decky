@@ -1071,3 +1071,25 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   background: var(--obs-focus-bg) !important;
   border-radius: 14px;
 }
+
+/* Tender: «Descargar» y «Jugar» son la acción principal de la ficha retro. Son DialogButton sin .Primary,
+   así que la superficie genérica de botón (6 % y, con foco, el tono al 16 %) tapaba el relleno y dejaba
+   el texto oscuro sobre fondo oscuro. Siempre relleno del tono con texto oscuro; el foco, un anillo. */
+.romm-play-section-row button.romm-btn-download-idle.DialogButton,
+.romm-play-section-row button.romm-btn-play.DialogButton,
+.romm-play-section-row button.romm-btn-download-idle.DialogButton.gpfocus,
+.romm-play-section-row button.romm-btn-play.DialogButton.gpfocus {
+  background: var(--obs-accent) !important;
+  color: var(--obs-on-accent) !important;
+  filter: none !important;
+  border-radius: 12px !important;
+}
+.romm-play-section-row button.romm-btn-download-idle.DialogButton *,
+.romm-play-section-row button.romm-btn-play.DialogButton * {
+  color: var(--obs-on-accent) !important;
+}
+.romm-play-section-row button.romm-btn-download-idle.DialogButton.gpfocus,
+.romm-play-section-row button.romm-btn-play.DialogButton.gpfocus {
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: 3px !important;
+}
