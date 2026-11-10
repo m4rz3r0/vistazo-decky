@@ -100,7 +100,7 @@ const es = {
   largeTextLabel: "Texto grande",
   largeTextDesc: "Ajustes y menús más fáciles de leer.",
   motionLabel: "Movimiento",
-  motionDesc: "La selección se desliza y las portadas crecen al elegirlas.",
+  motionDesc: "Las portadas crecen al elegirlas y los cambios se suavizan.",
   needsLoader: "Necesita CSS Loader, de la tienda de Decky.",
   themeMissing: "No se pudo instalar. Reinicia Decky para reintentarlo.",
 };
@@ -191,7 +191,7 @@ const en: typeof es = {
   largeTextLabel: "Larger text",
   largeTextDesc: "Settings and menus easier to read.",
   motionLabel: "Motion",
-  motionDesc: "The selection glides and covers grow when chosen.",
+  motionDesc: "Covers grow when chosen and changes ease in.",
   needsLoader: "Needs CSS Loader, from the Decky store.",
   themeMissing: "Couldn't be installed. Restart Decky to try again.",
 };

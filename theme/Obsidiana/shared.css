@@ -1028,3 +1028,39 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   padding-left: 24px !important;
   padding-right: 24px !important;
 }
+
+/* Library: Steam paints a copy of the focused cover blurred 50 px, saturated ×3 and doubled in
+   brightness behind it. It's a halo, and the most expensive effect on the screen: the 1.5 px ring
+   in the theme hue is the focus. */
+[class*="6zcMsloKVA3_bv5nQ0OQE"] { display: none !important; }
+
+/* Tab strips (library, achievements): sentence case, a size up from Steam's 12 px caps. */
+[class*="1nq0ibcuVEbRv0z_wk9pIQ"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 15px !important;
+}
+/* Library year headers ("2026") and the achievements list sections ("Locked achievements"): the
+   quiet section voice used across Settings. */
+[class*="2hvQbTq62AjXQS4tZqVepi"],
+[class*="IM0uEBPVo6MDEDQLGzeZr"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+/* Achievements summary: "Achievements unlocked: 0 of 45" and "Play time" as labels, not caps. */
+[class*="17zZlCuxyWWUil57ZLDOXp"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+/* Achievements summary when selected: the tinted surface under Steam's ring, as on every other
+   focused row, so focus reads the same everywhere. */
+.gpfocus > [class*="gDkIgrqhJq-FtbuR9wJi"] {
+  background: var(--obs-focus-bg) !important;
+  border-radius: 14px;
+}
