@@ -44,8 +44,6 @@ export const homeCss = `
 .vh-stage {
   position: absolute;
   inset: 0 0 34% 0;
-  /* The new art settles from a little larger: clip it, or its lower edge shows as a line across
-     the screen for a moment below the fade. */
   overflow: hidden;
 }
 .vh-hero {
@@ -58,15 +56,6 @@ export const homeCss = `
   /* The art is the life of the screen: near full brightness so the OLED shows its colour. The
      gradients below keep the text readable where it sits, not everywhere. */
   filter: brightness(0.86) saturate(1.08);
-}
-/* A new game's art settles into place: it starts a touch closer and eases back. Answers the
-   player's move along the shelf; nothing moves on its own. */
-.vh-hero[data-ready] {
-  animation: vh-settle calc(900ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-@keyframes vh-settle {
-  from { transform: scale(1.045); }
-  to { transform: scale(1); }
 }
 .vh-enter {
   animation: vh-rise calc(320ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -107,8 +96,8 @@ export const homeCss = `
 .vh-title {
   position: absolute;
   left: 28px;
-  bottom: calc(var(--vh-cover-h) + 136px);
-  max-width: 46%;
+  bottom: calc(var(--vh-cover-h) + 142px);
+  max-width: 52%; /* inside the dark side of the fade, which ends at 58 % */
 }
 .vh-logo {
   display: block;
@@ -149,7 +138,7 @@ export const homeCss = `
 .vh-shelves {
   position: absolute;
   left: 28px;
-  bottom: calc(var(--vh-cover-h) + 96px);
+  bottom: calc(var(--vh-cover-h) + 100px);
   display: flex;
   align-items: baseline;
   gap: 18px;
@@ -164,61 +153,60 @@ export const homeCss = `
   color: var(--vh-dim);
 }
 
-/* Covers: the art is the object; focus is a thin accent line, nothing else moves. */
+/* Covers. "Protagonist": the chosen game steps forward at full light, the rest stay smaller and
+   in the half-light. Only transform and opacity change, so the GPU composes it without laying the
+   shelf out again on every frame.
+   Sizes: a resting cover is 0.9, the chosen one 1.16 (W = cover width). The layout gap is the
+   visual gap minus the 0.1 W a resting pair loses, and the covers around the chosen one slide
+   out by its growth plus their shrink on that side, 0.08 W + 0.05 W, so every visible gap stays
+   14 px. With motion off nothing scales or slides and the gap is a plain 14 px. */
 .vh-row {
+  --vh-w: calc(var(--vh-cover-h) * 2 / 3);
+  --vh-rest: calc(1 - 0.1 * var(--vh-motion));
+  --vh-shift: calc(var(--vh-w) * 0.13 * var(--vh-motion));
   position: absolute;
   left: 0;
   right: 0;
   bottom: 46px;
   display: flex;
-  gap: 14px;
-  padding: 18px 28px 24px;
+  gap: calc(14px - var(--vh-w) * 0.1 * var(--vh-motion));
+  /* Left: a chosen first cover grows 0.08 W, a resting one ends 0.08 W in: both meet 28 px. */
+  padding: 20px calc(28px + var(--vh-w) * 0.08 * var(--vh-motion)) 22px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
 }
 .vh-row::-webkit-scrollbar { display: none; }
 .vh-cover {
-  --vh-tilt: 0deg;
   position: relative;
   flex: none;
-  width: calc(var(--vh-cover-h) * 2 / 3);
+  width: var(--vh-w);
   height: var(--vh-cover-h);
   border-radius: 12px;
   background: #000;
   outline: none;
-  /* Each cover has its own perspective, so a lean looks the same wherever it sits on the shelf
-     and every gap stays the same (a shared perspective foreshortens covers far from the middle). */
-  transform: perspective(700px) rotateY(var(--vh-tilt));
-  transform-origin: center center;
-  transition: transform calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity calc(240ms * var(--vh-motion)) ease-out,
-    margin calc(240ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Resting covers, and every cover before the chosen one, slide left by the same amount. */
+  transform: translateX(calc(-1 * var(--vh-shift))) scale(var(--vh-rest));
+  opacity: 0.72;
+  transition: transform calc(220ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity calc(220ms * var(--vh-motion)) ease-out;
 }
-/* While the shelf has the focus, covers before the selected one lean right and those after lean
-   left: all of them turn a little towards the game you're on. */
-.vh-row:has(.vh-cover.gpfocus) .vh-cover { --vh-tilt: 12deg; }
-.vh-row .vh-cover.gpfocus ~ .vh-cover { --vh-tilt: -12deg; }
-/* The selected cover is marked by size and light alone, no frame or line: it faces you, steps
-   forward and stays at full brightness while the rest lean towards it in the half-light. */
 .vh-row .vh-cover.gpfocus {
-  --vh-tilt: 0deg;
-  transform: perspective(700px) scale(calc(1 + 0.1 * var(--vh-motion)));
-  /* It grows 10 %: margins of half that growth keep its gaps the same as everyone else's. */
-  margin: 0 calc(var(--vh-cover-h) * 2 / 3 * 0.05 * var(--vh-motion));
+  transform: scale(calc(1 + 0.16 * var(--vh-motion)));
+  opacity: 1;
   z-index: 1;
 }
-@media (prefers-reduced-motion: reduce) {
-  .vh-cover { --vh-motion: 0; }
+.vh-row .vh-cover.gpfocus ~ .vh-cover {
+  transform: translateX(var(--vh-shift)) scale(var(--vh-rest));
 }
-/* Only the focused cover is at full brightness; on black, opacity dims for free (no filter pass). */
-.vh-cover:not(.gpfocus):not(.vh-library) {
-  opacity: 0.72;
-}
-/* While the shelf has the focus the others step further back, so the chosen one is unmistakable
-   even with motion off. */
+/* While the shelf has the focus the others step further back. With motion off light is the only
+   cue, so they go darker still. On black, opacity dims for free (no filter pass). */
 .vh-row:has(.vh-cover.gpfocus) .vh-cover:not(.gpfocus) {
-  opacity: 0.5;
+  opacity: calc(0.38 + 0.12 * var(--vh-motion));
+}
+.vh-row .vh-cover.vh-library:not(.gpfocus) { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .vh-row { --vh-motion: 0; }
 }
 .vh-art {
   display: block;
@@ -262,11 +250,6 @@ export const homeCss = `
   stroke-linejoin: round;
 }
 .vh-library.gpfocus .vh-lib-icon { stroke: var(--vh-accent); }
-.vh-library-sub {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--vh-dim);
-}
 .vh-empty {
   align-self: center;
   padding: 0 12px;

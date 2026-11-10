@@ -69,9 +69,11 @@ function since(ts: number): string | null {
   if (days <= 0) return t.playedToday;
   if (days === 1) return t.playedYesterday;
   if (days < 30) return t.playedDaysAgo(days);
-  return t.lastPlayed(
-    new Date(ts * 1000).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }),
-  );
+  // Short enough to keep the line whole: the day this year, the month before that.
+  const date = new Date(ts * 1000);
+  return date.getFullYear() === new Date().getFullYear()
+    ? t.playedOn(date.toLocaleDateString(locale, { day: "numeric", month: "short" }))
+    : t.playedIn(date.toLocaleDateString(locale, { month: "short", year: "numeric" }));
 }
 
 function PeopleIcon() {
@@ -447,7 +449,6 @@ export function Home() {
         >
           <LibraryIcon />
           <span>{t.wholeLibrary}</span>
-          <span className="vh-library-sub">{t.installNewGames}</span>
         </Focusable>
       </Focusable>
     </Focusable>
