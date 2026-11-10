@@ -1176,3 +1176,12 @@ button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap
    textos con foco porque espera un fondo blanco; sobre la superficie teñida quedaban casi invisibles. */
 .gpfocus [class*="3g-QHB82IGz91Hsk1Hw4lh"] { color: var(--obs-focus-fg) !important; }
 .gpfocus [class*="cbinvNOoQE045ZV5gCk_N"] { color: rgba(255, 255, 255, 0.72) !important; }
+
+/* Barra de volumen y brillo: la caja gris azulada con sombra de Steam pasa a carbón, redondeada y sin
+   sombra, como el resto del tema. */
+[class*="_2iUUMqGBsJmkgjGawC2D5V"] {
+  background: #161616 !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+  margin: 6px 0 0 8px !important;
+}

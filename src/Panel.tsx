@@ -176,9 +176,10 @@ function fitPanel(el: HTMLElement) {
   const desc = el.querySelector(".vz-desc") as HTMLElement | null;
   if (desc) {
     const line = parseFloat(getComputedStyle(desc).lineHeight) || 20;
+    // Room is kept below it for the "Tus cosas" corner, which sits at the bottom right.
     const lines = Math.min(
       4,
-      Math.max(1, Math.floor((height - desc.offsetTop - 12) / line)),
+      Math.max(1, Math.floor((height - desc.offsetTop - 50) / line)),
     );
     desc.style.setProperty("-webkit-line-clamp", String(lines));
   }
@@ -261,95 +262,114 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
   const size = formatSize(facts.sizeBytes);
   const share = ach && ach.total ? (ach.achieved / ach.total) * 100 : 0;
 
+  // What to go for next: the ones that say what to do. Hidden ones tell the player nothing, so
+  // when they are all that is left a line says so instead of a row of blank tiles.
+  const next = ach ? ach.next.filter((a) => !a.hidden) : [];
+  const left = ach ? ach.total - ach.achieved : 0;
+  const cells: { label: string; value: any }[] = [];
+  if (facts.tags.length) cells.push({ label: t.genre, value: facts.tags.join(", ") });
+  if (facts.year) cells.push({ label: t.year, value: facts.year });
+  if (size) cells.push({ label: t.onDisk, value: size });
+  if (facts.minutesTwoWeeks > 0)
+    cells.push({ label: t.lastTwoWeeks, value: formatMinutes(facts.minutesTwoWeeks) });
+  if (deck)
+    cells.push({
+      label: "Steam Deck",
+      value: (
+        <span className={`vz-badge vz-deck vz-${deck.tone}`}>
+          <DeckIcon tone={deck.tone} />
+          {deck.text}
+        </span>
+      ),
+    });
+  if (protondb && proton)
+    cells.push({
+      label: "ProtonDB",
+      value: (
+        <span className={`vz-badge vz-proton vz-tier-${proton}`}>
+          <ProtonIcon />
+          {PROTON[proton]}
+        </span>
+      ),
+    });
+
+  // Two columns: the player's achievements on the left, the game on the right. A game without
+  // achievements gives the whole width to the game.
   return (
     <div className="vz-root" ref={root}>
       <style>{pageCss()}</style>
 
-      {ach ? (
-        <Focusable
-          className={`vz-ach vz-${medal(ach.achieved, ach.total) ?? "none"}`}
-          noFocusRing
-          onActivate={() =>
-            Navigation.Navigate(
-              `/library/app/${appid}/achievements/my/individual`,
-            )
-          }
-          onOKActionDescription={t.seeAllAchievements}
-        >
-          <Ring share={share} />
-          <div className="vz-ach-sum">
-            <div className="vz-ach-count">
-              <span className="vz-ach-n">{ach.achieved}</span>
-              <span className="vz-ach-of">/{ach.total}</span>
+      <div className={`vz-cols${ach === null ? " vz-solo" : ""}`}>
+        {ach ? (
+          <Focusable
+            className={`vz-ach vz-${medal(ach.achieved, ach.total) ?? "none"}`}
+            noFocusRing
+            onActivate={() =>
+              Navigation.Navigate(
+                `/library/app/${appid}/achievements/my/individual`,
+              )
+            }
+            onOKActionDescription={t.seeAllAchievements}
+          >
+            <div className="vz-ach-head">
+              <Ring share={share} />
+              <div className="vz-ach-sum">
+                <div className="vz-ach-count">
+                  <span className="vz-ach-n">{ach.achieved}</span>
+                  <span className="vz-ach-of">/{ach.total}</span>
+                </div>
+                <div className="vz-ach-label">
+                  {ach.achieved === ach.total ? t.platinum : t.achievements}
+                </div>
+              </div>
             </div>
-            <div className="vz-ach-label">
-              {ach.achieved === ach.total ? t.platinum : t.achievements}
-            </div>
-          </div>
-          {ach.next.length > 0 && (
-            <ul className="vz-next">
-              {ach.next.map((a) => (
-                <li className="vz-next-item" key={a.id}>
-                  {a.image ? (
-                    <img className="vz-icon" src={a.image} alt="" />
-                  ) : (
-                    <span className="vz-icon" />
-                  )}
-                  <span className="vz-next-text">
+            {next.length > 0 ? (
+              <ul className="vz-next">
+                <li className="vz-next-cap">
+                  <span>{t.upNext}</span>
+                  <span>{t.players}</span>
+                </li>
+                {next.map((a) => (
+                  <li className="vz-next-item" key={a.id}>
+                    {a.image ? (
+                      <img className="vz-icon" src={a.image} alt="" />
+                    ) : (
+                      <span className="vz-icon" />
+                    )}
                     <span className="vz-next-name">{a.name}</span>
                     <span className="vz-next-sub">
                       {a.progress !== null && a.progress > 0
                         ? t.progressSoFar(pct(a.progress * 100))
                         : a.globalPercent > 0
-                          ? t.ofPlayers(pct(a.globalPercent))
-                          : a.description}
+                          ? pct(a.globalPercent)
+                          : ""}
                     </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Focusable>
-      ) : (
-        <div className="vz-ach vz-ach-quiet">
-          {ach === null
-            ? t.noAchievements
-            : achFailed
-              ? t.achievementsUnavailable
-              : t.loadingAchievements}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="vz-ach-note">{left > 0 ? t.hiddenLeft(left) : t.allEarned}</div>
+            )}
+          </Focusable>
+        ) : ach === null ? null : (
+          <div className="vz-ach vz-ach-quiet">
+            {achFailed ? t.achievementsUnavailable : t.loadingAchievements}
+          </div>
+        )}
+
+        <div className="vz-about">
+          <div className="vz-facts">
+            {cells.map((c) => (
+              <div className="vz-fact" key={c.label}>
+                <span className="vz-fact-label">{c.label}</span>
+                <span className="vz-fact-value">{c.value}</span>
+              </div>
+            ))}
+          </div>
+          {facts.snippet && <p className="vz-desc">{facts.snippet}</p>}
+          {ach === null && <div className="vz-ach-quiet">{t.noAchievements}</div>}
         </div>
-      )}
-
-      <div className="vz-meta">
-        {facts.tags.length > 0 && (
-          <span className="vz-tags">{facts.tags.join(", ")}</span>
-        )}
-        {facts.year && <span className="vz-fact">{facts.year}</span>}
-        {size && <span className="vz-fact">{size}</span>}
-        {facts.minutesTwoWeeks > 0 && (
-          <span className="vz-fact">
-            {t.lastTwoWeeks(formatMinutes(facts.minutesTwoWeeks))}
-          </span>
-        )}
-        <span className="vz-badges">
-          {deck && (
-            <span className={`vz-badge vz-deck vz-${deck.tone}`}>
-              <DeckIcon tone={deck.tone} />
-              <span className="vz-badge-src">Deck</span>
-              {deck.text}
-            </span>
-          )}
-          {protondb && proton && (
-            <span className={`vz-badge vz-proton vz-tier-${proton}`}>
-              <ProtonIcon />
-              <span className="vz-badge-src">ProtonDB</span>
-              {PROTON[proton]}
-            </span>
-          )}
-        </span>
       </div>
-
-      {facts.snippet && <p className="vz-desc">{facts.snippet}</p>}
 
       <Focusable
         className="vz-stuff"

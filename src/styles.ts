@@ -141,15 +141,36 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   color: var(--vz-text);
 }
 
-/* Achievements: ring, count, then what to go for next. No box: at rest the ring is gold (the
-   achievements color) and the count white; with the focus they light up in the accent, the same
-   signal as the home's covers. */
+/* Two columns that fill the width: the player's achievements on the left, the game on the right.
+   A game without achievements gives the whole width to the game. */
+.vz-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 9fr) minmax(0, 13fr);
+  column-gap: 40px;
+  align-items: start;
+}
+.vz-cols.vz-solo { grid-template-columns: minmax(0, 1fr); }
+
+/* Achievements: ring and count, then what to go for next underneath. No box: at rest the ring is
+   gold (the achievements color) and the count white; with the focus they light up in the accent,
+   the same signal as the home's covers. */
 .vz-ach {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 0;
+  outline: none;
+}
+.vz-ach-head {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 6px 0;
-  outline: none;
+}
+.vz-ach-note {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--vz-muted);
 }
 /* The ring takes the medal the game has reached: bronze up to a third, silver up to two thirds,
    gold beyond, platinum with every achievement (and the gem by the label). */
@@ -173,8 +194,8 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   font-size: 16px;
 }
 .vz-ring {
-  width: 54px;
-  height: 54px;
+  width: 62px;
+  height: 62px;
   flex: none;
 }
 .vz-ring-track {
@@ -216,92 +237,102 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   font-size: 14px;
   color: var(--vz-muted);
 }
+/* Up next: a short list with the whole name, and how many players have each one. */
 .vz-next {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
   margin: 0;
-  padding: 0 0 0 12px;
+  padding: 0;
   list-style: none;
+}
+.vz-next-cap {
+  display: flex;
+  justify-content: space-between;
+}
+.vz-next-cap,
+.vz-fact-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
 }
 .vz-next-item {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   min-width: 0;
 }
 .vz-icon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex: none;
   border-radius: 6px;
   background: #000;
   filter: saturate(0.4);
 }
-.vz-next-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.vz-next-name,
-.vz-next-sub {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .vz-next-name {
-  font-size: 16px;
-  font-weight: 700;
-}
-.vz-next-sub {
-  font-size: 14px;
-  color: var(--vz-muted);
-}
-
-/* One line of facts, then the pitch. */
-.vz-meta {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  white-space: nowrap;
-  font-size: 16px;
-}
-.vz-tags {
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 15px;
   font-weight: 600;
 }
-.vz-fact {
+.vz-next-sub {
   flex: none;
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 13px;
   color: var(--vz-muted);
   font-variant-numeric: tabular-nums;
 }
-.vz-badges {
+
+/* The game: its facts, each under its own label (the way Steam shows "Last played" above), then
+   the pitch. */
+.vz-about {
   display: flex;
-  gap: 18px;
-  margin-left: auto;
-  flex: none;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 6px;
+}
+.vz-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, auto));
+  justify-content: space-between;
+  column-gap: 24px;
+  row-gap: 12px;
+}
+.vz-solo .vz-facts {
+  grid-template-columns: repeat(6, minmax(0, auto));
+  justify-content: start;
+  column-gap: 40px;
+}
+.vz-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.vz-fact-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 /* Verdicts: the symbol and the word in their own colour, no box around them. */
 .vz-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 15px;
-  font-weight: 700;
   color: var(--vz-tone);
 }
 .vz-badge-icon {
   width: 16px;
   height: 16px;
   flex: none;
-}
-.vz-badge-src {
-  font-weight: 500;
-  color: var(--vz-muted);
 }
 /* Steam Deck compatibility, Valve's palette. */
 .vz-deck.vz-good { --vz-tone: #59bf40; }
@@ -331,7 +362,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   stroke-width: 1.2;
 }
 
-/* "Tus cosas": icon button in the bottom-right corner of the first screen. The label appears on focus. */
+/* "Tus cosas": the way down to Steam's own section, in the bottom-right corner of the first screen. */
 .vz-stuff {
   position: absolute;
   right: 24px;
@@ -350,12 +381,10 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   background: rgba(var(--vz-accent-rgb), 0.16);
 }
 .vz-stuff-label {
-  display: none;
   padding-left: 5px;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
 }
-.vz-stuff.gpfocus .vz-stuff-label { display: inline; }
 .vz-stuff-icon {
   width: 22px;
   height: 22px;
@@ -367,8 +396,7 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 }
 .vz-desc {
   margin: 0;
-  max-width: min(72ch, calc(100% - 64px));
-  font-size: 15.5px;
+  font-size: 15px;
   line-height: 1.45;
   color: var(--vz-muted);
   display: -webkit-box;

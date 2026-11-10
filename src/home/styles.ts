@@ -82,6 +82,17 @@ export const homeCss = `
 .vh-hero, .vh-logo { opacity: 0; transition: opacity 0.3s ease-out; }
 .vh-hero[data-ready], .vh-logo[data-ready] { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .vh-hero, .vh-logo { transition: none; } }
+/* A game with no wide art of its own: its cover, large and sharp on the right, fading into the
+   black on the left (a mask, not a blur). */
+.vh-hero.vh-poster {
+  left: auto;
+  right: 0;
+  width: 64%;
+  object-position: 50% 22%;
+  filter: brightness(0.82);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 52%);
+  mask-image: linear-gradient(to right, transparent 0, #000 52%);
+}
 .vh-fade {
   position: absolute;
   inset: 0;
@@ -152,6 +163,27 @@ export const homeCss = `
   vertical-align: 2px;
 }
 .vh-meta span.vh-platinum { color: #c4ecff; font-weight: 600; }
+/* How far the achievements have got, at a glance: a thin line in the medal's color. */
+.vh-progress {
+  width: 176px;
+  height: 3px;
+  margin-top: 11px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+.vh-progress i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: left;
+}
+.vh-progress.vh-bronze { color: #e39463; }
+.vh-progress.vh-silver { color: #b9c7d8; }
+.vh-progress.vh-gold { color: var(--obs-reward, #f5cf5a); }
+.vh-progress.vh-platinum { color: #c4ecff; }
 .vz-gem {
   width: 16px;
   height: 16px;
@@ -216,24 +248,34 @@ export const homeCss = `
   outline: none;
   /* Resting covers, and every cover before the chosen one, slide left by the same amount. */
   transform: translateX(calc(-1 * var(--vh-shift))) scale(var(--vh-rest));
-  opacity: 0.72;
-  transition: transform calc(220ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity calc(220ms * var(--vh-motion)) ease-out;
+  transition: transform calc(220ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Covers that aren't chosen go darker, not see-through: a shade over the art, so the hero behind
+   never shows through them. Only the shade's opacity changes (no filter pass). */
+.vh-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #000;
+  opacity: 0.3;
+  pointer-events: none;
+  transition: opacity calc(220ms * var(--vh-motion)) ease-out;
 }
 .vh-row .vh-cover.gpfocus {
   transform: scale(calc(1 + 0.16 * var(--vh-motion)));
-  opacity: 1;
   z-index: 1;
 }
+.vh-row .vh-cover.gpfocus::after { opacity: 0; }
 .vh-row .vh-cover.gpfocus ~ .vh-cover {
   transform: translateX(var(--vh-shift)) scale(var(--vh-rest));
 }
 /* While the shelf has the focus the others step further back. With motion off light is the only
-   cue, so they go darker still. On black, opacity dims for free (no filter pass). */
-.vh-row:has(.vh-cover.gpfocus) .vh-cover:not(.gpfocus) {
-  opacity: calc(0.38 + 0.12 * var(--vh-motion));
+   cue, so they go darker still. */
+.vh-row:has(.vh-cover.gpfocus) .vh-cover:not(.gpfocus)::after {
+  opacity: calc(0.62 - 0.1 * var(--vh-motion));
 }
-.vh-row .vh-cover.vh-library:not(.gpfocus) { opacity: 1; }
+.vh-row .vh-cover.vh-library::after { content: none; }
 @media (prefers-reduced-motion: reduce) {
   .vh-row { --vh-motion: 0; }
 }

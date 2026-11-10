@@ -184,7 +184,12 @@ const Friends = memo(function Friends() {
   );
 });
 
+// Games whose own wide art didn't load this session: they go straight to the poster.
+const noHero = new Set<number>();
+
 // Crossfade: the new art fades in over the previous one, which stays underneath until replaced.
+// A game without wide art of its own shows its cover as a poster instead of an empty stage; the
+// poster covers only part of the stage, so nothing of the previous game stays under it.
 function Hero({ game }: { game: Game | null }) {
   const [layers, setLayers] = useState<Game[]>([]);
   useEffect(() => {
@@ -193,20 +198,32 @@ function Hero({ game }: { game: Game | null }) {
         ? []
         : l[l.length - 1]?.appid === game.appid
           ? l
-          : // The previous art stays under the new one while it loads; a game without art clears it.
-            heroUrls(game).length
-            ? [...l.slice(-1), game]
-            : [game],
+          : noHero.has(game.appid)
+            ? [game]
+            : [...l.slice(-1), game],
     );
   }, [game]);
-  // The new art didn't load at all: don't leave the previous game's art on show.
-  const giveUp = (appid: number) =>
+  const toPoster = (appid: number) => {
+    noHero.add(appid);
     setLayers((l) => (l[l.length - 1]?.appid === appid ? l.slice(-1) : l));
+  };
   return (
     <>
-      {layers.map((g) => (
-        <Img key={g.appid} className="vh-hero" srcs={heroUrls(g)} onGiveUp={() => giveUp(g.appid)} />
-      ))}
+      {layers.map((g) => {
+        // Its own key: a poster must not inherit the failed hero's place in its list of sources.
+        const poster = <Img key={`poster-${g.appid}`} className="vh-hero vh-poster" srcs={portraitUrls(g)} />;
+        return noHero.has(g.appid) ? (
+          poster
+        ) : (
+          <Img
+            key={g.appid}
+            className="vh-hero"
+            srcs={heroUrls(g)}
+            onGiveUp={() => toPoster(g.appid)}
+            fallback={poster}
+          />
+        );
+      })}
     </>
   );
 }
@@ -504,6 +521,11 @@ export function Home() {
                     {m.text}
                   </span>
                 ))}
+              </div>
+            )}
+            {!!achievements?.total && (
+              <div className={`vh-progress${won ? ` vh-${won}` : ""}`}>
+                <i style={{ transform: `scaleX(${achievements.achieved / achievements.total})` }} />
               </div>
             )}
           </div>
