@@ -43,6 +43,8 @@ const es = {
   lastTwoWeeks: "Últimas 2 semanas",
   yourStuff: "Tus cosas",
   seeYourStuff: "Ver tus cosas",
+  readAll: "Leer entera",
+  readLess: "Recoger",
   hiddenAchievement: "Logro oculto",
   hiddenAchievementDesc: "Se desvela al conseguirlo.",
   // Home
@@ -143,6 +145,8 @@ const en: typeof es = {
   lastTwoWeeks: "Last 2 weeks",
   yourStuff: "Your stuff",
   seeYourStuff: "See your stuff",
+  readAll: "Read it all",
+  readLess: "Fold",
   hiddenAchievement: "Hidden achievement",
   hiddenAchievementDesc: "Revealed once you earn it.",
   installed: "Installed",

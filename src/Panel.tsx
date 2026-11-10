@@ -163,9 +163,10 @@ const pageOf = (el: HTMLElement) =>
 
 // The panel fills the first screen exactly, so "Tus cosas" starts below the fold and the corner
 // button always sits at the bottom right, whatever rows Steam adds above (family library, cloud…).
-function fitPanel(el: HTMLElement) {
+// Returns whether the description doesn't fit (so it can be opened to read it whole).
+function fitPanel(el: HTMLElement, open: boolean): boolean {
   const page = pageOf(el);
-  if (!page) return;
+  if (!page) return open;
   const top =
     el.getBoundingClientRect().top -
     page.getBoundingClientRect().top +
@@ -174,7 +175,13 @@ function fitPanel(el: HTMLElement) {
   el.style.minHeight = `${height}px`;
   // As many description lines as the screen has room for (1 to 4), never a half-cut line.
   const desc = el.querySelector(".vz-desc") as HTMLElement | null;
-  if (desc) {
+  if (!desc) return false;
+  // Opened to be read whole: no limit, and it stays openable so it can be folded again.
+  if (open) {
+    desc.style.removeProperty("-webkit-line-clamp");
+    return true;
+  }
+  {
     const line = parseFloat(getComputedStyle(desc).lineHeight) || 20;
     // Room is kept below it for the "Tus cosas" corner, which sits at the bottom right.
     const lines = Math.min(
@@ -183,6 +190,7 @@ function fitPanel(el: HTMLElement) {
     );
     desc.style.setProperty("-webkit-line-clamp", String(lines));
   }
+  return desc.scrollHeight - desc.clientHeight > 2;
 }
 
 // The page and the panel's parent get marker attributes, so the page CSS needs no :has() lookups.
@@ -205,18 +213,44 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
   const { protondb } = useSettings();
   const facts = getFacts(appid);
   const root = useRef<HTMLDivElement>(null);
+  // The description shows as many lines as fit. When some are left out it can be opened in place
+  // to read it whole, and folded again.
+  const [clipped, setClipped] = useState(false);
+  const [open, setOpen] = useState(false);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const fit = (el: HTMLElement) => setClipped(fitPanel(el, openRef.current));
 
   // Re-fit when what we show changes (achievements and ProtonDB arrive later) and when the page resizes.
   useLayoutEffect(() => {
     if (!root.current) return;
     markPage(root.current, true);
-    fitPanel(root.current);
-  }, [ach, achFailed, proton, protondb]);
+    fit(root.current);
+  }, [ach, achFailed, proton, protondb, open]);
+  // Opened, the panel grows past the first screen: scroll just enough to show all of it above
+  // Steam's button hints, and go back to where the page was when it is folded again.
+  const scrolledFrom = useRef<number | null>(null);
+  useEffect(() => {
+    const el = root.current;
+    const page = el && pageOf(el);
+    if (!el || !page) return;
+    if (open) {
+      const over =
+        el.getBoundingClientRect().bottom - (page.getBoundingClientRect().bottom - footerReserve);
+      if (over > 0) {
+        scrolledFrom.current = page.scrollTop;
+        page.scrollBy({ top: over, behavior: "smooth" });
+      }
+    } else if (scrolledFrom.current !== null) {
+      page.scrollTo({ top: scrolledFrom.current, behavior: "smooth" });
+      scrolledFrom.current = null;
+    }
+  }, [open]);
   useLayoutEffect(() => {
     const el = root.current;
     const page = el && pageOf(el);
     if (!el || !page) return; // the effect above has already marked the page
-    const ro = new ResizeObserver(() => fitPanel(el));
+    const ro = new ResizeObserver(() => fit(el));
     ro.observe(page);
     if (el.parentElement?.firstElementChild)
       ro.observe(el.parentElement.firstElementChild);
@@ -296,10 +330,11 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
   // Two columns: the player's achievements on the left, the game on the right. A game without
   // achievements gives the whole width to the game.
   return (
-    <div className="vz-root" ref={root}>
+    <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
       <style>{pageCss()}</style>
 
-      <div className={`vz-cols${ach === null ? " vz-solo" : ""}`}>
+      {/* A row for the gamepad too: right from the achievements reaches the description. */}
+      <Focusable className={`vz-cols${ach === null ? " vz-solo" : ""}`} flow-children="row">
         {ach ? (
           <Focusable
             className={`vz-ach vz-${medal(ach.achieved, ach.total) ?? "none"}`}
@@ -366,10 +401,22 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
               </div>
             ))}
           </div>
-          {facts.snippet && <p className="vz-desc">{facts.snippet}</p>}
+          {facts.snippet &&
+            (clipped || open ? (
+              <Focusable
+                className="vz-desc-box"
+                noFocusRing
+                onActivate={() => setOpen((o) => !o)}
+                onOKActionDescription={open ? t.readLess : t.readAll}
+              >
+                <p className={`vz-desc${open ? " vz-open" : ""}`}>{facts.snippet}</p>
+              </Focusable>
+            ) : (
+              <p className="vz-desc">{facts.snippet}</p>
+            ))}
           {ach === null && <div className="vz-ach-quiet">{t.noAchievements}</div>}
         </div>
-      </div>
+      </Focusable>
 
       <Focusable
         className="vz-stuff"

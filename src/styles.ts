@@ -394,6 +394,23 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* A description that doesn't fit can be chosen and opened in place. The box bleeds a little past
+   the text so the text itself stays aligned with the facts above. */
+.vz-desc-box {
+  margin: -6px -10px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  outline: none;
+}
+/* Opened, the text runs down to where the "Tus cosas" corner sits: the corner goes below it. */
+.vz-reading .vz-about { padding-bottom: 44px; }
+.vz-desc-box.gpfocus { background: rgba(var(--vz-accent-rgb), 0.16); }
+.vz-desc-box.gpfocus .vz-desc { color: var(--vz-text); }
+.vz-desc.vz-open {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
 .vz-desc {
   margin: 0;
   font-size: 15px;
