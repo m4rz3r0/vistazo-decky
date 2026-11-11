@@ -124,7 +124,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   width: 44px !important;
 }
 .romm-btn-dropdown svg { fill: var(--obs-on-accent) !important; color: var(--obs-on-accent) !important; }
-.romm-btn-dropdown.gpfocus { box-shadow: var(--obs-glow) !important; }
 .romm-info-header {
   font-size: 12px !important;
   font-weight: 700 !important;
@@ -141,7 +140,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   border-radius: 10px !important;
   background: var(--obs-surface-2) !important;
 }
-.romm-gear-btn.gpfocus { box-shadow: var(--obs-glow) !important; }
 
 /* Pestañas de Tender como las píldoras de Steam, centradas */
 .romm-tab-bar {
@@ -206,6 +204,9 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   background: linear-gradient(to right, var(--obs-accent), var(--obs-accent-2)) !important;
   border-radius: 12px !important;
 }
+/* La flecha junto a «Jugar»: un solo anillo y algo más de aire para que no roce el botón. */
+.romm-play-section-row .romm-btn-dropdown { margin-left: 12px !important; box-shadow: none !important; }
+.romm-gear-btn { box-shadow: none !important; }
 .romm-play-section-row .romm-btn-dropdown {
   background: var(--obs-surface-2) !important;
   color: var(--obs-accent) !important;
@@ -402,6 +403,36 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 .gamepadpagedsettings_PagedSettingsDialog_PageListColumn_2EZ3o .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gpfocus {
   border-radius: 12px !important;
 }
+/* Columna de secciones (ajustes de Steam y de Decky): la primera fila empezaba justo bajo la barra
+   superior, que en las pantallas de Decky es opaca y le cortaba el anillo por arriba. */
+.PageListColumn > [class*="gNwozyl1BAcDyyhUKvx1Y"] { padding-top: 46px !important; }
+/* Configuración del mando: fondo negro en lugar del azul marino, filas carbón y el encabezado sin
+   mayúsculas. */
+[class*="APY6jDS50MNUPuX38IgC0"],
+[class*="20sN9G_C5kZ9GO_mVUuWTD"],
+[class*="3RsRfCOW7Do0JNHcEs2nqX"] { background: var(--obs-bg) !important; }
+[class*="3RsRfCOW7Do0JNHcEs2nqX"] [class*="lgme24Fp_HWt"]:not(.gpfocus):not(.gpfocuswithin) { background: var(--obs-surface) !important; }
+[class*="3RsRfCOW7Do0JNHcEs2nqX"] [class*="lgme24Fp_HWt"] { border-radius: var(--obs-radius) !important; }
+[class*="3A_c3YHYd4YIjA8Y-olnPl"] {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: var(--obs-fs-section) !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+/* Decky (ajustes y tienda): sus encabezados venían en mayúsculas y subrayados; como los de Steam. */
+.DialogControlsSectionHeader {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  border-bottom: none !important;
+  font-size: var(--obs-fs-section) !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  padding-left: 16px !important;
+}
+.DialogLabel { text-transform: none !important; letter-spacing: 0 !important; }
+/* Enlaces sin estilo propio (la tienda de Decky): el azul puro del navegador no se lee sobre negro. */
+a[href]:not([class]) { color: var(--obs-accent) !important; }
 .gamepadpagedsettings_PagedSettingDialog_ContentColumn_3JPle .gamepaddialog_Field_S-_La {
   background: transparent !important;
 }
@@ -814,6 +845,15 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 [class*="dbACWBb8zr4cf4u05jQ4x"] { text-transform: none !important; letter-spacing: -0.2px !important; font-size: 12px !important; }
 [class*="LYPXtQ-MbXCeitc8-tCDO"]:first-child [class*="dbACWBb8zr4cf4u05jQ4x"] { align-self: flex-start !important; margin-left: -16px !important; }
 [class*="LYPXtQ-MbXCeitc8-tCDO"]:last-child [class*="dbACWBb8zr4cf4u05jQ4x"] { align-self: flex-end !important; }
+/* Acceso rápido: el deslizador traía un ancho mínimo mayor que la fila y, con sus marcas, llegaba
+   hasta el anillo. Dentro de la fila, con el mismo aire a ambos lados. */
+[id^="quickaccess_content_"] [class*="1aw7cA3mAZfWt8idAlVJWi"]:has(.SliderControlPanelGroup) { min-width: 0 !important; width: 100% !important; }
+/* Las marcas, algo más pequeñas, y la primera asoma lo justo para no pisar a la segunda cuando hay
+   cinco (Modo de escalado) sin llegar al anillo. */
+[id^="quickaccess_content_"] [class*="dbACWBb8zr4cf4u05jQ4x"] { font-size: 11px !important; }
+[id^="quickaccess_content_"] [class*="LYPXtQ-MbXCeitc8-tCDO"]:first-child [class*="dbACWBb8zr4cf4u05jQ4x"] { margin-left: -10px !important; }
+/* Un botón enfocado dentro de una fila: el anillo va en el botón, sin la caja de la fila detrás. */
+[id^="quickaccess_content_"] [class*="lgme24Fp_HWt"].gpfocuswithin:has(button.DialogButton.gpfocus) { background: transparent !important; outline-color: transparent !important; }
 /* Interruptor enfocado: sin contorno gris azulado en la bola; el foco ya lo marca la fila. */
 [class*="1PQppcgkuXQAiFPar9AG"] { border-color: transparent !important; }
 [class*="9Ql-oVe_j8E-vsDdyVdW"]::after { display: none !important; }
@@ -1301,3 +1341,23 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 }
 .gamepadtabbedpage_Tab_3eEbS.gpfocus,
 .gamepadtabbedpage_Tab_3eEbS.gpfocus * { color: #fff !important; }
+
+/* Menús (principal, contextuales y la columna de secciones de ajustes): la opción enfocada no se
+   rellena de gris; el anillo y el texto en blanco bastan sobre el negro. */
+[class*="2w9TpQwxU7vcwaAbf3"][class*="2w9TpQwxU7vcwaAbf3"][class*="2w9TpQwxU7vcwaAbf3"]:is(.gpfocus, .gpfocuswithin),
+[class*="34o03-8cUc3fQX1u650"][class*="34o03-8cUc3fQX1u650"][class*="34o03-8cUc3fQX1u650"].gpfocus,
+.gamepadcontextmenu_contextMenuItem_1sdvo.gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus,
+.PageListColumn [class*="2mL2HfT5AkDXRi1YBnRW"][class*="2mL2HfT5AkDXRi1YBnRW"][class*="2mL2HfT5AkDXRi1YBnRW"]:is(.gpfocus, .gpfocuswithin) {
+  background: transparent !important;
+}
+
+/* Selector de opciones (filtros de Multimedia): sin rayas entre opciones ni resplandor azul en el
+   texto, y su encabezado sin mayúsculas. */
+.Shared_Radio_Group .RadioButton::before { display: none !important; }
+.Shared_Radio_Group .RadioButton { text-shadow: none !important; }
+.DialogSubHeader {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: var(--obs-fs-section) !important;
+  font-weight: 600 !important;
+}

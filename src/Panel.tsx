@@ -149,6 +149,23 @@ function fitPanel(el: HTMLElement, open: boolean): boolean {
     page.scrollTop;
   const height = Math.max(0, page.clientHeight - top - footerReserve);
   el.style.minHeight = `${height}px`;
+  // The "up next" achievements that would run past the screen step aside (a row Steam adds above,
+  // such as the family library notice, takes the room of one); the list goes when none fits.
+  const list = el.querySelector(".vz-next") as HTMLElement | null;
+  if (list) {
+    list.style.removeProperty("display");
+    const items = Array.from(list.querySelectorAll<HTMLElement>(".vz-next-item"));
+    for (const item of items) item.style.removeProperty("display");
+    const limit = el.getBoundingClientRect().top + height;
+    let shown = items.length;
+    for (const item of items) {
+      if (item.getBoundingClientRect().bottom > limit + 1) {
+        item.style.display = "none";
+        shown--;
+      }
+    }
+    if (items.length && !shown) list.style.display = "none";
+  }
   // As many description lines as the screen has room for (1 to 6), never a half-cut line.
   const desc = el.querySelector(".vz-desc") as HTMLElement | null;
   if (!desc) return false;
