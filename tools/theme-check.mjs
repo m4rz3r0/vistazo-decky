@@ -198,6 +198,7 @@ const AUDIT_IN_PAGE = `(() => {
   const watched = (prop) => [prop, ...(GROUPS[prop] ?? []), ...names.filter((n) => n.startsWith(prop + "-"))];
   const state = (window.__obsAudit ??= { orig: new Map(), off: new Map(), proven: new Set() });
   const matched = [];
+  const declared = {}; // "sheet:rule" -> property names as the browser lists them
   // A transition would keep the old value for a moment and hide the change. The theme sets its own
   // transitions with !important, so this needs more weight than any of its selectors.
   const still = document.head.appendChild(document.createElement("style"));
@@ -222,6 +223,7 @@ const AUDIT_IN_PAGE = `(() => {
       if (!state.orig.has(rule)) state.orig.set(rule, rule.style.cssText);
       if (!state.off.has(rule)) state.off.set(rule, new Set());
       const decls = split(state.orig.get(rule), ";");
+      declared[k + ":" + ri] = decls.map((d) => d.slice(0, d.indexOf(":")).trim());
       const off = state.off.get(rule);
       const apply = () => { rule.style.cssText = decls.filter((_, i) => !off.has(i)).join("; "); };
       const read = (props) => targets.map(([el, ps]) => { const cs = getComputedStyle(el, ps); return props.map((p) => cs.getPropertyValue(p)).join("|"); }).join("#");
@@ -242,14 +244,15 @@ const AUDIT_IN_PAGE = `(() => {
     });
   });
   still.remove();
-  return { matched, effective: [...state.proven], counts };
+  return { matched, declared, effective: [...state.proven], counts };
 })()`;
 const AUDIT_RESTORE = `(() => { for (const [rule, text] of window.__obsAudit?.orig ?? []) rule.style.cssText = text; delete window.__obsAudit; return true; })()`;
 
 const sheets = new Map(); // file name -> [{line, rule, selector, level}]
 const sources = []; // the injected text of each sheet, in the order the page lists them
 const ruleMatched = new Set(); // "sheet:rule"
-const declEffective = new Set(); // "sheet:rule:property"
+const ruleDeclared = new Map(); // "sheet:rule" -> property names as the browser lists them
+const declEffective = new Set(); // "sheet:rule:property", by the browser's name for the property
 let auditAligned = true;
 let renameChecked = false;
 let auditFailed = 0;
@@ -265,6 +268,7 @@ async function auditStep(key) {
     if (n !== mine) auditAligned = false; // the browser dropped a rule: rule numbers no longer line up
   });
   for (const m of r.matched) ruleMatched.add(m);
+  for (const [rule, names] of Object.entries(r.declared)) ruleDeclared.set(rule, names);
   for (const e of r.effective) declEffective.add(e);
 }
 
@@ -450,6 +454,14 @@ function report() {
   return broken;
 }
 
+const LONGHANDS = {
+  inset: ["top", "right", "bottom", "left"],
+  gap: ["row-gap", "column-gap"],
+  overflow: ["overflow-x", "overflow-y"],
+  flex: ["flex-grow", "flex-shrink", "flex-basis"],
+  "border-radius": ["border-top-left-radius", "border-top-right-radius", "border-bottom-left-radius", "border-bottom-right-radius"],
+};
+
 function reportAudit() {
   if (!auditAligned) {
     console.log("\nAudit: the browser dropped a rule, so declarations cannot be traced to their lines. Fix the invalid rules first.");
@@ -461,8 +473,14 @@ function reportAudit() {
     const rules = declarationsOf(css);
     const idle = [];
     rules.forEach((rule, ri) => {
-      if (!ruleMatched.has(`${k}:${ri}`)) return;
-      const dead = rule.props.filter((p) => !declEffective.has(`${k}:${ri}:${p}`));
+      const names = ruleDeclared.get(`${k}:${ri}`);
+      if (!names) return;
+      // The browser may list a declaration under another name (mask-image for -webkit-mask-image) or
+      // as its longhands, so a property as written is dead only if everything it became is.
+      const dead = rule.props.filter((p) => {
+        const became = names.filter((n) => n === p || n === p.replace(/^-webkit-/, "") || n.startsWith(`${p}-`) || LONGHANDS[p]?.includes(n));
+        return became.length > 0 && became.every((n) => !declEffective.has(`${k}:${ri}:${n}`));
+      });
       if (dead.length) idle.push({ ...rule, dead, all: dead.length === rule.props.length });
     });
     console.log(`\n${names[k]}: ${idle.length} rules with declarations that never changed anything on this tour`);
