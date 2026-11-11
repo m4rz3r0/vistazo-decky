@@ -52,9 +52,6 @@
 .allcollections_Collection_3IWn- {
   background-color: var(--obs-surface) !important;
 }
-.allcollections_Collection_3IWn-.gpfocus {
-  box-shadow: var(--obs-glow) !important;
-}
 .appportrait_LibraryItemBoxShine_MyNb5 {
   display: none !important;
 }
@@ -374,8 +371,12 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 /* Cabeceras de sección de la cuadrícula: solo el texto, sin raya ni velo */
 .appgrid_AppGridSectionHeader_3bWIS::after { display: none !important; }
 .appgrid_AppGridSectionHeader_3bWIS { box-shadow: none !important; }
-.appportrait_LibraryItemBox_WYgDg { box-shadow: none !important; }
-.appportrait_LibraryItemBox_WYgDg.gpfocus { box-shadow: var(--obs-glow) !important; }
+/* Portadas y colecciones enfocadas: basta el anillo de Steam, que ya va separado; sin un segundo
+   anillo pegado al borde. */
+.appportrait_LibraryItemBox_WYgDg,
+.allcollections_Collection_3IWn- { box-shadow: none !important; }
+/* La portada trae su propio contorno blanquecino: el mismo anillo que todo lo demás. */
+.appportrait_LibraryItemBox_WYgDg.gpfocus { outline: 1.5px solid var(--obs-ring) !important; outline-offset: var(--obs-ring-gap) !important; }
 /* Buscador: fondo negro y campo oscuro con texto claro */
 .gamepadsearch_GamepadSearch_P_AlE { background: #000 !important; }
 .searchbar_SearchFieldBackground_3F4YR,
@@ -819,6 +820,14 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 /* Notificaciones enfocadas: la superficie del tema, no la caja gris azulada de Steam. */
 [class*="3oKFhPrh1lbp-WtA72Q2Y"], [class*="30fVm4Rsel-4nUKEiPJg"] { border-radius: 10px !important; }
 [class*="3oKFhPrh1lbp-WtA72Q2Y"].gpfocus, [class*="30fVm4Rsel-4nUKEiPJg"].gpfocus { background: var(--obs-focus-bg) !important; }
+/* Los avisos de los plugins de Decky usan otra caja: la misma superficie y el anillo, por dentro
+   para que no lo corte el panel. */
+[class*="2yhmcyeUOyM8lt__Skbk9O"] { border-radius: 10px !important; }
+[class*="2yhmcyeUOyM8lt__Skbk9O"].gpfocus {
+  background: var(--obs-focus-bg) !important;
+  outline: 1.5px solid var(--obs-ring) !important;
+  outline-offset: -2px !important;
+}
 [class*="3oKFhPrh1lbp-WtA72Q2Y"].gpfocus *, [class*="30fVm4Rsel-4nUKEiPJg"].gpfocus [class*="2MGSmn9lIFnmLVIX49POS"] { color: var(--obs-focus-fg) !important; }
 /* Descargas: el botón de descargar es la acción de A. Con la fila enfocada, relleno del tono con el icono oscuro; sin foco, icono claro. */
 [class*="3oavRVhIS9tC3vBsFT4Gg"] svg { color: inherit !important; fill: currentColor; }
