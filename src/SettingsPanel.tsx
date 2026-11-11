@@ -60,6 +60,7 @@ export function SettingsPanel() {
       <PanelSection title={t.pageSection}>
         {toggle("page", t.pageLabel, t.pageDesc)}
         {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
+        {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
       </PanelSection>
       <ThemeSection />
       <PanelSection title={t.sound}>

@@ -126,6 +126,8 @@ const es = {
   updateToastTitle: (v: string) => `Vistazo ${v} disponible`,
   updateToastBody: "Pulsa para actualizar.",
   // Retro game page (RomM games, with Tender)
+  retroPageLabel: "Ficha de juegos retro",
+  retroPageDesc: "Logros y datos en los juegos de RomM. Sin esto, la ficha original de Tender.",
   retroPlatform: "Plataforma",
   retroRating: "Nota",
   retroSave: "Guardado",
@@ -256,6 +258,8 @@ const en: typeof es = {
   updateToastTitle: (v: string) => `Vistazo ${v} is out`,
   updateToastBody: "Press to update.",
   // Retro game page (RomM games, with Tender)
+  retroPageLabel: "Retro game page",
+  retroPageDesc: "Achievements and facts on RomM games. Off: Tender's own page.",
   retroPlatform: "Platform",
   retroRating: "Rating",
   retroSave: "Save",

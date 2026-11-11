@@ -233,7 +233,7 @@ function sync() {
   const m = /^\/library\/app\/(\d+)$/.exec(String(win?.m_history?.location?.pathname ?? ""));
   const appid = m ? Number(m[1]) : 0;
   const row = appid ? (doc.querySelector(".romm-play-section-row") as HTMLElement | null) : null;
-  if (!row || !row.parentElement || !settings().page) return clear(doc);
+  if (!row || !row.parentElement || !settings().retro) return clear(doc);
   if (!cache.has(appid)) {
     cache.set(appid, null);
     load(appid);
