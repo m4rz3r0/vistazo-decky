@@ -260,13 +260,14 @@ export const homeCss = `
   background: #000;
   opacity: 0.3;
   pointer-events: none;
-  transition: opacity calc(220ms * var(--vh-motion)) ease-out;
+  /* The cover you leave dims slowly; the one you reach lights up at once (see below). */
+  transition: opacity calc(320ms * var(--vh-motion)) cubic-bezier(0.3, 0, 0.3, 1);
 }
 .vh-row .vh-cover.gpfocus {
   transform: scale(calc(1 + 0.16 * var(--vh-motion)));
   z-index: 1;
 }
-.vh-row .vh-cover.gpfocus::after { opacity: 0; }
+.vh-row .vh-cover.gpfocus::after { opacity: 0; transition-duration: calc(140ms * var(--vh-motion)); transition-timing-function: ease-out; }
 .vh-row .vh-cover.gpfocus ~ .vh-cover {
   transform: translateX(var(--vh-shift)) scale(var(--vh-rest));
 }
@@ -346,14 +347,17 @@ export const homeCss = `
   outline: 1.5px solid transparent;
   outline-offset: 7px;
   z-index: 5;
-  transition: outline-color calc(160ms * var(--vh-motion)) ease-out,
-    outline-offset calc(200ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Leaving: the ring fades where it is, then steps back out. Arriving (below): quick, closing in. */
+  transition: outline-color calc(260ms * var(--vh-motion)) cubic-bezier(0.3, 0, 0.3, 1),
+    outline-offset 0s linear calc(260ms * var(--vh-motion));
 }
 /* Selected: a fine ring in the theme's tone, the same focus as a settings row. */
 .vh-friends.gpfocus {
   color: var(--vh-text);
   outline: 1.5px solid var(--obs-ring, var(--vh-accent));
   outline-offset: 3px;
+  transition: outline-color calc(110ms * var(--vh-motion)) ease-out,
+    outline-offset calc(200ms * var(--vh-motion)) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .vh-dot {
   display: inline-block;

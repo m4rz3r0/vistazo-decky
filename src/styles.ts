@@ -392,8 +392,8 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 .vz-desc-box {
   outline: 1.5px solid transparent;
   outline-offset: 4px;
-  transition: outline-color calc(160ms * var(--obs-motion, 0)) ease-out,
-    outline-offset calc(200ms * var(--obs-motion, 0)) cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: outline-color calc(260ms * var(--obs-motion, 0)) cubic-bezier(0.3, 0, 0.3, 1),
+    outline-offset 0s linear calc(260ms * var(--obs-motion, 0));
 }
 /* A description that doesn't fit can be chosen and opened in place. The box bleeds a little past
    the text so the text itself stays aligned with the facts above. */
@@ -408,6 +408,8 @@ ${page} ${c(ps.CloudStatusRow)}${busyCloud ? `:not(:has(${busyCloud}))` : ""} {
 .vz-desc-box.gpfocus {
   outline: 1.5px solid var(--obs-ring, var(--vz-accent));
   outline-offset: 0;
+  transition: outline-color calc(110ms * var(--obs-motion, 0)) ease-out,
+    outline-offset calc(200ms * var(--obs-motion, 0)) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .vz-desc-box.gpfocus .vz-desc { color: var(--vz-text); }
 .vz-desc.vz-open {

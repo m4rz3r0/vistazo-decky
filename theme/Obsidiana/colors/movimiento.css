@@ -1,11 +1,25 @@
 /* Obsidiana · Movimiento: solo responde a lo que haces con el mando; nada se mueve por su cuenta.
-   - El foco entra y sale con suavidad (160 ms) en filas, botones, menús y amigos; el anillo se cierra sobre lo elegido.
+   - Entrada rápida, salida suave: lo que eliges responde enseguida (110 ms) y lo que dejas se apaga
+     más despacio (260 ms). Así la interfaz va igual de rápida y deja una estela en vez de un corte.
+   - El anillo de foco se cierra sobre lo elegido; al salir solo se desvanece, sin moverse.
    - La portada enfocada crece un 4 % (la guía de foco de TV recomienda entre 2,5 % y 10 %).
-   - Un botón pulsado se hunde un poco.
+   - Menús y diálogos aparecen con un fundido corto y subiendo 6 px; no esperan a terminar para
+     aceptar una pulsación.
+   - Un botón pulsado se hunde un poco; el interruptor cambia de color con recorrido.
+   Solo se animan color, opacidad, transformación y contorno: nada que recoloque la pantalla.
    Si el sistema pide reducir el movimiento, no se aplica nada. */
 @media (prefers-reduced-motion: no-preference) {
-  /* Tells Vistazo (and anything else) that motion is on. */
-  :root:root { --obs-motion: 1; }
+  :root:root {
+    /* Tells Vistazo (and anything else) that motion is on. */
+    --obs-motion: 1;
+    --obs-in: 110ms;
+    --obs-out: 260ms;
+    --obs-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --obs-ease-out: cubic-bezier(0.3, 0, 0.3, 1);
+  }
+
+  /* Filas, botones, menús y amigos. The rule at rest holds the timings of leaving. The ring waits a
+     little further out and see-through; on leaving it fades where it is and only then steps back. */
   .gamepaddialog_Field_S-_La,
   button.DialogButton,
   .gamepadcontextmenu_contextMenuItem_1sdvo,
@@ -14,22 +28,60 @@
   [class*="2w9TpQwxU7vcwaAbf3"],
   [class*="34o03-8cUc3fQX1u650"],
   [class*="lgme24Fp_HWt"] {
-    /* The ring waits a little further out and see-through, so on focus it fades in while closing
-       onto the element. */
     outline: 1.5px solid transparent;
     outline-offset: 7px;
-    transition: background-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1), color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      outline-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1), outline-offset 200ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transition: background-color var(--obs-out) var(--obs-ease-out), color var(--obs-out) var(--obs-ease-out),
+      box-shadow var(--obs-out) var(--obs-ease-out), transform 160ms var(--obs-ease),
+      outline-color var(--obs-out) var(--obs-ease-out), outline-offset 0s linear var(--obs-out) !important;
   }
+  /* Arriving: quick, and the ring closes onto the element. */
+  .gamepaddialog_Field_S-_La:is(.gpfocus, .gpfocuswithin),
+  button.DialogButton.gpfocus,
+  .gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus,
+  .friend.gpfocus,
+  [class*="2mL2HfT5AkDXRi1YBnRW"]:is(.gpfocus, .gpfocuswithin),
+  [class*="2w9TpQwxU7vcwaAbf3"]:is(.gpfocus, .gpfocuswithin),
+  [class*="34o03-8cUc3fQX1u650"].gpfocus,
+  [class*="lgme24Fp_HWt"]:is(.gpfocus, .gpfocuswithin) {
+    transition: background-color var(--obs-in) ease-out, color var(--obs-in) ease-out,
+      box-shadow var(--obs-in) ease-out, transform 160ms var(--obs-ease),
+      outline-color var(--obs-in) ease-out, outline-offset 200ms var(--obs-ease) !important;
+  }
+  button.DialogButton:active {
+    transform: scale(0.97) !important;
+    transition-duration: 80ms !important;
+  }
+
+  /* Pestañas: la que dejas se apaga despacio. */
+  .gamepadtabbedpage_Tab_3eEbS { transition: background-color var(--obs-out) var(--obs-ease-out), color var(--obs-out) var(--obs-ease-out) !important; }
+  .gamepadtabbedpage_Tab_3eEbS:is(.gpfocus, .gamepadtabbedpage_Selected_3Gp1b) { transition-duration: var(--obs-in) !important; }
+
+  /* Portadas y colecciones: crecen deprisa, vuelven con calma. */
   .appportrait_LibraryItemBox_WYgDg,
   .allcollections_Collection_3IWn- {
-    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transition: transform var(--obs-out) var(--obs-ease-out), box-shadow var(--obs-out) var(--obs-ease-out) !important;
   }
   .appportrait_LibraryItemBox_WYgDg.gpfocus,
   .allcollections_Collection_3IWn-.gpfocus {
     transform: scale(1.04) !important;
+    transition: transform 180ms var(--obs-ease), box-shadow var(--obs-in) ease-out !important;
     z-index: 2;
   }
-  button.DialogButton:active { transform: scale(0.97) !important; }
+
+  /* Interruptor: el carril cambia de color mientras el botón recorre su camino. */
+  .gamepaddialog_ToggleRail_2JtC3,
+  .gamepaddialog_ToggleRail_2JtC3::before {
+    transition: background-color 220ms var(--obs-ease-out), opacity 220ms var(--obs-ease-out) !important;
+  }
+
+  /* Menús y diálogos: aparecen en un gesto corto. `translate` y no `transform`, que Steam usa para
+     colocarlos. */
+  .BasicUIContextMenu > div,
+  .DialogContent.GenericConfirmDialog {
+    animation: obs-appear 160ms var(--obs-ease) both;
+  }
+  @keyframes obs-appear {
+    from { opacity: 0; translate: 0 6px; }
+    to { opacity: 1; translate: 0 0; }
+  }
 }
