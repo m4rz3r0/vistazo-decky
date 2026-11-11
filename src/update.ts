@@ -104,7 +104,8 @@ const publish = () => {
 
 // Asks GitHub. Without `force` it keeps to once a day.
 export async function checkForUpdate(force = false): Promise<void> {
-  if (checking || (!force && Date.now() - saved.at < DAY)) return;
+  // Math.abs: a clock that was ahead when this was saved must not stop the checks.
+  if (checking || (!force && Math.abs(Date.now() - saved.at) < DAY)) return;
   checking = true;
   failed = false;
   publish();
@@ -120,11 +121,16 @@ export async function checkForUpdate(force = false): Promise<void> {
   publish();
 }
 
+let asked = 0;
 // Opens Decky's own "update plugin" dialog for the newest release.
 export function installUpdate() {
   const s = state();
-  if (!s.available || !s.latest) return;
-  DeckyBackend.call("utilities/install_plugin", s.latest.url, NAME, s.latest.version, s.latest.hash, UPDATE);
+  // A second press while Decky's dialog is coming up would open another one.
+  if (!s.available || !s.latest || Date.now() - asked < 5000) return;
+  asked = Date.now();
+  Promise.resolve(
+    DeckyBackend.call("utilities/install_plugin", s.latest.url, NAME, s.latest.version, s.latest.hash, UPDATE),
+  ).catch((e) => console.warn("[Vistazo] update", e));
 }
 
 // Once a day, a while after Steam starts, and one notification per new version. Only while
@@ -134,7 +140,7 @@ export function watchUpdates() {
     if (isUnloaded() || !settings().updates) return;
     await checkForUpdate();
     const s = state();
-    if (isUnloaded() || !s.available || !s.latest || saved.told === s.latest.version) return;
+    if (isUnloaded() || !settings().updates || !s.available || !s.latest || saved.told === s.latest.version) return;
     save({ told: s.latest.version });
     toaster.toast({ title: t.updateToastTitle(s.latest.version), body: t.updateToastBody, onClick: installUpdate });
   };
