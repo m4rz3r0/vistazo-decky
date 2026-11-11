@@ -147,7 +147,13 @@ export function fitPanel(el: HTMLElement, open: boolean): boolean {
     el.getBoundingClientRect().top -
     page.getBoundingClientRect().top +
     page.scrollTop;
-  const height = Math.max(0, page.clientHeight - top - footerReserve);
+  // The page can be a little taller than the window (it was 10 px with the family library notice):
+  // what counts is the part of the window above Steam's button hints.
+  const view = el.ownerDocument.defaultView?.innerHeight ?? page.clientHeight;
+  const height = Math.max(
+    0,
+    Math.min(page.clientHeight - top, view - el.getBoundingClientRect().top) - footerReserve,
+  );
   el.style.minHeight = `${height}px`;
   // The "up next" achievements that would run past the screen step aside (a row Steam adds above,
   // such as the family library notice, takes the room of one); the list goes when none fits.
@@ -159,7 +165,7 @@ export function fitPanel(el: HTMLElement, open: boolean): boolean {
     const limit = el.getBoundingClientRect().top + height;
     let shown = items.length;
     for (const item of items) {
-      if (item.getBoundingClientRect().bottom > limit + 1) {
+      if (item.getBoundingClientRect().bottom > limit) {
         item.style.display = "none";
         shown--;
       }
