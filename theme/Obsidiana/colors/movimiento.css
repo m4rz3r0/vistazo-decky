@@ -19,7 +19,9 @@
   }
 
   /* Filas, botones, menús y amigos. The rule at rest holds the timings of leaving. The ring waits a
-     little further out and see-through; on leaving it fades where it is and only then steps back. */
+     little further out and see-through; on leaving it fades where it is and only then steps back.
+     The corners wait too: several of these only get their rounded corners with the focus, and the
+     fading ring would turn square for a few frames. */
   .gamepaddialog_Field_S-_La,
   button.DialogButton,
   .gamepadcontextmenu_contextMenuItem_1sdvo,
@@ -32,7 +34,8 @@
     outline-offset: 7px;
     transition: background-color var(--obs-out) var(--obs-ease-out), color var(--obs-out) var(--obs-ease-out),
       box-shadow var(--obs-out) var(--obs-ease-out), transform 160ms var(--obs-ease),
-      outline-color var(--obs-out) var(--obs-ease-out), outline-offset 0s linear var(--obs-out) !important;
+      outline-color var(--obs-out) var(--obs-ease-out), outline-offset 0s linear var(--obs-out),
+      border-radius 0s linear var(--obs-out) !important;
   }
   /* Arriving: quick, and the ring closes onto the element. */
   .gamepaddialog_Field_S-_La:is(.gpfocus, .gpfocuswithin),
