@@ -1,6 +1,9 @@
-# Builds the plugin on every push and pull request. On a version tag (v1.2.3) it also checks that the
-# tag matches package.json and attaches Vistazo.zip to a GitHub release, ready for Decky's
-# "Install plugin from URL".
+# Builds the plugin on a version tag, on pull requests and when started by hand. On a version tag
+# (v1.2.3) it also checks that the tag matches package.json and attaches Vistazo.zip to a GitHub
+# release, ready for Decky's "Install plugin from URL".
+#
+# No run on pushes to main: main only moves at a release, together with its tag, so that run built
+# the same commit a second time.
 #
 # Two jobs on purpose. `build` installs and runs third-party packages, so it can only read the
 # repository and keeps no credentials in the checkout. `release` is the only one allowed to write,
@@ -9,9 +12,9 @@ name: Build and release
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
