@@ -11,6 +11,7 @@ import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
 import { watchGames } from "./data";
+import { watchRetroPages } from "./retro";
 import { watchUpdates } from "./update";
 import { settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
@@ -305,6 +306,7 @@ export default definePlugin(() => {
   setupTheme();
   const stopWatching = watchGames();
   const stopUpdates = watchUpdates();
+  const stopRetro = watchRetroPages();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,
@@ -316,6 +318,7 @@ export default definePlugin(() => {
       removeSounds();
       stopWatching();
       stopUpdates();
+      stopRetro();
       routerHook.removePatch(ROUTE, patch);
       routerHook.removePatch(HOME, homePatch);
     },

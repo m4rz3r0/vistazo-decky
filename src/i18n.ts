@@ -125,6 +125,25 @@ const es = {
   updateCheck: "Buscar ahora",
   updateToastTitle: (v: string) => `Vistazo ${v} disponible`,
   updateToastBody: "Pulsa para actualizar.",
+  // Retro game page (RomM games, with Tender)
+  retroPlatform: "Plataforma",
+  retroRating: "Nota",
+  retroSave: "Guardado",
+  retroSaveSynced: "Sincronizado",
+  retroSaveConflict: "En conflicto",
+  retroBios: "BIOS",
+  retroBiosOk: "Completa",
+  retroBiosMissing: "Incompleta",
+  retroHardcore: (n: number) => `${n} en modo difícil`,
+  retroHave: "Los tienen",
+  retroPlayers: (n: string) => `${n} jugadores`,
+  retroMore: "Guardados, BIOS y todos los logros",
+  lastSession: "Última sesión",
+  playtime: "Tiempo de juego",
+  sessionToday: "hoy",
+  sessionYesterday: "ayer",
+  sessionDaysAgo: (d: number) => `hace ${d} días`,
+  sessionNever: "sin jugar",
 };
 
 const en: typeof es = {
@@ -236,6 +255,25 @@ const en: typeof es = {
   updateCheck: "Check now",
   updateToastTitle: (v: string) => `Vistazo ${v} is out`,
   updateToastBody: "Press to update.",
+  // Retro game page (RomM games, with Tender)
+  retroPlatform: "Platform",
+  retroRating: "Rating",
+  retroSave: "Save",
+  retroSaveSynced: "Synced",
+  retroSaveConflict: "In conflict",
+  retroBios: "BIOS",
+  retroBiosOk: "Complete",
+  retroBiosMissing: "Incomplete",
+  retroHardcore: (n: number) => `${n} in hardcore`,
+  retroHave: "Earned by",
+  retroPlayers: (n: string) => `${n} players`,
+  retroMore: "Saves, BIOS and all achievements",
+  lastSession: "Last session",
+  playtime: "Play time",
+  sessionToday: "today",
+  sessionYesterday: "yesterday",
+  sessionDaysAgo: (d: number) => `${d} days ago`,
+  sessionNever: "not played",
 };
 
 export const t = lang === "es" ? es : en;

@@ -140,7 +140,7 @@ const pageOf = (el: HTMLElement) =>
 // The panel fills the first screen exactly, whatever rows Steam adds above (family library, cloud…):
 // the page is that one screen, with nothing below it to scroll to.
 // Returns whether the description doesn't fit (so it can be opened to read it whole).
-function fitPanel(el: HTMLElement, open: boolean): boolean {
+export function fitPanel(el: HTMLElement, open: boolean): boolean {
   const page = pageOf(el);
   if (!page) return open;
   const top =
