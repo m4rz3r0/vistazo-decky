@@ -17,8 +17,6 @@
   --obs-accent-2: #8fd63f;
   --obs-on-accent: #0b0f05;
   --obs-radius: 12px;
-  --obs-focus-fg: var(--obs-accent);
-  --obs-focus-bg: rgba(var(--obs-accent-rgb), 0.16);
   --obs-ring: var(--obs-accent);
   --obs-danger: #ff6b6b;
   --obs-danger-bg: rgba(255, 92, 92, 0.18);
@@ -28,7 +26,6 @@
   --obs-mode-bg: rgba(160, 136, 255, 0.18);
   --obs-ingame: #5fd8a0;
   --obs-reward: #f5cf5a;
-  --obs-glow: 0 0 0 1.5px var(--obs-ring);
 }
 
 /* Fondos: negro puro en lugar del degradado azulado */
@@ -37,27 +34,16 @@
 .appdetails_ScrollContainer_2l416.appdetails_Glassy_3Fmxx {
   background: var(--obs-bg) !important;
 }
-.backgroundglass_BackgroundGlass_3rsrz.backgroundglass_DrawBackground_2NQoF {
-  background-color: rgba(0, 0, 0, 0.82) !important;
-}
 
 /* Pestañas de la biblioteca: la seleccionada en lima */
 .gamepadtabbedpage_Tab_3eEbS {
   border-radius: 999px !important;
   transition: background-color 120ms ease, color 120ms ease;
 }
-.gamepadtabbedpage_Tab_3eEbS.gamepadtabbedpage_Selected_3Gp1b {
-  background-color: var(--obs-accent) !important;
-  color: var(--obs-on-accent) !important;
-}
-.gamepadtabbedpage_Tab_3eEbS.gamepadtabbedpage_Selected_3Gp1b * {
-  color: var(--obs-on-accent) !important;
-}
 
 /* Portadas y colecciones: esquinas suaves y foco con halo lima */
 .libraryassetimage_Container_1R9r2,
 .libraryassetimage_GreyBackground_2E7G8,
-.appportrait_LibraryItemBox_WYgDg,
 .allcollections_Collection_3IWn- {
   border-radius: var(--obs-radius) !important;
 }
@@ -65,7 +51,6 @@
 .allcollections_Collection_3IWn- {
   background-color: var(--obs-surface) !important;
 }
-.appportrait_LibraryItemBox_WYgDg.gpfocus,
 .allcollections_Collection_3IWn-.gpfocus {
   box-shadow: var(--obs-glow) !important;
 }
@@ -74,15 +59,11 @@
 }
 
 /* Ficha del juego: barra de jugar oscura y legible */
-.basicappdetailssectionstyler_PlaySection_3scbH,
-.romm-tab-bar,
-.romm-tab-content {
+.basicappdetailssectionstyler_PlaySection_3scbH {
   background-color: rgba(0, 0, 0, 0.72) !important;
-  backdrop-filter: blur(10px);
 }
 .appactionbutton_PlayButton_3ydig,
 .romm-btn-play {
-  background: linear-gradient(to right, var(--obs-accent), var(--obs-accent-2)) !important;
   color: var(--obs-on-accent) !important;
   border-radius: 12px !important;
   font-weight: 700 !important;
@@ -102,9 +83,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   color: var(--obs-on-accent) !important;
 }
 .gamepadcontextmenu_contextMenuContents_sIgB- {
-  background: var(--obs-surface) !important;
   border-radius: var(--obs-radius) !important;
-  border: 1px solid var(--obs-line);
 }
 .ModalPosition_Content > div:not(.ModalPosition_TopBar):not(.ModalPosition_Dismiss) {
   border-radius: var(--obs-radius);
@@ -117,11 +96,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 .gamepadslider_SliderTrack_Mq25N {
   --left-track-color: var(--obs-accent) !important;
 }
-.gamepadslider_SliderHandle_2yVKj {
-  background: #ffffff !important;
-  box-shadow: 0 0 0 3px var(--obs-accent);
-}
-
 
 /* Menú rápido (···) y menú principal (botón Steam) */
 .quickaccessmenu_QuickAccessMenu_V0cr-,
@@ -166,7 +140,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   width: 44px !important;
 }
 .romm-btn-dropdown svg { fill: var(--obs-on-accent) !important; color: var(--obs-on-accent) !important; }
-.romm-btn-play.gpfocus, .romm-btn-dropdown.gpfocus { box-shadow: var(--obs-glow) !important; }
+.romm-btn-dropdown.gpfocus { box-shadow: var(--obs-glow) !important; }
 .romm-info-header {
   font-size: 12px !important;
   font-weight: 700 !important;
@@ -191,9 +165,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   gap: 6px;
   height: auto !important;
   padding: 14px 24px !important;
-  border-bottom: 1px solid var(--obs-line) !important;
   background: var(--obs-bg) !important;
-  backdrop-filter: none;
 }
 .romm-tab {
   font-size: 14px !important;
@@ -206,14 +178,8 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   border-radius: 999px !important;
   color: #c9cdd2 !important;
 }
-.romm-tab.romm-tab-active {
-  background: var(--obs-accent) !important;
-  color: var(--obs-on-accent) !important;
-}
-.romm-tab.gpfocus:not(.romm-tab-active) { background: var(--obs-surface-2) !important; }
 .romm-tab-content {
   background: var(--obs-bg) !important;
-  backdrop-filter: none;
 }
 .romm-panel-section-title {
   font-size: 12px !important;
@@ -223,15 +189,12 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 }
 .romm-panel-label { font-size: 13px !important; }
 .romm-panel-tag {
-  background: var(--obs-surface-2) !important;
   border-radius: 999px !important;
-  padding: 2px 10px !important;
 }
 
 /* Anillo de foco nativo de Steam: lima y redondeado, a juego con el halo */
 .focusring_FocusRing_1IZrQ {
   border-color: var(--obs-ring) !important;
-  border-radius: 14px !important;
 }
 
 /* Ficha compacta: cabecera más baja para ver jugar, datos y pestañas sin desplazarse */
@@ -252,7 +215,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   border-radius: 12px !important;
   overflow: hidden;
 }
-.appactionbutton_PlayButton_3ydig.gpfocus { box-shadow: var(--obs-glow) !important; }
 .appdetailsplaysection_MenuButton_3qDWQ {
   border-radius: 12px !important;
   background: var(--obs-surface-2) !important;
@@ -381,18 +343,12 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   color: rgba(255, 255, 255, 0.5) !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  font-size: 13px !important;
   font-weight: 600 !important;
 }
 /* Listas de ajustes: sin líneas separadoras ni cajas; el foco se ve en el texto (ver «Foco» al final) */
 .gamepaddialog_Field_S-_La::after { display: none !important; }
 .gamepaddialog_StandaloneFieldSeparator_23kNb { background: transparent !important; }
 .quickaccesscontrols_EmptyNotifications_1g1_n::before { border: none !important; }
-.gamepaddialog_Field_S-_La.gpfocus {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 12px !important;
-}
 /* Interruptores y deslizadores */
 .gamepaddialog_ToggleRail_2JtC3 { background: rgba(255, 255, 255, 0.14) !important; }
 .gamepaddialog_ToggleRail_2JtC3::before { background: var(--obs-accent) !important; }
@@ -419,7 +375,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 }
 .gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus,
 .gamepadcontextmenu_contextMenuItem_1sdvo.gamepadcontextmenu_Focused_X813r {
-  background: var(--obs-focus-bg) !important;
   color: var(--obs-focus-fg) !important;
 }
 /* Anillo de foco nativo: una línea lima fina, sin halo */
@@ -468,9 +423,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   background: transparent !important;
   box-shadow: none !important;
   color: rgba(255, 255, 255, 0.55) !important;
-}
-.gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gamepadpagedsettings_Active_22LLB {
-  color: #ececec !important;
 }
 .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gamepadpagedsettings_Active_22LLB::before,
 .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gamepadpagedsettings_Active_22LLB::after {
@@ -545,9 +497,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 .friend.offline, .friend.offline * { color: rgba(255, 255, 255, 0.35) !important; }
 .friend.offline img { opacity: 0.5; }
 .friend.gpfocus {
-  background: transparent !important;
   box-shadow: none !important;
-  border-radius: 12px !important;
 }
 .friend .labelHolder svg, .friend .labelHolder svg * { color: rgba(255, 255, 255, 0.5) !important; fill: rgba(255, 255, 255, 0.5) !important; }
 /* Conversación con un amigo: sin sombras ni degradados; campo de texto oscuro; botones laterales sin caja */
@@ -578,7 +528,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 }
 .appactionbutton_PlayButton_3ydig,
 .romm-btn-play {
-  background: var(--obs-accent) !important;
   box-shadow: none !important;
 }
 .romm-tab-bar { border-bottom: none !important; }
@@ -679,14 +628,11 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
    - Lo demás: el anillo propio de Steam, en lima y sin separación, en vez del contorno blanco. */
 .focusring_FocusRing_1IZrQ {
   outline: 1.5px solid var(--obs-ring) !important;
-  outline-offset: 0 !important;
-  border-radius: 14px !important;
 }
 .gamepaddialog_Field_S-_La.gpfocuswithin,
 .gamepaddialog_Field_S-_La.gpfocus {
   background: var(--obs-focus-bg) !important;
   box-shadow: none !important;
-  border-radius: 10px !important;
 }
 .gamepaddialog_Field_S-_La.gpfocus .gamepaddialog_FieldLabel_3b0U-,
 .gamepaddialog_Field_S-_La.gpfocus .gamepaddialog_FieldLabel_3b0U- * { color: var(--obs-focus-fg) !important; }
@@ -720,11 +666,9 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
    como destructivo), ámbar. Y rojo solo para lo más serio: la primera acción destructiva tras una normal
    (Apagar, Desinstalar…). */
 [tone="destructive"].gpfocus {
-  background: var(--obs-warn-bg) !important;
   color: var(--obs-warn) !important;
 }
 [role="menu"] > :not([tone]):not([role="separator"]) + [tone="destructive"].gpfocus {
-  background: var(--obs-danger-bg) !important;
   color: var(--obs-danger) !important;
 }
 [class*="ixiWPQKqTMxnq43WgT3"] {
@@ -780,7 +724,6 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
    como destructiva, es un cambio de modo y no un riesgo, así que va en violeta. */
 [role="menu"]:has(> [role="separator"] ~ [role="separator"] ~ [role="separator"])
   > [tone="destructive"]:not(:has(~ [tone="destructive"])).gpfocus {
-  background: var(--obs-mode-bg) !important;
   color: var(--obs-mode) !important;
 }
 
@@ -1185,7 +1128,6 @@ button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap
   border-radius: 14px !important;
   margin: 6px 0 0 8px !important;
 }
-
 
 /* ===== Foco con anillo (2026-11-10) =====
    El foco deja de teñir el fondo: lo marca un anillo fino del tono del tema, separado 3 px del
