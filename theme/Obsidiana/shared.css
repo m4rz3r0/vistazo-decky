@@ -1,17 +1,21 @@
 /* Obsidiana — tema propio para Steam Deck OLED.
-   Negro puro (ahorra batería en OLED), superficies carbón, acento lima. */
-/* Guía de color (v4). Cada color dice una cosa:
-   - Tono del tema (Lima por defecto; se elige en CSS Loader → Obsidiana → Color): todo lo que se puede
-     pulsar y dónde estás. Foco = superficie teñida del tono + texto en el tono; acción principal e
-     «activado» = relleno del tono. Mismo modelo que el color de tinte de iOS y la superficie tonal de Android TV.
+   Negro puro (ahorra batería en OLED), superficies carbón y un tono vivo. */
+/* Guía de color (v5). Cada color dice una cosa:
+   - Tono del tema (Lima por defecto; se elige en CSS Loader → Obsidiana → Color): la acción principal y
+     lo «activado» van rellenos del tono; el foco es un anillo fino del tono, separado del elemento y
+     con sus mismas esquinas, sin teñir el fondo ni el texto (ver «Foco con anillo» más abajo).
+   - Dónde estás (pestaña o sección actual): en blanco, con el resto atenuado. Sin color.
    - Estados, fijos en todos los temas: menta = jugando; oro = logros;
      ámbar = precaución; rojo = irreversible; violeta = cambio de modo.
-   Colores saturados sobre negro puro: en el OLED brillan sin encender el resto de la pantalla. */
+   Colores saturados sobre negro puro: en el OLED brillan sin encender el resto de la pantalla.
+
+   Cómo está ordenado: las reglas van por pantallas, de lo general a lo particular, y lo que viene
+   después manda. `node tools/theme-check.mjs` recorre la Deck y avisa de las clases que Steam haya
+   renombrado; con --audit señala las declaraciones que ya no cambian nada. */
 :root {
   --obs-bg: #000000;
   --obs-surface: #121212;
   --obs-surface-2: #1c1c1c;
-  --obs-line: #2a2a2a;
   --obs-accent: #b8f35a;
   --obs-accent-rgb: 184, 243, 90;
   --obs-accent-2: #8fd63f;
@@ -19,11 +23,8 @@
   --obs-radius: 12px;
   --obs-ring: var(--obs-accent);
   --obs-danger: #ff6b6b;
-  --obs-danger-bg: rgba(255, 92, 92, 0.18);
   --obs-warn: #ffbe5c;
-  --obs-warn-bg: rgba(255, 176, 64, 0.16);
   --obs-mode: #b9a6ff;
-  --obs-mode-bg: rgba(160, 136, 255, 0.18);
   --obs-ingame: #5fd8a0;
   --obs-reward: #f5cf5a;
 }
@@ -35,13 +36,13 @@
   background: var(--obs-bg) !important;
 }
 
-/* Pestañas de la biblioteca: la seleccionada en lima */
+/* Pestañas de la biblioteca: píldoras */
 .gamepadtabbedpage_Tab_3eEbS {
   border-radius: 999px !important;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
-/* Portadas y colecciones: esquinas suaves y foco con halo lima */
+/* Portadas y colecciones: esquinas suaves */
 .libraryassetimage_Container_1R9r2,
 .libraryassetimage_GreyBackground_2E7G8,
 .allcollections_Collection_3IWn- {
@@ -82,14 +83,11 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   background: var(--obs-accent) !important;
   color: var(--obs-on-accent) !important;
 }
-.gamepadcontextmenu_contextMenuContents_sIgB- {
-  border-radius: var(--obs-radius) !important;
-}
 .ModalPosition_Content > div:not(.ModalPosition_TopBar):not(.ModalPosition_Dismiss) {
   border-radius: var(--obs-radius);
 }
 
-/* Interruptores y deslizadores en lima */
+/* Interruptores y deslizadores en el tono del tema */
 .gamepaddialog_ToggleSwitch_3__OD.gamepaddialog_On_3ld7T .gamepaddialog_ToggleRail_2JtC3 {
   background: var(--obs-accent) !important;
 }
@@ -103,21 +101,10 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   background: var(--obs-bg) !important;
 }
 /* Menú principal: CSS Loader traduce mal estas clases, así que van como fragmentos de atributo, que no reconoce.
-   Fila sin caja; el foco pone texto e icono en lima; la sección actual, una marca blanca discreta. */
-[class*="2w9TpQwxU7vcwaAbf3"],
-[class*="2w9TpQwxU7vcwaAbf3"].gpfocuswithin {
-  background: transparent !important;
-  box-shadow: none !important;
-}
+   Fila sin caja; la sección actual, una marca blanca discreta. */
 [class*="2w9TpQwxU7vcwaAbf3"].gpfocus {
   background: var(--obs-focus-bg) !important;
-  box-shadow: none !important;
   border-radius: 10px !important;
-}
-[class*="2w9TpQwxU7vcwaAbf3"].gpfocus,
-[class*="2w9TpQwxU7vcwaAbf3"].gpfocus [class*="3xZ3ZujYllkNRr5UdD"],
-[class*="2w9TpQwxU7vcwaAbf3"].gpfocus [class*="3x-ZK1MiNB1Uvo7Aa6q"] * {
-  color: var(--obs-focus-fg) !important;
 }
 [class*="1uLVHdiiCg78BRnhqLx"] {
   background: #ececec !important;
@@ -192,7 +179,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   border-radius: 999px !important;
 }
 
-/* Anillo de foco nativo de Steam: lima y redondeado, a juego con el halo */
+/* Anillo de foco propio de Steam: del tono del tema */
 .focusring_FocusRing_1IZrQ {
   border-color: var(--obs-ring) !important;
 }
@@ -200,13 +187,9 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 /* Ficha compacta: cabecera más baja para ver jugar, datos y pestañas sin desplazarse */
 .BasicUI .sharedappdetailsheader_TopCapsule_2meE3:not(.sharedappdetailsheader_FullscreenEnterStart_P7eLv):not(.sharedappdetailsheader_FullscreenEnterDone_1PRtu) {
   height: 35vh !important;
-  min-height: 0 !important;
 }
 .sharedappdetailsheader_HeaderBackgroundImage_1sarA {
   object-position: center 30% !important;
-}
-.basicappdetailssectionstyler_AppDetailsRoot_3fp5y {
-  background: var(--obs-bg) !important;
 }
 
 /* Contenedor del botón Jugar de Steam: sin caja gris ni esquinas rectas */
@@ -217,9 +200,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 }
 .appdetailsplaysection_MenuButton_3qDWQ {
   border-radius: 12px !important;
-  background: var(--obs-surface-2) !important;
 }
-.appdetailsplaysection_MenuButton_3qDWQ.gpfocus { box-shadow: var(--obs-glow) !important; }
 .romm-play-section-row .appactionbutton_PlayButtonContainer_1FnJ6 {
   overflow: visible !important;
   width: auto !important;
@@ -234,7 +215,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 }
 .romm-play-section-row .romm-btn-dropdown svg { fill: var(--obs-accent) !important; color: var(--obs-accent) !important; }
 
-/* Ficha de Steam: la compone el plugin Vistazo (panel único, solo pestaña Tus cosas). */
+/* Ficha de Steam: la compone el plugin Vistazo (una sola pantalla, en dos columnas). */
 
 /* Inicio: último juego protagonista y el resto en fila */
 .gamepadhomerecentgames_RecentGamesBackgroundImages_30D-8 {
@@ -271,7 +252,7 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
   letter-spacing: 0.04em;
 }
 
-/* Panel de Novedades: secciones con cabecera lima y tarjetas carbón redondeadas */
+/* Panel de Novedades (inicio de Steam, cuando el de Vistazo está apagado): cabeceras tenues y tarjetas carbón redondeadas */
 .recentlycompleted_Header_NhBU2,
 .homestorecarousel_Header_xpRXv,
 .recentlycompleted_Header_NhBU2 *,
@@ -320,30 +301,26 @@ button.gamepaddialog_Button_1kn70.DialogButton.Primary {
 /* El inicio lo compone el plugin Vistazo (escenario con estanterías, amigos y estado en la esquina);
    las reglas de pestañas del inicio de Steam ya no hacen falta. */
 
-/* Calma OLED: negro donde no hay nada que decir; sin cajas, bordes, brillos ni desenfoques.
-   El lima solo marca lo seleccionado o enfocado. Va al final para mandar sobre lo anterior. */
+/* Calma OLED: negro donde no hay nada que decir; sin cajas, bordes, brillos ni desenfoques. */
 :root { --obs-glow: 0 0 0 1.5px var(--obs-ring); --obs-motion: 0; }
 .backgroundglass_BackgroundGlass_3rsrz.backgroundglass_DrawBackground_2NQoF {
   background-color: rgba(0, 0, 0, 0.9) !important;
   backdrop-filter: none !important;
 }
 /* Menú rápido (···) */
-.quickaccessmenu_Title_34nl5 { background: #000 !important; box-shadow: none !important; }
+.quickaccessmenu_Title_34nl5 { background: #000 !important;}
 .quickaccessmenu_Tabs_3Ag1w::after { display: none !important; }
 .quickaccessmenu_Tab_1S76C.quickaccessmenu_Selected_2QHMu {
   background: transparent !important;
-  box-shadow: none !important;
   border-radius: 12px !important;
 }
 .quickaccesscontrols_PanelSection_2C0g0 {
-  background: transparent !important;
   margin: 2px 8px 12px !important;
 }
 .quickaccesscontrols_PanelSectionTitle_2iFf9 {
   color: rgba(255, 255, 255, 0.5) !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  font-weight: 600 !important;
 }
 /* Listas de ajustes: sin líneas separadoras ni cajas; el foco se ve en el texto (ver «Foco» al final) */
 .gamepaddialog_Field_S-_La::after { display: none !important; }
@@ -369,16 +346,11 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   color: var(--obs-focus-fg) !important;
 }
 /* Menús contextuales */
-.gamepadcontextmenu_contextMenuContents_sIgB- {
-  background: #0a0a0a !important;
-  border: none !important;
-}
 .gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus,
 .gamepadcontextmenu_contextMenuItem_1sdvo.gamepadcontextmenu_Focused_X813r {
   color: var(--obs-focus-fg) !important;
 }
-/* Anillo de foco nativo: una línea lima fina, sin halo */
-.focusring_FocusRing_1IZrQ { box-shadow: none !important; }
+/* Anillo de foco propio de Steam: una línea fina, sin halo */
 
 /* Calma OLED en biblioteca, buscador y Ajustes */
 /* Cabecera, fila de pestañas y pie: negro sólido, sin velos ni líneas */
@@ -390,11 +362,10 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   background: #000 !important;
   border-top: none !important;
 }
-/* Pestañas: la elegida es una palabra lima, no una píldora; L1 y R1 discretos */
+/* Pestañas: la elegida es una palabra en blanco, no una píldora; L1 y R1 discretos */
 .gamepadtabbedpage_Tab_3eEbS.gamepadtabbedpage_Selected_3Gp1b {
   background: transparent !important;
   box-shadow: none !important;
-  color: #ffffff !important;
 }
 .gamepadtabbedpage_Tab_3eEbS.gamepadtabbedpage_Selected_3Gp1b * {
   color: #ffffff !important;
@@ -421,7 +392,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 .gamepadpage_GamepadPage_2FqpD { background: #000 !important; }
 .gamepadpagedsettings_PagedSettingsDialog_PageListColumn_2EZ3o .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r {
   background: transparent !important;
-  box-shadow: none !important;
   color: rgba(255, 255, 255, 0.55) !important;
 }
 .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gamepadpagedsettings_Active_22LLB::before,
@@ -429,20 +399,15 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   display: none !important;
 }
 .gamepadpagedsettings_PagedSettingsDialog_PageListColumn_2EZ3o .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gpfocus {
-  background: transparent !important;
-  box-shadow: none !important;
   border-radius: 12px !important;
-  color: var(--obs-focus-fg) !important;
 }
 .gamepadpagedsettings_PagedSettingDialog_ContentColumn_3JPle .gamepaddialog_Field_S-_La {
   background: transparent !important;
 }
 .appgrid_Rule_3pJqX { display: none !important; }
 .searchbar_SearchIconLeft_2Ya83 { color: rgba(255, 255, 255, 0.6) !important; }
-.searchbar_SearchIconLeft_2Ya83 * { fill: currentColor !important; }
 .gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r { border-left: none !important; }
-.gamepadpagedsettings_PagedSettingsDialog_PageListItem_1ix7r.gamepadpagedsettings_Active_22LLB { color: #ffffff !important; }
-/* Teclado en pantalla: negro, teclas apenas marcadas, las de función sin caja; el foco en lima */
+/* Teclado en pantalla: negro, teclas apenas marcadas, las de función sin caja */
 .virtualkeyboard_Keyboard_45rH7 { background: #000 !important; }
 .virtualkeyboard_Keyboard_45rH7 * { animation: none !important; }
 .virtualkeyboard_KeyboardKey_2KhPX {
@@ -482,13 +447,12 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 .friendListButton.AddFriendButton.gpfocus { color: var(--obs-focus-fg) !important; }
 .FriendsListSteamDeckTabs img { opacity: 0.35; }
 .FriendsListTab svg { opacity: 0.4; }
-.FriendsListTab.Active svg { opacity: 1; color: #ffffff !important; fill: #ffffff !important; }
-.FriendsListTab.Active svg path { fill: #ffffff !important; }
+.FriendsListTab.Active svg { opacity: 1; color: #ffffff !important;}
 .groupCount { color: rgba(255, 255, 255, 0.4) !important; }
 .avatarStatus { display: none !important; }
 .ChatRoomGroupAvatar, .ChatRoomMultiFriendAvatar { border: none !important; box-shadow: none !important; }
 .friend.ingame, .friend.ingame .labelHolder > :first-child * { color: #ececec !important; }
-/* Jugando: verde menta, distinto del lima del foco y del gris de desconectado. */
+/* Jugando: verde menta, distinto del tono del tema y del gris de desconectado. */
 .friend.ingame .labelHolder > :last-child * { color: var(--obs-ingame) !important; }
 .friend.online, .friend.online .labelHolder > :first-child * { color: #ececec !important; }
 .friend.online .labelHolder > :last-child * { color: rgba(255, 255, 255, 0.6) !important; }
@@ -499,9 +463,9 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 .friend.gpfocus {
   box-shadow: none !important;
 }
-.friend .labelHolder svg, .friend .labelHolder svg * { color: rgba(255, 255, 255, 0.5) !important; fill: rgba(255, 255, 255, 0.5) !important; }
+.friend .labelHolder svg, .friend .labelHolder svg * { fill: rgba(255, 255, 255, 0.5) !important; }
 /* Conversación con un amigo: sin sombras ni degradados; campo de texto oscuro; botones laterales sin caja */
-.chattabs_ChatTab_X2iyw { box-shadow: none !important; background: #000 !important; }
+.chattabs_ChatTab_X2iyw { background: #000 !important; }
 .insetshadow_FriendListInsetShadowTop_2-sgw { display: none !important; }
 .ChatHistorySelector, .FriendChatTypingNotification { background: transparent !important; }
 .preHorizDivider, .horizDivider { background: transparent !important; }
@@ -511,7 +475,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   border-radius: 12px !important;
 }
 .oneOnOneVoiceChatButton, .inviteAnotherFriendButton {
-  background: transparent !important;
   color: rgba(255, 255, 255, 0.5) !important;
 }
 .oneOnOneVoiceChatButton.gpfocus, .inviteAnotherFriendButton.gpfocus {
@@ -519,8 +482,8 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   color: var(--obs-focus-fg) !important;
 }
 
-/* Calma OLED, pase de auditoría (2026-11-09): sin desenfoque tras la barra de jugar, «Jugar» en lima liso,
-   pestañas de la ficha retro sin pastilla ni raya: el lima solo en la pestaña elegida y en el foco. */
+/* Calma OLED, pase de auditoría (2026-11-09): sin desenfoque tras la barra de jugar, «Jugar» en el tono liso,
+   pestañas de la ficha retro sin pastilla ni raya. */
 .basicappdetailssectionstyler_PlaySection_3scbH,
 .romm-tab-bar,
 .romm-tab-content {
@@ -546,10 +509,9 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 }
 
 /* Lista de plugins (menú rápido → Decky): filas limpias, icono y nombre alineados a la izquierda,
-   sin cajas; el foco pone el nombre y el icono en lima, como el resto de menús. */
+   sin cajas; el foco, como en el resto de menús. */
 #quickaccess_content_999 .quickaccessmenu_Title_34nl5 .gamepaddialog_Button_1kn70 {
   background: transparent !important;
-  box-shadow: none !important;
   color: rgba(255, 255, 255, 0.55) !important;
 }
 #quickaccess_content_999 .quickaccessmenu_Title_34nl5 .gamepaddialog_Button_1kn70.gpfocus {
@@ -558,8 +520,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
 }
 #quickaccess_content_999 .gamepaddialog_Button_1kn70:has(> div[style*="space-between"] > svg:first-child) {
   background: transparent !important;
-  box-shadow: none !important;
-  border-radius: 10px !important;
   padding-left: 12px !important;
   color: #ececec !important;
 }
@@ -572,7 +532,6 @@ button.gamepaddialog_Button_1kn70.DialogButton.gpfocus:not(.Primary) {
   opacity: 0.5;
 }
 #quickaccess_content_999 .gamepaddialog_Button_1kn70.gpfocus:has(> div[style*="space-between"] > svg:first-child) {
-  background: transparent !important;
   box-shadow: none !important;
   border-radius: 12px !important;
   color: var(--obs-focus-fg) !important;
@@ -600,14 +559,14 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   color: var(--obs-focus-fg) !important;
 }
 button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] > svg { display: none; }
-#quickaccess_content_999 .quickaccessmenu_Title_34nl5 { background: #000 !important; z-index: 2; padding-bottom: 14px !important; }
+#quickaccess_content_999 .quickaccessmenu_Title_34nl5 { z-index: 2; padding-bottom: 14px !important; }
 
-/* Menú rápido: la pestaña elegida se ve en su icono lima, sin raya; el resto, tenue.
+/* Menú rápido: la pestaña elegida se ve en su icono blanco, sin raya; el resto, tenue.
    Texto algo mayor para leer de un vistazo y filas que aprovechan el ancho. */
 .quickaccessmenu_Tab_1S76C svg { color: rgba(255, 255, 255, 0.45); }
 .quickaccessmenu_Tab_1S76C.quickaccessmenu_Selected_2QHMu svg { color: #ffffff !important; }
-/* The tab with the focus: Steam paints it solid white and expects a dark icon, but the icons above
-   are light, so it read as a blank block. Same focus as everywhere: tinted surface, icon in the hue. */
+/* La pestaña enfocada: Steam la pinta en blanco y espera un icono oscuro, pero los iconos de arriba
+   son claros y se veía un bloque vacío. Superficie gris e icono blanco; el anillo, más abajo. */
 .quickaccessmenu_Tab_1S76C.gpfocus {
   background: var(--obs-focus-bg) !important;
   border-radius: 12px;
@@ -620,26 +579,19 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   padding-bottom: 12px !important;
 }
 
-/* Foco: una sola señal por elemento, nunca dos, y que se vea de un vistazo.
-   - Imágenes (portadas, banners): anillo lima de 2 px.
-   - Filas de listas (menús, plugins, ajustes, amigos): una superficie redondeada clara y el texto en lima.
-   - Acciones destructivas (apagar, reiniciar, cerrar sesión…): la misma superficie en rojo.
-   - Botones con superficie: la superficie se queda, el texto pasa a lima.
-   - Lo demás: el anillo propio de Steam, en lima y sin separación, en vez del contorno blanco. */
+/* Foco: una sola señal por elemento y que se vea de un vistazo. Aquí va la superficie que apenas se
+   aclara bajo lo enfocado; el anillo, que es la señal, está en «Foco con anillo». */
 .focusring_FocusRing_1IZrQ {
   outline: 1.5px solid var(--obs-ring) !important;
 }
 .gamepaddialog_Field_S-_La.gpfocuswithin,
 .gamepaddialog_Field_S-_La.gpfocus {
   background: var(--obs-focus-bg) !important;
-  box-shadow: none !important;
 }
 .gamepaddialog_Field_S-_La.gpfocus .gamepaddialog_FieldLabel_3b0U-,
 .gamepaddialog_Field_S-_La.gpfocus .gamepaddialog_FieldLabel_3b0U- * { color: var(--obs-focus-fg) !important; }
 .friend.gpfocus .labelHolder > :first-child * { color: var(--obs-focus-fg) !important; }
 .friend.gpfocus { background: var(--obs-focus-bg) !important; border-radius: 10px !important; }
-.gamepadcontextmenu_contextMenuItem_1sdvo.gpfocus,
-.gamepadcontextmenu_contextMenuItem_1sdvo.gamepadcontextmenu_Focused_X813r { background: var(--obs-focus-bg) !important; }
 /* Menús contextuales (p. ej. Iniciar/Apagar): filas sobre el negro del menú, sin el gris azulado de
    Steam; los separadores, una línea fina. Fragmentos de clase: CSS Loader traduce mal estos nombres. */
 /* Medidas con ritmo de 4 px y radios concéntricos: panel 16 px con 6 px de margen interior, fila 10 px. */
@@ -662,7 +614,7 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   color: rgba(255, 255, 255, 0.6) !important;
 }
 [class*="34o03-8cUc3fQX1u650"].gpfocus { background: var(--obs-focus-bg) !important; }
-/* Color por gravedad. Lo inocuo, superficie clara y lima. Lo que interrumpe o reinicia (Steam lo marca
+/* Color por gravedad. Lo inocuo, superficie clara y el tono del tema. Lo que interrumpe o reinicia (Steam lo marca
    como destructivo), ámbar. Y rojo solo para lo más serio: la primera acción destructiva tras una normal
    (Apagar, Desinstalar…). */
 [tone="destructive"].gpfocus {
@@ -672,12 +624,10 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   color: var(--obs-danger) !important;
 }
 [class*="ixiWPQKqTMxnq43WgT3"] {
-  height: 1px !important;
   margin: 4px 14px !important;
   background: rgba(255, 255, 255, 0.08) !important;
 }
 #quickaccess_content_999 .gamepaddialog_Button_1kn70::before { box-shadow: none !important; }
-#quickaccess_content_999 .gamepaddialog_Button_1kn70.gpfocus > div[style*="space-between"] > svg:first-child { color: var(--obs-focus-fg); }
 
 /* Jugar: la acción principal lleva siempre el relleno del tono; el foco solo le añade el anillo. */
 .appactionbutton_PlayButton_3ydig,
@@ -696,23 +646,18 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 ._294HV0se7vdDLPe-RvRZbb img { filter: brightness(0.5); object-position: center 30%; }
 ._3FQHgRosfNJYE44Fsd_U6z { background: #000 !important; }
 ._1UXC2lGcmNTGepRJTwtuH0 { background: transparent !important; }
-._36Dp_CLuZbFCm7KDc9tbCv { height: auto !important; min-height: 0 !important; }
-._36Dp_CLuZbFCm7KDc9tbCv ._2iGYYePQN5QQzHWNLybmd4 { height: auto !important; min-height: 0 !important; padding: 4px 0 0 !important; }
+._36Dp_CLuZbFCm7KDc9tbCv { min-height: 0 !important; }
+._36Dp_CLuZbFCm7KDc9tbCv ._2iGYYePQN5QQzHWNLybmd4 { padding: 4px 0 0 !important; }
 ._36Dp_CLuZbFCm7KDc9tbCv ._2SjmZt7H8ly6xW3pCbiuwG { display: none !important; }
 ._36Dp_CLuZbFCm7KDc9tbCv .Pr0VCo6YB9GN5VnGd_wvF {
-  display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   gap: 28px;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
 }
-._36Dp_CLuZbFCm7KDc9tbCv ._3wNylaCAUJ8XtRM6mu2C0k { flex: none; width: auto !important; font-size: 26px !important; font-weight: 700; margin: 0 !important; }
+._36Dp_CLuZbFCm7KDc9tbCv ._3wNylaCAUJ8XtRM6mu2C0k { flex: none;font-size: 26px !important; font-weight: 700;}
 ._36Dp_CLuZbFCm7KDc9tbCv .Pr0VCo6YB9GN5VnGd_wvF > :last-child { flex: 1; min-width: 0; }
 ._gDkIgrqhJq-FtbuR9wJi { background: transparent !important; padding: 8px 16px !important; }
 ._1-nHjRywUoX7Mpyc6JOPaQ { background: rgba(255, 255, 255, 0.14) !important; }
-._2_0JonK7eKEvh8IoOvq0-B { background: #ececec !important; }
 ._2Kmn7fJOkLT4KyWl467a9M { background: transparent !important; }
 ._2Kmn7fJOkLT4KyWl467a9M ._2V2sHETNfa62yMoDwSF3_t { box-shadow: none !important; border-radius: 10px; }
 ._2Kmn7fJOkLT4KyWl467a9M ._17dhGq-FsL8xZBes7dOOlN { font-size: 18px !important; color: #ececec !important; }
@@ -748,7 +693,7 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%);
 }
 /* Navegación lateral (Ajustes, propiedades del juego): la sección abierta y el foco no pueden verse igual.
-   Abierta: texto blanco en negrita. Enfocada: superficie redondeada y texto lima, como cualquier fila. */
+   Abierta: texto blanco en negrita. Enfocada: superficie redondeada y anillo, como cualquier fila. */
 [class*="2mL2HfT5AkDXRi1YBnRW"] {
   margin: 0 10px !important;
   padding-left: 14px !important;
@@ -763,7 +708,7 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   background: var(--obs-focus-bg) !important;
   color: var(--obs-focus-fg) !important;
 }
-/* Filas de ajustes con el foco en su control: la etiqueta también en lima; radio que abraza al control. */
+/* Filas de ajustes con el foco en su control: radio que abraza al control. */
 .gamepaddialog_Field_S-_La.gpfocuswithin,
 .gamepaddialog_Field_S-_La.gpfocus { border-radius: 14px !important; }
 .gamepaddialog_Field_S-_La.gpfocuswithin .gamepaddialog_FieldLabel_3b0U-,
@@ -781,11 +726,10 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 }
 [class*="7EGqd8bdiXJBd2fj5Hh8"].gpfocus,
 [class*="2LyGIHuQ8SFKb5T262YU"].gpfocus { background: var(--obs-focus-bg) !important; }
-/* Botones de opción: aro tenue; el elegido, lima con el centro hueco. */
+/* Botones de opción: aro tenue; el elegido, en el tono del tema con el centro hueco. */
 [class*="2sQtvR60AbFF5UzDwY9h"] {
   background: transparent !important;
   border: 2px solid rgba(255, 255, 255, 0.45) !important;
-  box-sizing: border-box;
 }
 [class*="2sQtvR60AbFF5UzDwY9h"][class*="1gKI37LOWj1Df3QSnxvK"] {
   background: var(--obs-accent) !important;
@@ -816,7 +760,7 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 [class*="373v1eWNyaPKhgnea9FZ"] { box-shadow: none !important; }
 [class*="SEmVpmXrYVl3OxL1sDFT"] { display: none !important; }
 /* Campos de texto (código de amigo, nombres, búsquedas en diálogos): nunca una caja blanca sobre negro.
-   Superficie oscura, texto claro; con el foco, más luz y un aro lima fino por dentro. */
+   Superficie oscura, texto claro; con el foco, más luz y un aro fino del tono por dentro. */
 .DialogInput,
 .DialogInput:focus,
 .DialogInput.gpfocus {
@@ -826,7 +770,6 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   border-radius: 10px !important;
   padding-left: 14px !important;
 }
-.DialogInput::placeholder { color: rgba(255, 255, 255, 0.4) !important; }
 .DialogInput:focus,
 .DialogInput.gpfocus,
 .DialogInput_Wrapper.gpfocuswithin .DialogInput {
@@ -861,9 +804,9 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 /* Deslizadores del menú rápido: la etiqueta en una línea; si el valor no cabe al lado, baja a la derecha. */
 [class*="3jMlJm4PQCA8SfNlUR99F"]:has(> [class*="11I0_AlsB40ak50752rsu"]) { flex-wrap: wrap !important; row-gap: 2px; }
 [class*="3jMlJm4PQCA8SfNlUR99F"] > [class*="1eMTvSj5tJlivVheftbZ5"] { white-space: nowrap !important; }
-[class*="3jMlJm4PQCA8SfNlUR99F"] > [class*="11I0_AlsB40ak50752rsu"] { margin-left: auto !important; white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important; }
+[class*="3jMlJm4PQCA8SfNlUR99F"] > [class*="11I0_AlsB40ak50752rsu"] { margin-left: auto !important; white-space: nowrap !important;}
 /* Encabezado de sección del menú rápido: en minúsculas y blanco suave, sin gris azulado. */
-[class*="1bIiM99nyensOmPZL_As0"] { text-transform: none !important; letter-spacing: 0 !important; color: rgba(255, 255, 255, 0.6) !important; font-size: 17px !important; font-weight: 600 !important; }
+[class*="1bIiM99nyensOmPZL_As0"] { color: rgba(255, 255, 255, 0.6) !important; font-size: 17px !important; font-weight: 600 !important; }
 /* Título fijo del menú rápido: un margen negro bajo él para que lo que se desplaza no se pegue al texto. */
 [class*="34nl5vUoFCDYYnmHNL7ax"] { box-shadow: 0 10px 0 #000 !important; }
 /* Marcas de los deslizadores: sin mayúsculas, y la primera y la última pegadas a su borde para que no se corten. */
@@ -873,12 +816,11 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
 /* Interruptor enfocado: sin contorno gris azulado en la bola; el foco ya lo marca la fila. */
 [class*="1PQppcgkuXQAiFPar9AG"] { border-color: transparent !important; }
 [class*="9Ql-oVe_j8E-vsDdyVdW"]::after { display: none !important; }
-/* Notificaciones enfocadas: la superficie del tema y el texto en lima, no la caja gris azulada de Steam. */
+/* Notificaciones enfocadas: la superficie del tema, no la caja gris azulada de Steam. */
 [class*="3oKFhPrh1lbp-WtA72Q2Y"], [class*="30fVm4Rsel-4nUKEiPJg"] { border-radius: 10px !important; }
 [class*="3oKFhPrh1lbp-WtA72Q2Y"].gpfocus, [class*="30fVm4Rsel-4nUKEiPJg"].gpfocus { background: var(--obs-focus-bg) !important; }
 [class*="3oKFhPrh1lbp-WtA72Q2Y"].gpfocus *, [class*="30fVm4Rsel-4nUKEiPJg"].gpfocus [class*="2MGSmn9lIFnmLVIX49POS"] { color: var(--obs-focus-fg) !important; }
-/* Descargas: el botón de descargar es la acción de A. Con la fila enfocada, lima con el icono oscuro; sin foco, icono claro. */
-[class*="3oavRVhIS9tC3vBsFT4Gg"] { color: rgba(255, 255, 255, 0.6) !important; }
+/* Descargas: el botón de descargar es la acción de A. Con la fila enfocada, relleno del tono con el icono oscuro; sin foco, icono claro. */
 [class*="3oavRVhIS9tC3vBsFT4Gg"] svg { color: inherit !important; fill: currentColor; }
 .gpfocus [class*="1VNuYHM6BPBOJspC6zPf"] [class*="3oavRVhIS9tC3vBsFT4Gg"].DialogButton.DialogButton.DialogButton { background: var(--obs-accent) !important; color: var(--obs-on-accent) !important; }
 /* La fila enfocada no crece ni toca el borde: misma sangría que el resto y 10 px de aire a cada lado. */
@@ -928,7 +870,6 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   font-size: var(--obs-fs-desc) !important;
   line-height: 1.4 !important;
   color: rgba(255, 255, 255, 0.6) !important;
-  margin-top: 4px !important;
 }
 /* Botones de las filas: más altos y con peso, para acertar con el dedo y leerlos de un vistazo. */
 .gamepadpagedsettings_PagedSettingDialog_ContentColumn_3JPle button.DialogButton {
@@ -961,12 +902,10 @@ button.DialogButton.gamepaddialog_Button_1kn70 > div[style*="min-width: 180px"] 
   text-transform: none !important;
   letter-spacing: normal !important;
   font-size: inherit !important;
-  font-weight: inherit !important;
   color: inherit !important;
 }
 [class*="1N4s22rd7ItJQ2XqqyOzBK"] {
   text-transform: none !important;
-  letter-spacing: normal !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   color: rgba(255, 255, 255, 0.55) !important;
@@ -1060,7 +999,6 @@ div[style*="height: 10px"][style*="background-color: rgb(76, 76, 76)"] {
   background-color: var(--obs-surface-2) !important;
 }
 /* Título de un plugin con cabecera propia (CSS Loader, Punktfunk): la flecha de volver centrada con él. */
-#quickaccess_content_999 .quickaccessmenu_Title_34nl5[style*="sticky"] { align-items: center !important; }
 /* La cabecera propia reutiliza la clase del título y heredaba su margen inferior de 14 px. */
 #quickaccess_content_999 .quickaccessmenu_Title_34nl5 .quickaccessmenu_Title_34nl5 {
   padding-bottom: 0 !important;
@@ -1124,7 +1062,6 @@ button.DialogButton[style*="flex-direction: column"][style*="white-space: nowrap
    sombra, como el resto del tema. */
 [class*="_2iUUMqGBsJmkgjGawC2D5V"] {
   background: #161616 !important;
-  box-shadow: none !important;
   border-radius: 14px !important;
   margin: 6px 0 0 8px !important;
 }
@@ -1190,11 +1127,9 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 }
 /* Gravedad: el anillo y el texto llevan el color del riesgo (ámbar, rojo, violeta); el fondo no se tiñe. */
 [tone="destructive"].gpfocus {
-  background: var(--obs-focus-bg) !important;
   outline-color: var(--obs-warn) !important;
 }
 [role="menu"] > :not([tone]):not([role="separator"]) + [tone="destructive"].gpfocus {
-  background: var(--obs-focus-bg) !important;
   outline-color: var(--obs-danger) !important;
 }
 [role="menu"]:has(> [role="separator"] ~ [role="separator"] ~ [role="separator"])
@@ -1260,7 +1195,6 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 #quickaccess_content_999 .gamepaddialog_Field_S-_La.gpfocuswithin:has(button.DialogButton.gpfocus) {
   background: transparent !important;
 }
-#quickaccess_content_999 .gamepaddialog_Field_S-_La button.DialogButton.gpfocus { background: var(--obs-focus-bg) !important; }
 /* Descargas: la fila enfocada no se distinguía cuando no tiene botón (las completadas). */
 [class*="21P7c4MWmsU2QSZeL-uyZo"].gpfocus [class*="1VNuYHM6BPBOJspC6zPf"] {
   background: var(--obs-focus-bg) !important;
@@ -1289,13 +1223,11 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   color: #fff !important;
 }
 /* El anillo lo pone el propio Steam (.focusring_FocusRing), ya con el estilo del tema. */
-.Shared_Radio_Group .RadioButton.gpfocus { color: #fff !important; }
 /* Multimedia: la miniatura enfocada lleva el anillo, separado y con esquinas redondas, en lugar del
    marco blanco de Steam. */
 [class*="2-7fqz03LhYHKEBI-HwIPq"] { border-radius: 10px !important; overflow: hidden !important; }
 [class*="2-7fqz03LhYHKEBI-HwIPq"].gpfocus {
   border-color: transparent !important;
-  box-shadow: none !important;
   outline: 1.5px solid var(--obs-ring) !important;
   outline-offset: var(--obs-ring-gap) !important;
 }
@@ -1320,7 +1252,7 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   outline-offset: -1.5px !important;
 }
 [class*="2HnVd7wV6yVaTiXfrBe3gq"].gpfocus svg,
-[class*="2HnVd7wV6yVaTiXfrBe3gq"].gpfocus svg * { color: var(--obs-focus-fg) !important; fill: var(--obs-focus-fg) !important; }
+[class*="2HnVd7wV6yVaTiXfrBe3gq"].gpfocus svg * { fill: var(--obs-focus-fg) !important; }
 /* Resultados de búsqueda: el banner lleva las mismas esquinas redondas que su anillo. */
 [class*="3K3BxF9C7wIjPeECKwAMFj"],
 [class*="3K3BxF9C7wIjPeECKwAMFj"] [class*="3vyTQYwBNtW_e953TTBg9D"],
@@ -1339,7 +1271,6 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 }
 /* Multimedia: cada miniatura llena su celda redondeada (antes las de otra proporción quedaban cuadradas). */
 [class*="2-7fqz03LhYHKEBI-HwIPq"] img {
-  width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
   border-radius: 10px !important;
@@ -1356,7 +1287,6 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 /* Pestañas de página (biblioteca, búsqueda, logros): al subir a ellas con el mando, la enfocada lleva el anillo. */
 .gamepadtabbedpage_Tab_3eEbS.gpfocus {
   background: var(--obs-focus-bg) !important;
-  border-radius: 999px !important;
   outline: 1.5px solid var(--obs-ring) !important;
   outline-offset: -1.5px !important;
 }
