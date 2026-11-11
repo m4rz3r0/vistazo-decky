@@ -8,11 +8,12 @@ export interface Settings {
   protondb: boolean; // ask protondb.com for the game's rating
   sounds: boolean; // calm menu sounds instead of Steam's
   aOpensPage: boolean; // home: A opens the game page and X plays (Steam games only)
+  updates: boolean; // ask GitHub once a day for a newer Vistazo and say so
   shelves: string[]; // home shelves on show, by id (see availableShelves)
 }
 
 const KEY = "vistazo:settings";
-const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, shelves: ["installed", "retro"] };
+const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, updates: true, shelves: ["installed", "retro"] };
 
 function read(): Settings {
   const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});

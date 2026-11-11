@@ -44,12 +44,13 @@ apply at once.
 
 3. Confirm. The new home appears the next time you go Home.
 
-To update, repeat step 2. To remove it, open <img src="docs/icons/gear.svg" height="16" alt="⚙"> **Plugins**.
+To update, open Vistazo in the quick access menu and press **Update** under Version; it tells you when there is a new one. To remove it, open <img src="docs/icons/gear.svg" height="16" alt="⚙"> **Plugins**.
 
 ## Privacy
 
 Everything comes from Steam on the Deck. The ProtonDB rating asks `protondb.com` with the game's number only,
-and can be turned off. No telemetry.
+and can be turned off. Once a day Vistazo asks `api.github.com` whether there is a newer version, sending nothing
+about you; that can be turned off too. No telemetry.
 
 ## Build
 

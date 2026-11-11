@@ -3,6 +3,7 @@ import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ToggleField } 
 import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 import { availableShelves } from "./home/data";
+import { checkForUpdate, installUpdate, useUpdate } from "./update";
 import { COLOR, COLORS, MOTION, TEXT, setThemeEnabled, setThemeOption, useTheme } from "./theme";
 
 // Vistazo's settings, in the quick access menu. Following the Apple, Android and Windows guidelines:
@@ -69,7 +70,38 @@ export function SettingsPanel() {
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
+      <PanelSection title={t.updateSection}>
+        <UpdateRows />
+        {toggle("updates", t.updatesLabel, t.updatesDesc)}
+      </PanelSection>
     </>
+  );
+}
+
+// The installed version and one button: update when there is something newer, otherwise look now.
+function UpdateRows() {
+  const u = useUpdate();
+  const status = u.checking
+    ? t.updateChecking
+    : u.available && u.latest
+      ? t.updateFound(u.latest.version)
+      : u.failed
+        ? t.updateFailed
+        : u.latest
+          ? t.upToDate
+          : undefined;
+  return (
+    <PanelSectionRow>
+      <ButtonItem
+        layout="below"
+        label={t.versionLine(u.current)}
+        description={status}
+        disabled={u.checking}
+        onClick={() => (u.available ? installUpdate() : checkForUpdate(true))}
+      >
+        {u.available && u.latest ? t.updateNow(u.latest.version) : t.updateCheck}
+      </ButtonItem>
+    </PanelSectionRow>
   );
 }
 

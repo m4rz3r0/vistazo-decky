@@ -11,6 +11,7 @@ import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
 import { watchGames } from "./data";
+import { watchUpdates } from "./update";
 import { settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
 import { Guard } from "./Guard";
@@ -303,6 +304,7 @@ export default definePlugin(() => {
   const removeSounds = installSounds(() => settings().sounds);
   setupTheme();
   const stopWatching = watchGames();
+  const stopUpdates = watchUpdates();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,
@@ -313,6 +315,7 @@ export default definePlugin(() => {
       markUnloaded();
       removeSounds();
       stopWatching();
+      stopUpdates();
       routerHook.removePatch(ROUTE, patch);
       routerHook.removePatch(HOME, homePatch);
     },

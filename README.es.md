@@ -45,12 +45,13 @@ estanterías. Los cambios se aplican al momento.
 
 3. Confirma. El nuevo inicio aparece la próxima vez que vuelvas a Inicio.
 
-Para actualizar, repite el paso 2. Para quitarlo, entra en <img src="docs/icons/gear.svg" height="16" alt="⚙"> **Plugins**.
+Para actualizar, abre Vistazo en el menú de acceso rápido y pulsa **Actualizar** en Versión; te avisa cuando hay una nueva. Para quitarlo, entra en <img src="docs/icons/gear.svg" height="16" alt="⚙"> **Plugins**.
 
 ## Privacidad
 
 Todo sale de Steam en la Deck. La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, y se
-puede desactivar. Sin telemetría.
+puede desactivar. Una vez al día Vistazo pregunta a `api.github.com` si hay una versión nueva, sin enviar nada
+sobre ti; también se puede desactivar. Sin telemetría.
 
 ## Compilar
 

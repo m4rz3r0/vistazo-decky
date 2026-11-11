@@ -113,6 +113,18 @@ const es = {
   motionDesc: "Las portadas crecen al elegirlas y los cambios se suavizan.",
   needsLoader: "Necesita CSS Loader, de la tienda de Decky.",
   themeMissing: "No se pudo instalar. Reinicia Decky para reintentarlo.",
+  updateSection: "Versión",
+  updatesLabel: "Avisar de versiones nuevas",
+  updatesDesc: "Lo consulta en GitHub una vez al día.",
+  versionLine: (v: string) => `Vistazo ${v}`,
+  upToDate: "Es la más reciente.",
+  updateChecking: "Buscando…",
+  updateFailed: "No se pudo consultar. Revisa la conexión.",
+  updateFound: (v: string) => `Hay una nueva: ${v}.`,
+  updateNow: (v: string) => `Actualizar a ${v}`,
+  updateCheck: "Buscar ahora",
+  updateToastTitle: (v: string) => `Vistazo ${v} disponible`,
+  updateToastBody: "Pulsa para actualizar.",
 };
 
 const en: typeof es = {
@@ -211,7 +223,19 @@ const en: typeof es = {
   motionLabel: "Motion",
   motionDesc: "Covers grow when chosen and changes ease in.",
   needsLoader: "Needs CSS Loader, from the Decky store.",
-  themeMissing: "Couldn't be installed. Restart Decky to try again.",
+  themeMissing: "Couldn't install it. Restart Decky to try again.",
+  updateSection: "Version",
+  updatesLabel: "Tell me about new versions",
+  updatesDesc: "Checks GitHub once a day.",
+  versionLine: (v: string) => `Vistazo ${v}`,
+  upToDate: "It's the latest.",
+  updateChecking: "Checking…",
+  updateFailed: "Couldn't check. Look at the connection.",
+  updateFound: (v: string) => `There's a new one: ${v}.`,
+  updateNow: (v: string) => `Update to ${v}`,
+  updateCheck: "Check now",
+  updateToastTitle: (v: string) => `Vistazo ${v} is out`,
+  updateToastBody: "Press to update.",
 };
 
 export const t = lang === "es" ? es : en;
