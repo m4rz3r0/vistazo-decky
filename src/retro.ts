@@ -4,6 +4,7 @@ import { locale, num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
 import { fitPanel } from "./Panel";
 import { safe } from "./safe";
+import { keepTranslated, restoreText, wordInSpanish } from "./retroText";
 import { settings } from "./settings";
 import { pageCss } from "./styles";
 
@@ -148,7 +149,7 @@ function panelHtml(d: Retro, tabs: Set<string>): string {
   const cells: [string, string, string?][] = [];
   if (d.platform) cells.push([t.retroPlatform, esc(d.platform)]);
   if (d.year) cells.push([t.year, esc(d.year)]);
-  if (d.genres.length) cells.push([t.genre, esc(d.genres.join(", "))]);
+  if (d.genres.length) cells.push([t.genre, esc(d.genres.map(wordInSpanish).join(", "))]);
   if (d.save || tabs.has("SAVES"))
     cells.push([
       t.retroSave,
@@ -269,18 +270,53 @@ const css = () => `${pageCss()}
   font-size: 22px; font-weight: 700; letter-spacing: -0.2px; color: #f4f4f4;
 }
 [data-vz-sheet] .romm-tab-content * { text-transform: none !important; letter-spacing: 0 !important; }
+/* Flat, like the rest of the interface: everything of Tender's inside sits straight on the black,
+   with no grey boxes; what is selected gets the ring, nothing gets a fill. */
+[data-vz-sheet] .romm-tab-content *:not(img):not(.romm-cheevo-progress-bar):not(.romm-cheevo-progress-fill):not(.romm-status-dot) {
+  background-color: transparent !important; background-image: none !important;
+  border-color: transparent !important; box-shadow: none !important; filter: none !important;
+}
+[data-vz-sheet] .romm-tab-content { scroll-padding: 64px 0 20px; }
+/* Tender clips some of its boxes; the ring of what is inside must not be cut. */
+[data-vz-sheet] .romm-tab-content .romm-slot-panel, [data-vz-sheet] .romm-tab-content .romm-slot-body { overflow: visible !important; }
 [data-vz-sheet] .romm-tab-content .gpfocus {
-  outline: 1.5px solid var(--obs-ring, #b8f35a) !important; outline-offset: -2px !important;
-  box-shadow: none !important;
+  outline: 1.5px solid var(--obs-ring, #b8f35a) !important; outline-offset: 2px !important;
+  border-radius: 12px !important;
+}
+[data-vz-sheet] .romm-tab-content .romm-cheevo-progress-bar { background: rgba(255, 255, 255, 0.12) !important; border-radius: 3px; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-progress-fill { background: var(--obs-reward, #f5cf5a) !important; border-radius: 3px; }
+/* Actions keep the theme's quiet button. */
+[data-vz-sheet] .romm-tab-content button.DialogButton.DialogButton:not(.romm-cheevo-row):not(.romm-panel-section):not(.romm-slot-header):not(:has(div)) {
+  background-color: rgba(255, 255, 255, 0.08) !important; border-radius: 12px !important; color: #f4f4f4 !important;
 }
 /* A whole block that takes the selection (the game's card, the BIOS list): the sheet is its frame. */
-[data-vz-sheet] .romm-tab-content .romm-panel-section {
-  background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important;
-}
 [data-vz-sheet] .romm-tab-content .romm-panel-section.romm-panel-section.romm-panel-section.DialogButton.DialogButton,
 [data-vz-sheet] .romm-tab-content .romm-panel-section.romm-panel-section.romm-panel-section.DialogButton.DialogButton.gpfocus {
-  outline: 0 solid transparent !important; background: transparent !important; box-shadow: none !important;
-  text-align: left; filter: none !important;
+  outline: 0 solid transparent !important; padding: 0 !important; text-align: left;
+}
+[data-vz-sheet] .romm-tab-content .romm-panel-section-title,
+[data-vz-sheet] .romm-tab-content .romm-cheevo-section-title {
+  font-size: 14px !important; font-weight: 600 !important; color: rgba(255, 255, 255, 0.55) !important;
+  margin: 16px 0 8px !important;
+}
+[data-vz-sheet] .romm-tab-content .romm-cheevo-row { margin-bottom: 8px !important; padding: 6px 8px !important; }
+[data-vz-sheet] .romm-tab-content .romm-panel-label { color: rgba(255, 255, 255, 0.5) !important; }
+[data-vz-sheet] .romm-tab-content .romm-panel-summary { color: rgba(255, 255, 255, 0.78) !important; line-height: 1.5 !important; }
+/* Achievements: X shows all, earned or pending; Y changes the order. What is chosen shows by the title. */
+[data-vz-sheet] .romm-tab-content[data-vz-filter="earned"] .romm-cheevo-row:not(.romm-cheevo-row-earned),
+[data-vz-sheet] .romm-tab-content[data-vz-filter="locked"] .romm-cheevo-row.romm-cheevo-row-earned,
+[data-vz-sheet] .romm-tab-content[data-vz-plain="0"] .romm-cheevo-section-title { display: none !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-summary { order: -3; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-progress-bar { order: -2; }
+.vz-sheet-tools {
+  position: fixed; z-index: 2147483000; display: flex; gap: 18px; align-items: center;
+  font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.72); pointer-events: none;
+  font-family: "Motiva Sans", sans-serif;
+}
+.vz-sheet-tools i {
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  margin-right: 7px; border-radius: 50%; background: #f4f4f4; color: #000;
+  font-style: normal; font-size: 12px; font-weight: 700;
 }
 /* Steam draws its own ring as a separate layer over the whole window, so it can run past the
    sheet: off while a sheet is open (the rows inside draw theirs, see above). */
@@ -324,7 +360,9 @@ function closeSheet(doc: Document, refocus: boolean) {
   page.removeAttribute("data-vz-sheet");
   doc.documentElement.removeAttribute("data-vz-sheet-open");
   inside = null;
+  sheetName = "";
   unplace(sheetOf(doc));
+  applyAchievements(doc);
   if (refocus) (doc.querySelector(".romm-tab.romm-tab-active") as HTMLElement | null)?.focus();
 }
 
@@ -334,6 +372,7 @@ function openSheet(doc: Document, tab: HTMLElement) {
   const page = pageOfRetro(doc);
   if (!page) return;
   const title = tab.dataset.vzLabel ?? tab.textContent ?? "";
+  sheetName = tabName(tab);
   page.setAttribute("data-vz-sheet", "");
   doc.documentElement.setAttribute("data-vz-sheet-open", "");
   let tries = 0;
@@ -342,6 +381,7 @@ function openSheet(doc: Document, tab: HTMLElement) {
     if (!sheet || !page.hasAttribute("data-vz-sheet")) return;
     sheet.dataset.vzTitle = title;
     place(sheet);
+    applyAchievements(doc);
     sheet.scrollTop = 0;
     // The first thing in it that really takes the selection (some wrappers do not).
     const within = () => !!sheet.querySelector(".gpfocus") || sheet.contains(doc.activeElement);
@@ -372,6 +412,63 @@ function place(sheet: HTMLElement) {
 }
 const unplace = (sheet: HTMLElement | null) =>
   sheet && ["top", "left", "width", "height"].forEach((k) => sheet.style.removeProperty(k));
+
+// The achievements sheet: what to show and in which order (kept while Steam runs).
+type Filter = "all" | "earned" | "locked";
+type Order = "game" | "common" | "rare" | "points";
+const FILTERS: Filter[] = ["all", "earned", "locked"];
+const ORDERS: Order[] = ["game", "common", "rare", "points"];
+let filter: Filter = "all";
+let order: Order = "game";
+let sheetName = ""; // Tender's name of the tab the open sheet shows
+
+const firstNumber = (el: Element | null) => Number((el?.textContent ?? "").replace(/[^\d]/g, "")) || 0;
+const visibleRows = (sheet: HTMLElement) =>
+  Array.from(sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row"))
+    .filter((r) => r.offsetParent !== null)
+    .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+
+// Applies the choice to Tender's list without touching its nodes' order: the list is a column, so
+// each row only gets its place in it.
+function applyAchievements(doc: Document) {
+  const sheet = sheetOf(doc);
+  const tools = doc.querySelector(".vz-sheet-tools") as HTMLElement | null;
+  const on = !!sheet && sheetName === "ACHIEVEMENTS" && !!pageOfRetro(doc)?.hasAttribute("data-vz-sheet");
+  if (!on || !sheet) {
+    tools?.remove();
+    return;
+  }
+  const rows = Array.from(sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row"));
+  const key = `${filter}|${order}|${rows.length}`;
+  if (sheet.dataset.vzApplied !== key) {
+    sheet.dataset.vzApplied = key;
+    sheet.dataset.vzFilter = filter;
+    sheet.dataset.vzPlain = filter === "all" && order === "game" ? "1" : "0";
+    if (order === "game") rows.forEach((r) => r.style.removeProperty("order"));
+    else {
+      const value = (r: HTMLElement) =>
+        order === "points" ? -firstNumber(r.querySelector(".romm-cheevo-points")) : firstNumber(r.querySelector(".romm-cheevo-rarity")) * (order === "common" ? -1 : 1);
+      rows
+        .map((r, i) => [r, value(r), i] as const)
+        .sort((a, b) => a[1] - b[1] || a[2] - b[2])
+        .forEach(([r], i) => (r.style.order = String(i + 1)));
+    }
+  }
+  let el = tools;
+  if (!el) {
+    el = doc.createElement("div");
+    el.className = "vz-sheet-tools";
+    doc.body.appendChild(el);
+  }
+  const html = `<span><i>X</i>${t.retroFilter[filter]}</span><span><i>Y</i>${t.retroOrder[order]}</span>`;
+  if (el.dataset.html !== html) {
+    el.dataset.html = html;
+    el.innerHTML = html;
+  }
+  const r = sheet.getBoundingClientRect();
+  el.style.top = `${Math.round(r.top + 24)}px`;
+  el.style.right = `${Math.round((doc.defaultView?.innerWidth ?? r.right) - r.right + 26)}px`;
+}
 
 let last: HTMLElement | null = null; // what had the selection before
 let inside: HTMLElement | null = null; // the last thing selected inside the open sheet
@@ -412,6 +509,21 @@ function listen(doc: Document) {
       // Inside the sheet Tender's rows move as they always do. A single block taller than the
       // sheet (the BIOS list, a long description) has nowhere to move to, so up and down scroll it.
       const sheet = sheetOf(doc);
+      // Achievements move through the rows as they are shown (filtered, reordered), not as Tender
+      // lists them.
+      const row = (e.target as HTMLElement | null)?.closest?.(".romm-cheevo-row") as HTMLElement | null;
+      if (sheet && row && (dir === 9 || dir === 10)) {
+        e.stopPropagation();
+        const rows = visibleRows(sheet);
+        const next = rows[rows.indexOf(row) + (dir === 10 ? 1 : -1)];
+        if (next)
+          setTimeout(() => {
+            next.focus();
+            next.scrollIntoView({ block: "nearest" });
+          }, 0);
+        else if (dir === 9) sheet.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       const block = (e.target as HTMLElement | null)?.closest?.(".romm-panel-section") as HTMLElement | null;
       if (!sheet || !block || (dir !== 9 && dir !== 10) || block.offsetHeight <= sheet.clientHeight) return;
       const room = dir === 10 ? sheet.scrollHeight - sheet.clientHeight - sheet.scrollTop : sheet.scrollTop;
@@ -471,7 +583,24 @@ function listen(doc: Document) {
     })[0];
     if (first && first !== to) setTimeout(() => first.focus(), 0);
   };
+  // X and Y in the achievements sheet: what to show, and the order.
+  const onButton: EventListener = (e) => {
+    const button = Number((e as CustomEvent).detail?.button);
+    if ((button !== 3 && button !== 4) || sheetName !== "ACHIEVEMENTS" || !pageOfRetro(doc)?.hasAttribute("data-vz-sheet")) return;
+    e.stopPropagation();
+    if (button === 3) filter = FILTERS[(FILTERS.indexOf(filter) + 1) % FILTERS.length];
+    else order = ORDERS[(ORDERS.indexOf(order) + 1) % ORDERS.length];
+    applyAchievements(doc);
+    const sheet = sheetOf(doc);
+    const first = sheet && visibleRows(sheet)[0];
+    if (sheet && first)
+      setTimeout(() => {
+        first.focus();
+        sheet.scrollTop = 0;
+      }, 0);
+  };
   const list: Array<[string, EventListener]> = [
+    ["vgp_onbuttondown", onButton],
     ["vgp_ondirection", onDirection],
     ["focusin", onEnter],
     ["click", onClick],
@@ -495,6 +624,14 @@ function clear(doc: Document | undefined) {
     n.removeAttribute("data-vz-sheet");
   });
   doc.documentElement.removeAttribute("data-vz-sheet-open");
+  doc.querySelector(".vz-sheet-tools")?.remove();
+  const sheet = doc.querySelector(".romm-tab-content") as HTMLElement | null;
+  if (sheet) {
+    for (const a of ["data-vz-filter", "data-vz-plain", "data-vz-applied", "data-vz-title"]) sheet.removeAttribute(a);
+    sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row").forEach((r) => r.style.removeProperty("order"));
+  }
+  sheetName = "";
+  restoreText();
   doc.querySelectorAll<HTMLElement>("[data-vz-label]").forEach((n) => {
     for (const a of ["data-vz-label", "data-vz-at", "data-vz-name"]) n.removeAttribute(a);
     for (const k of ["left", "top", "width", "height"]) n.style.removeProperty(k);
@@ -566,6 +703,9 @@ function sync() {
     page.setAttribute("data-vz-page", "");
   }
   listen(doc);
+  applyAchievements(doc);
+  keepTranslated(row);
+  keepTranslated(doc.querySelector(".romm-tab-content") as HTMLElement | null);
   fitPanel(panel, false);
   // Each of Tender's tabs goes over the piece of the panel that opens it, a little wider than it
   // so the ring has air, and never past the edge of the window.
