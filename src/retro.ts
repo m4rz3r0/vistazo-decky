@@ -307,19 +307,24 @@ const css = () => `${pageCss()}
 [data-vz-sheet] .romm-tab-content[data-vz-filter="locked"] .romm-cheevo-row.romm-cheevo-row-earned,
 [data-vz-sheet] .romm-tab-content[data-vz-plain="0"] .romm-cheevo-section-title { display: none !important; }
 [data-vz-sheet] .romm-tab-content .romm-cheevo-summary { order: -3; }
-[data-vz-sheet] .romm-tab-content .romm-cheevo-summary[data-vz-state]::after {
-  content: attr(data-vz-state); margin-left: 18px; font-size: 14px; font-weight: 600; color: #f4f4f4;
-}
 [data-vz-sheet] .romm-tab-content .romm-cheevo-progress-bar { order: -2; }
 .vz-sheet-tools {
-  position: fixed; z-index: 2147483000; display: flex; gap: 18px; align-items: center;
-  font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.72); pointer-events: none;
-  font-family: "Motiva Sans", sans-serif;
+  position: fixed; z-index: 2147483000; display: flex; gap: 30px; align-items: center;
+  font-size: 14px; pointer-events: none; font-family: "Motiva Sans", sans-serif;
 }
+.vz-sheet-tools span { display: flex; align-items: center; gap: 16px; }
 .vz-sheet-tools i {
   display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
-  margin-right: 7px; border-radius: 50%; background: #f4f4f4; color: #000;
+  margin-right: -4px; border-radius: 50%; background: rgba(255, 255, 255, 0.85); color: #000;
   font-style: normal; font-size: 12px; font-weight: 700;
+}
+.vz-sheet-tools b {
+  font-weight: 600; color: rgba(255, 255, 255, 0.42);
+  transition: color calc(160ms * var(--obs-motion, 0)) ease-out;
+}
+.vz-sheet-tools b.on { color: #f4f4f4; }
+.vz-sheet-tools em {
+  margin-left: 6px; font-style: normal; font-weight: 500; font-variant-numeric: tabular-nums; opacity: 0.6;
 }
 /* Steam draws its own ring as a separate layer over the whole window, so it can run past the
    sheet: off while a sheet is open (the rows inside draw theirs, see above). */
@@ -463,21 +468,20 @@ function applyAchievements(doc: Document) {
     el.className = "vz-sheet-tools";
     doc.body.appendChild(el);
   }
-  // The buttons say what they do, always the same; what is chosen shows as a fact by the count,
-  // and only when it is not the usual.
-  const html = `<span><i>X</i>${t.retroFilterAction}</span><span><i>Y</i>${t.retroOrderAction}</span>`;
-  const summary = sheet.querySelector(".romm-cheevo-summary") as HTMLElement | null;
-  const state = [filter === "all" ? "" : t.retroFilter[filter], order === "game" ? "" : t.retroOrder[order]].filter(Boolean).join(" · ");
-  if (summary && (summary.dataset.vzState ?? "") !== state) {
-    if (state) summary.dataset.vzState = state;
-    else summary.removeAttribute("data-vz-state");
-  }
+  // The three views side by side with how many each holds: the current one in white, the others
+  // dimmed, so X is seen stepping along them. The order shows its current value by Y.
+  const earned = rows.filter((r) => r.classList.contains("romm-cheevo-row-earned")).length;
+  const count: Record<Filter, number> = { all: rows.length, earned, locked: rows.length - earned };
+  const views = FILTERS.map(
+    (f) => `<b${f === filter ? ' class="on"' : ""}>${t.retroFilter[f]}<em>${count[f]}</em></b>`,
+  ).join("");
+  const html = `<span><i>X</i>${views}</span><span><i>Y</i><b class="on">${t.retroOrder[order]}</b></span>`;
   if (el.dataset.html !== html) {
     el.dataset.html = html;
     el.innerHTML = html;
   }
   const r = sheet.getBoundingClientRect();
-  el.style.top = `${Math.round(r.top + 24)}px`;
+  el.style.top = `${Math.round(r.top + 25)}px`;
   el.style.right = `${Math.round((doc.defaultView?.innerWidth ?? r.right) - r.right + 26)}px`;
 }
 
@@ -639,7 +643,6 @@ function clear(doc: Document | undefined) {
   const sheet = doc.querySelector(".romm-tab-content") as HTMLElement | null;
   if (sheet) {
     for (const a of ["data-vz-filter", "data-vz-plain", "data-vz-applied", "data-vz-title"]) sheet.removeAttribute(a);
-    sheet.querySelector(".romm-cheevo-summary")?.removeAttribute("data-vz-state");
     sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row").forEach((r) => r.style.removeProperty("order"));
   }
   sheetName = "";
