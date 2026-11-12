@@ -10,12 +10,14 @@ import { pageCss } from "./styles";
 // The page of a RomM game. Tender (another plugin) owns that page: it replaces Steam's play row and
 // adds its tabs (game info, achievements, saves, BIOS). Vistazo leaves all of that working and only
 // adds, between Tender's play row and its tabs, the same first screen a Steam game gets: the
-// achievements and what comes next on the left, the game on the right. Tender's tabs stay right
-// below, one press down.
+// achievements and what comes next on the left, the game on the right. The page is that one
+// screen: Tender's tabs become a row of buttons at its bottom (description, achievements, saves,
+// BIOS) and what each one holds opens over the page, like a dialog, instead of further down.
 //
 // It is plain DOM placed next to Tender's own nodes, not a React patch: two plugins rewriting the
-// same React tree is where pages break. Nothing here can be focused, so the gamepad path through
-// Tender's page is exactly what it was. All the data comes from Tender.
+// same React tree is where pages break. The buttons and what they open are Tender's own elements,
+// only placed and dressed differently, so everything in them keeps working (syncing a save,
+// downloading a BIOS). All the data comes from Tender.
 declare const DeckyBackend: any;
 declare const SteamUIStore: any;
 declare const appStore: any;
@@ -139,28 +141,42 @@ function ringSvg(share: number): string {
   return `<svg class="vz-ring" viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="${r}" class="vz-ring-track"/>${fill}<text x="27" y="27" class="vz-ring-text" dominant-baseline="central" text-anchor="middle">${num(Math.floor(share))} %</text></svg>`;
 }
 
-function panelHtml(d: Retro): string {
-  const cells: [string, string][] = [];
+function panelHtml(d: Retro, tabs: Set<string>): string {
+  // Each of Tender's tabs opens from the piece of this panel that names it: the achievements, the
+  // description, the save and the BIOS. Where the game has nothing to show for one, a plain cell
+  // stands in so it can still be opened.
+  const cells: [string, string, string?][] = [];
   if (d.platform) cells.push([t.retroPlatform, esc(d.platform)]);
   if (d.year) cells.push([t.year, esc(d.year)]);
   if (d.genres.length) cells.push([t.genre, esc(d.genres.join(", "))]);
-  if (d.save)
+  if (d.save || tabs.has("SAVES"))
     cells.push([
       t.retroSave,
       d.save === "synced"
         ? `<span class="vz-retro-ok">${t.retroSaveSynced}</span>`
-        : `<span class="vz-retro-warn">${t.retroSaveConflict}</span>`,
+        : d.save === "conflict"
+          ? `<span class="vz-retro-warn">${t.retroSaveConflict}</span>`
+          : t.retroSee,
+      "SAVES",
     ]);
-  if (d.bios)
+  if (d.bios || tabs.has("BIOS"))
     cells.push([
       t.retroBios,
       d.bios === "ok"
         ? `<span class="vz-retro-ok">${t.retroBiosOk}</span>`
-        : `<span class="vz-retro-warn">${t.retroBiosMissing}</span>`,
+        : d.bios === "missing"
+          ? `<span class="vz-retro-warn">${t.retroBiosMissing}</span>`
+          : t.retroSee,
+      "BIOS",
     ]);
+  if (d.total <= 0 && tabs.has("ACHIEVEMENTS")) cells.push([t.retroTabAchievements, t.retroSee, "ACHIEVEMENTS"]);
+  if (!d.summary && tabs.has("GAME INFO")) cells.push([t.retroTabInfo, t.retroSee, "GAME INFO"]);
   if (d.rating > 0) cells.push([t.retroRating, `${num(Math.round(d.rating))} %`]);
   const facts = cells
-    .map(([l, v]) => `<div class="vz-fact"><span class="vz-fact-label">${l}</span><span class="vz-fact-value">${v}</span></div>`)
+    .map(
+      ([l, v, tab]) =>
+        `<div class="vz-fact"${tab ? ` data-vz-tab="${tab}"` : ""}><span class="vz-fact-label">${l}</span><span class="vz-fact-value">${v}</span></div>`,
+    )
     .join("");
   let ach = "";
   if (d.total > 0) {
@@ -170,13 +186,13 @@ function panelHtml(d: Retro): string {
           `<li class="vz-next-item">${badgeUrl(a.badge) ? `<img class="vz-icon" src="${badgeUrl(a.badge)}" alt="">` : `<span class="vz-icon"></span>`}<span class="vz-next-name">${esc(a.title)}</span><span class="vz-next-sub">${a.awarded > 0 ? t.retroPlayers(num(a.awarded)) : ""}</span></li>`,
       )
       .join("");
-    ach = `<div class="vz-ach vz-${medal(d.earned, d.total) ?? "none"}"><div class="vz-ach-head">${ringSvg((d.earned / d.total) * 100)}<div class="vz-ach-sum"><div class="vz-ach-count"><span class="vz-ach-n">${d.earned}</span><span class="vz-ach-of">/${d.total}</span></div><div class="vz-ach-label">${d.earned >= d.total ? t.platinum : t.achievements}${d.hardcore > 0 ? ` · ${t.retroHardcore(d.hardcore)}` : ""}</div></div></div>${
+    ach = `<div class="vz-ach vz-${medal(d.earned, d.total) ?? "none"}" data-vz-tab="ACHIEVEMENTS"><div class="vz-ach-head">${ringSvg((d.earned / d.total) * 100)}<div class="vz-ach-sum"><div class="vz-ach-count"><span class="vz-ach-n">${d.earned}</span><span class="vz-ach-of">/${d.total}</span></div><div class="vz-ach-label">${d.earned >= d.total ? t.platinum : t.achievements}${d.hardcore > 0 ? ` · ${t.retroHardcore(d.hardcore)}` : ""}</div></div></div>${
       next ? `<ul class="vz-next"><li class="vz-next-cap"><span>${t.upNext}</span><span>${t.retroHave}</span></li>${next}</ul>` : ""
     }</div>`;
   }
   return `<div class="vz-cols${ach ? "" : " vz-solo"}">${ach}<div class="vz-about"><div class="vz-facts">${facts}</div>${
-    d.summary ? `<p class="vz-desc">${esc(d.summary)}</p>` : ""
-  }</div></div><div class="vz-retro-more">${t.retroMore}</div>`;
+    d.summary ? `<p class="vz-desc" data-vz-tab="GAME INFO">${esc(d.summary)}</p>` : ""
+  }</div></div>`;
 }
 
 // Last session and play time, in the play row, in the interface language (Tender's own are English).
@@ -210,29 +226,265 @@ const css = () => `${pageCss()}
 .vz-retro-ok { color: #7fe0a8; }
 .vz-retro-warn { color: var(--obs-warn, #ffb040); }
 .vz-retro { position: relative; }
-.vz-retro-more {
-  position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.45);
-}
-.vz-retro-more::before {
-  content: ""; display: inline-block; margin-right: 8px; vertical-align: 2px;
-  border-top: 6px solid currentColor; border-left: 5px solid transparent; border-right: 5px solid transparent;
-}
 .vz-retro-stats { display: flex; gap: 22px; margin-left: 14px; white-space: nowrap; }
 .vz-retro-stat span { display: block; font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.5); }
 .vz-retro-stat b { display: block; margin-top: 3px; font-size: 16px; font-weight: 600; color: #f4f4f4; }
 /* Tender's own figures give way to ours (same data, in the interface language, no capitals). */
 [data-vz-retro] .romm-info-items { display: none !important; }
-/* Moving down to Tender's tabs brings them to the top of the screen, clear of the button hints,
-   with their content below. */
-[data-vz-retro] .romm-tab { scroll-margin-bottom: 400px; }
+/* Tender's tabs are the things you can press here, but not as a row of buttons: each one lies,
+   see-through, over the piece of the panel that names it (placed by the code below), so that
+   piece is what gets the ring and opens. */
+[data-vz-retro] .romm-tab-bar {
+  height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  overflow: visible !important; background: transparent !important;
+}
+[data-vz-retro] button.romm-tab.romm-tab.DialogButton.DialogButton.DialogButton,
+[data-vz-retro] button.romm-tab.romm-tab.DialogButton.DialogButton.DialogButton.gpfocus,
+[data-vz-retro] button.romm-tab.romm-tab.DialogButton.DialogButton.DialogButton:hover {
+  background: transparent !important; color: transparent !important;
+}
+[data-vz-retro] .romm-tab.romm-tab {
+  position: fixed !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important;
+  background: transparent !important; box-shadow: none !important; border-radius: 12px !important;
+  font-size: 0 !important; color: transparent !important; filter: none !important;
+  outline: 1.5px solid transparent; transition: outline-color calc(140ms * var(--obs-motion, 0)) ease-out;
+}
+[data-vz-retro] .romm-tab:not([data-vz-at]) { display: none !important; }
+[data-vz-retro] .romm-tab.gpfocus { outline-color: var(--obs-ring, #b8f35a) !important; }
+/* What a tab holds stays out of the page until it is opened; then it comes up over the page: a
+   black sheet with the rest dimmed, scrolling inside. Calm and flat: no boxes inside boxes, no
+   capitals, and every ring drawn inside its row so none can leave the sheet. */
+[data-vz-retro] .romm-tab-content { display: none !important; }
+[data-vz-retro][data-vz-sheet] .romm-tab-content {
+  display: block !important; position: fixed !important; z-index: 20;
+  margin: 0 !important; padding: 20px 26px 24px !important; box-sizing: border-box;
+  overflow-y: auto; border-radius: 18px; background: #000 !important;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.78);
+  animation: vz-sheet calc(160ms * var(--obs-motion, 0)) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+[data-vz-retro][data-vz-sheet] .romm-tab-content::-webkit-scrollbar { display: none; }
+[data-vz-retro][data-vz-sheet] .romm-tab-content::before {
+  content: attr(data-vz-title); display: block; position: sticky; top: -20px; z-index: 2;
+  margin: -20px -26px 8px; padding: 18px 26px 10px; background: #000;
+  font-size: 22px; font-weight: 700; letter-spacing: -0.2px; color: #f4f4f4;
+}
+[data-vz-sheet] .romm-tab-content * { text-transform: none !important; letter-spacing: 0 !important; }
+[data-vz-sheet] .romm-tab-content .gpfocus {
+  outline: 1.5px solid var(--obs-ring, #b8f35a) !important; outline-offset: -2px !important;
+  box-shadow: none !important;
+}
+/* A whole block that takes the selection (the game's card, the BIOS list): the sheet is its frame. */
+[data-vz-sheet] .romm-tab-content .romm-panel-section {
+  background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important;
+}
+[data-vz-sheet] .romm-tab-content .romm-panel-section.romm-panel-section.romm-panel-section.DialogButton.DialogButton,
+[data-vz-sheet] .romm-tab-content .romm-panel-section.romm-panel-section.romm-panel-section.DialogButton.DialogButton.gpfocus {
+  outline: 0 solid transparent !important; background: transparent !important; box-shadow: none !important;
+  text-align: left; filter: none !important;
+}
+/* Steam draws its own ring as a separate layer over the whole window, so it can run past the
+   sheet: off while a sheet is open (the rows inside draw theirs, see above). */
+:root[data-vz-sheet-open] [class*="1wPplsegQqCoe06wXPhzKT"] { display: none !important; }
+[data-vz-sheet] .romm-tab-content .romm-panel-section-title,
+[data-vz-sheet] .romm-tab-content .romm-cheevo-section-title {
+  font-size: 14px !important; font-weight: 600 !important; color: rgba(255, 255, 255, 0.55) !important;
+  border: 0 !important; margin: 14px 0 8px !important;
+}
+[data-vz-sheet] .romm-tab-content .romm-cheevo-row,
+[data-vz-sheet] .romm-tab-content .romm-slot-panel {
+  background: #121212 !important; border: 0 !important; border-radius: 12px !important; box-shadow: none !important;
+}
+[data-vz-sheet] .romm-tab-content .romm-cheevo-row { margin-bottom: 6px !important; }
+[data-vz-sheet] .romm-tab-content .romm-panel-label { color: rgba(255, 255, 255, 0.5) !important; }
+[data-vz-sheet] .romm-tab-content .romm-panel-summary { color: rgba(255, 255, 255, 0.78) !important; line-height: 1.5 !important; }
+@keyframes vz-sheet { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
 /* And moving back up to the play row brings the whole first screen back, not just the button. */
 [data-vz-retro] .romm-play-section-row button,
 [data-vz-retro] .romm-play-section-row .Focusable { scroll-margin-top: 100vh; }
 `;
 
-const HINT = 28; // room the "more below" line takes at the bottom of the first screen
 const STYLE = "vz-retro-style";
 const scrollClass = (appDetailsClasses as Record<string, string>).ScrollContainer;
+
+// Tender's name for a tab (its text), kept aside the first time we see it.
+const tabName = (tab: HTMLElement) => (tab.dataset.vzName ??= (tab.textContent ?? "").trim().toUpperCase());
+
+// Tender's tab names, in our words.
+const tabLabel = (name: string) =>
+  (({ "GAME INFO": t.retroTabInfo, ACHIEVEMENTS: t.retroTabAchievements, SAVES: t.retroTabSaves, BIOS: "BIOS" }) as Record<string, string>)[
+    name.trim().toUpperCase()
+  ] ?? name.trim();
+
+const pageOfRetro = (doc: Document) => doc.querySelector("[data-vz-retro]") as HTMLElement | null;
+const sheetOf = (doc: Document) => doc.querySelector("[data-vz-retro] .romm-tab-content") as HTMLElement | null;
+
+function closeSheet(doc: Document, refocus: boolean) {
+  const page = pageOfRetro(doc);
+  if (!page?.hasAttribute("data-vz-sheet")) return;
+  page.removeAttribute("data-vz-sheet");
+  doc.documentElement.removeAttribute("data-vz-sheet-open");
+  inside = null;
+  unplace(sheetOf(doc));
+  if (refocus) (doc.querySelector(".romm-tab.romm-tab-active") as HTMLElement | null)?.focus();
+}
+
+// A press on one of the buttons: Tender switches to that tab as always; we show what it holds over
+// the page and move the selection into it (it may take a moment to load).
+function openSheet(doc: Document, tab: HTMLElement) {
+  const page = pageOfRetro(doc);
+  if (!page) return;
+  const title = tab.dataset.vzLabel ?? tab.textContent ?? "";
+  page.setAttribute("data-vz-sheet", "");
+  doc.documentElement.setAttribute("data-vz-sheet-open", "");
+  let tries = 0;
+  const enter = () => {
+    const sheet = sheetOf(doc);
+    if (!sheet || !page.hasAttribute("data-vz-sheet")) return;
+    sheet.dataset.vzTitle = title;
+    place(sheet);
+    sheet.scrollTop = 0;
+    // The first thing in it that really takes the selection (some wrappers do not).
+    const within = () => !!sheet.querySelector(".gpfocus") || sheet.contains(doc.activeElement);
+    for (const el of Array.from(sheet.querySelectorAll<HTMLElement>("button, .Focusable")).slice(0, 12)) {
+      el.focus();
+      if (within()) break;
+    }
+    if (within()) setTimeout(() => (sheet.scrollTop = 0), 120);
+    else if (++tries < 12) setTimeout(enter, 250);
+  };
+  setTimeout(enter, 60);
+}
+
+// The sheet fills the window less a margin, clear of the top bar and the button hints. An ancestor
+// of Tender's content is the frame "fixed" is measured from, so the numbers are worked out from
+// where the sheet actually lands.
+function place(sheet: HTMLElement) {
+  const view = sheet.ownerDocument.defaultView;
+  if (!view) return;
+  const [mx, top, bottom] = [40, 44, 48];
+  sheet.style.top = "0px";
+  sheet.style.left = "0px";
+  const at = sheet.getBoundingClientRect();
+  sheet.style.top = `${top - at.top}px`;
+  sheet.style.left = `${mx - at.left}px`;
+  sheet.style.width = `${view.innerWidth - 2 * mx}px`;
+  sheet.style.height = `${view.innerHeight - top - bottom}px`;
+}
+const unplace = (sheet: HTMLElement | null) =>
+  sheet && ["top", "left", "width", "height"].forEach((k) => sheet.style.removeProperty(k));
+
+let last: HTMLElement | null = null; // what had the selection before
+let inside: HTMLElement | null = null; // the last thing selected inside the open sheet
+const handlers = new WeakMap<Document, Array<[string, EventListener]>>();
+function listen(doc: Document) {
+  if (handlers.has(doc)) return;
+  const onClick: EventListener = (e) => {
+    const tab = (e.target as HTMLElement | null)?.closest?.("[data-vz-retro] .romm-tab") as HTMLElement | null;
+    if (tab) openSheet(doc, tab);
+  };
+  // B closes the sheet instead of doing what it does on the page.
+  const onCancel: EventListener = (e) => {
+    if (!pageOfRetro(doc)?.hasAttribute("data-vz-sheet")) return;
+    e.stopPropagation();
+    closeSheet(doc, true);
+  };
+  // The selection stays inside an open sheet (B is the way out): a move that would leave it, such
+  // as up from its first row, comes back to where it was.
+  const onFocus: EventListener = (e) => {
+    const page = pageOfRetro(doc);
+    if (!page?.hasAttribute("data-vz-sheet")) return;
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest(".romm-tab-content")) {
+      inside = target;
+      return;
+    }
+    const back = inside;
+    if (back?.isConnected) setTimeout(() => back.focus(), 0);
+    else if (!target.closest(".romm-tab")) closeSheet(doc, false);
+  };
+  // Among the pieces of the panel the selection moves by where they are on screen, not by the
+  // order of Tender's tabs. With nothing in that direction the press goes on as usual (up reaches
+  // the play row).
+  const onDirection: EventListener = (e) => {
+    const dir = Number((e as CustomEvent).detail?.button);
+    if (pageOfRetro(doc)?.hasAttribute("data-vz-sheet")) {
+      // Inside the sheet Tender's rows move as they always do. A single block taller than the
+      // sheet (the BIOS list, a long description) has nowhere to move to, so up and down scroll it.
+      const sheet = sheetOf(doc);
+      const block = (e.target as HTMLElement | null)?.closest?.(".romm-panel-section") as HTMLElement | null;
+      if (!sheet || !block || (dir !== 9 && dir !== 10) || block.offsetHeight <= sheet.clientHeight) return;
+      const room = dir === 10 ? sheet.scrollHeight - sheet.clientHeight - sheet.scrollTop : sheet.scrollTop;
+      if (room <= 1) return;
+      e.stopPropagation();
+      sheet.scrollBy({ top: (dir === 10 ? 1 : -1) * Math.round(sheet.clientHeight * 0.6), behavior: "smooth" });
+      return;
+    }
+    const from = (e.target as HTMLElement | null)?.closest?.("[data-vz-retro] .romm-tab") as HTMLElement | null;
+    if (!from) return;
+    const [dx, dy] = dir === 9 ? [0, -1] : dir === 10 ? [0, 1] : dir === 11 ? [-1, 0] : dir === 12 ? [1, 0] : [0, 0];
+    if (!dx && !dy) return;
+    const a = from.getBoundingClientRect();
+    let best: HTMLElement | null = null;
+    let bestScore = Infinity;
+    for (const tab of Array.from(doc.querySelectorAll<HTMLElement>("[data-vz-retro] .romm-tab[data-vz-at]"))) {
+      if (tab === from) continue;
+      const b = tab.getBoundingClientRect();
+      // How far the other one starts beyond this one's edge in that direction, and how far aside.
+      const along = dx ? (dx > 0 ? b.left - a.right : a.left - b.right) : dy > 0 ? b.top - a.bottom : a.top - b.bottom;
+      if (along < -4) continue;
+      const aside = dx
+        ? Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom))
+        : Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right));
+      // Between two equally near, the one that starts level with this one.
+      const level = dx ? Math.abs(b.top - a.top) : Math.abs(b.left - a.left);
+      const score = Math.max(0, along) + 3 * aside + level / 100;
+      if (score < bestScore) {
+        bestScore = score;
+        best = tab;
+      }
+    }
+    if (dy < 0 && best) {
+      // Something above only counts when it is right over this one; otherwise up leaves to the play row.
+      const b = best.getBoundingClientRect();
+      if (Math.max(a.left, b.left) >= Math.min(a.right, b.right)) best = null;
+    }
+    // Up with nothing above goes on to the play row; any other press stays among the pieces
+    // (Tender's own order of tabs means nothing here).
+    if (!best && dy < 0) return;
+    e.stopPropagation();
+    const to = best;
+    if (to) setTimeout(() => to.focus(), 0);
+  };
+  // Coming down from the play row lands on the topmost piece (the leftmost of a row), whatever tab
+  // Tender had current.
+  const onEnter: EventListener = (e) => {
+    const target = e.target as HTMLElement | null;
+    const to = target?.closest?.("[data-vz-retro] .romm-tab") as HTMLElement | null;
+    const fromEl = last;
+    last = target;
+    if (!to || fromEl?.closest?.(".romm-tab, .romm-tab-content") || pageOfRetro(doc)?.hasAttribute("data-vz-sheet")) return;
+    const all = Array.from(doc.querySelectorAll<HTMLElement>("[data-vz-retro] .romm-tab[data-vz-at]"));
+    const first = all.sort((p, q) => {
+      const [a, b] = [p.getBoundingClientRect(), q.getBoundingClientRect()];
+      return Math.abs(a.top - b.top) > 20 ? a.top - b.top : a.left - b.left;
+    })[0];
+    if (first && first !== to) setTimeout(() => first.focus(), 0);
+  };
+  const list: Array<[string, EventListener]> = [
+    ["vgp_ondirection", onDirection],
+    ["focusin", onEnter],
+    ["click", onClick],
+    ["vgp_oncancel", onCancel],
+    ["focusin", onFocus],
+  ];
+  for (const [name, fn] of list) doc.addEventListener(name, fn, true);
+  handlers.set(doc, list);
+}
+function unlisten(doc: Document) {
+  for (const [name, fn] of handlers.get(doc) ?? []) doc.removeEventListener(name, fn, true);
+  handlers.delete(doc);
+}
 
 function clear(doc: Document | undefined) {
   if (!doc) return;
@@ -240,7 +492,14 @@ function clear(doc: Document | undefined) {
   doc.querySelectorAll("[data-vz-retro]").forEach((n) => {
     n.removeAttribute("data-vz-retro");
     n.removeAttribute("data-vz-page");
+    n.removeAttribute("data-vz-sheet");
   });
+  doc.documentElement.removeAttribute("data-vz-sheet-open");
+  doc.querySelectorAll<HTMLElement>("[data-vz-label]").forEach((n) => {
+    for (const a of ["data-vz-label", "data-vz-at", "data-vz-name"]) n.removeAttribute(a);
+    for (const k of ["left", "top", "width", "height"]) n.style.removeProperty(k);
+  });
+  unlisten(doc);
   doc.getElementById(STYLE)?.remove();
 }
 
@@ -281,7 +540,8 @@ function sync() {
     panel.dataset.app = String(appid);
     row.after(panel);
   }
-  const html = panelHtml(data);
+  const tabs = Array.from(doc.querySelectorAll<HTMLElement>(".romm-tab"));
+  const html = panelHtml(data, new Set(tabs.map(tabName)));
   if (panel.dataset.html !== html) {
     panel.dataset.html = html;
     panel.innerHTML = html;
@@ -305,17 +565,39 @@ function sync() {
     page.setAttribute("data-vz-retro", "");
     page.setAttribute("data-vz-page", "");
   }
+  listen(doc);
   fitPanel(panel, false);
-  // The hint sits on the bottom edge of the first screen: what would run into it steps aside.
-  const limit = panel.getBoundingClientRect().top + (parseFloat(panel.style.minHeight) || 0) - HINT;
-  const items = Array.from(panel.querySelectorAll<HTMLElement>(".vz-next-item")).reverse();
-  for (const item of items) if (item.getBoundingClientRect().bottom > limit) item.style.display = "none";
-  const desc = panel.querySelector(".vz-desc") as HTMLElement | null;
-  if (desc) {
-    let lines = Number(desc.style.getPropertyValue("-webkit-line-clamp")) || 1;
-    while (lines > 1 && desc.getBoundingClientRect().bottom > limit) {
-      desc.style.setProperty("-webkit-line-clamp", String(--lines));
+  // Each of Tender's tabs goes over the piece of the panel that opens it, a little wider than it
+  // so the ring has air, and never past the edge of the window.
+  const view = doc.defaultView;
+  for (const tab of tabs) {
+    const name = tabName(tab);
+    const label = tabLabel(name);
+    if (tab.dataset.vzLabel !== label) tab.dataset.vzLabel = label;
+    const target = panel.querySelector(`[data-vz-tab="${name}"]`) as HTMLElement | null;
+    const r = target?.getBoundingClientRect();
+    if (!r || !view || r.width <= 0 || r.height <= 0) {
+      tab.removeAttribute("data-vz-at");
+      continue;
     }
+    const pad = 7;
+    const x = Math.max(6, r.left - pad);
+    const y = r.top - pad;
+    const w = Math.min(view.innerWidth - 6, r.right + pad) - x;
+    const h = r.height + 2 * pad;
+    const at = `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`;
+    // Worked out from where the button actually lands (see place() below) and checked each time:
+    // the page scrolling or Tender redrawing the bar moves it.
+    const now = tab.getBoundingClientRect();
+    if (tab.dataset.vzAt === at && Math.abs(now.left - x) < 1 && Math.abs(now.top - y) < 1) continue;
+    tab.dataset.vzAt = at;
+    tab.style.setProperty("left", "0px", "important");
+    tab.style.setProperty("top", "0px", "important");
+    tab.style.setProperty("width", `${w}px`, "important");
+    tab.style.setProperty("height", `${h}px`, "important");
+    const zero = tab.getBoundingClientRect();
+    tab.style.setProperty("left", `${x - zero.left}px`, "important");
+    tab.style.setProperty("top", `${y - zero.top}px`, "important");
   }
 }
 
