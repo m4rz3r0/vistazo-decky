@@ -1361,3 +1361,9 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   font-size: var(--obs-fs-section) !important;
   font-weight: 600 !important;
 }
+
+/* Fichas retro (Tender): «Jugar» y la flecha de al lado comparten caja, y el anillo de la caja
+   abarcaba los dos. El botón ya lleva el suyo: fuera el de la caja. */
+.romm-play-section-row.romm-play-section-row .appactionbutton_PlayButtonContainer_1FnJ6.appactionbutton_PlayButtonContainer_1FnJ6:has(> .gpfocus) {
+  outline: 0 solid transparent !important;
+}

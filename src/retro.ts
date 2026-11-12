@@ -48,6 +48,8 @@ interface Retro {
 
 const cache = new Map<number, Retro | null>();
 // After RomM fails to answer, no more reads through it for a while.
+// Games Tender has nothing for (or could not answer about): its own page is left as it is.
+const unavailable = new Set<number>();
 const QUIET = 2 * 60 * 1000;
 let quietUntil = 0;
 const listeners = new Set<() => void>();
@@ -58,8 +60,11 @@ async function load(appid: number): Promise<void> {
     const g = await tender("get_cached_game_detail", appid);
     if (!g?.found || !g.rom_id) {
       cache.set(appid, null);
+      unavailable.add(appid);
+      changed();
       return;
     }
+    unavailable.delete(appid);
     const meta = g.metadata ?? {};
     const sum = g.achievement_summary ?? {};
     const status = String(g.save_sync_display?.status ?? "");
@@ -123,7 +128,12 @@ async function load(appid: number): Promise<void> {
     changed();
   } catch {
     // Tender missing or not ready: asked again in a while, not on every look.
-    setTimeout(() => cache.delete(appid), 10000);
+    unavailable.add(appid);
+    changed();
+    setTimeout(() => {
+      cache.delete(appid);
+      unavailable.delete(appid);
+    }, 10000);
   }
 }
 
@@ -230,8 +240,15 @@ const css = () => `${pageCss()}
 .vz-retro-stats { display: flex; gap: 22px; margin-left: 14px; white-space: nowrap; }
 .vz-retro-stat span { display: block; font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.5); }
 .vz-retro-stat b { display: block; margin-top: 3px; font-size: 16px; font-weight: 600; color: #f4f4f4; }
-/* Tender's own figures give way to ours (same data, in the interface language, no capitals). */
-[data-vz-retro] .romm-info-items { display: none !important; }
+/* From the first frame of a RomM game page, before the panel is there: Tender's own figures, tabs
+   and tab content never show, so its page is not seen for a moment and then replaced. */
+:root[data-vz-retro-on] .romm-info-items,
+:root[data-vz-retro-on] .romm-tab-content,
+:root[data-vz-retro-on] .romm-tab:not([data-vz-at]) { display: none !important; }
+:root[data-vz-retro-on] .romm-tab-bar {
+  height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: visible !important;
+}
+.vz-seg b.off { opacity: 0.45; }
 /* Tender's tabs are the things you can press here, but not as a row of buttons: each one lies,
    see-through, over the piece of the panel that names it (placed by the code below), so that
    piece is what gets the ring and opens. */
@@ -425,12 +442,11 @@ function openSheet(doc: Document, tab: HTMLElement) {
     sheet.scrollTop = 0;
     // The first thing in it that really takes the selection (some wrappers do not).
     const within = () => !!sheet.querySelector(".gpfocus") || sheet.contains(doc.activeElement);
-    for (const el of Array.from(sheet.querySelectorAll<HTMLElement>("button, .Focusable")).slice(0, 12)) {
+    for (const el of selectable(sheet).slice(0, 12)) {
       el.focus();
       if (within()) break;
     }
-    if (within()) setTimeout(() => (sheet.scrollTop = 0), 120);
-    else if (++tries < 12) setTimeout(enter, 250);
+    if (!within() && ++tries < 12) setTimeout(enter, 250);
   };
   setTimeout(enter, 60);
 }
@@ -468,6 +484,22 @@ const visibleRows = (sheet: HTMLElement) =>
     .filter((r) => r.offsetParent !== null)
     .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
 
+function counts(rows: HTMLElement[]): Record<Filter, number> {
+  const earned = rows.filter((r) => r.classList.contains("romm-cheevo-row-earned")).length;
+  return { all: rows.length, earned, locked: rows.length - earned };
+}
+// What can take the selection in the sheet, as shown.
+const selectable = (sheet: HTMLElement) =>
+  Array.from(sheet.querySelectorAll<HTMLElement>("button, .Focusable")).filter((el) => el.offsetParent !== null);
+// Selecting the first thing in the sheet must not push its top out of sight (the list scrolls a
+// selected row into place a moment later, more than once).
+function keepTop(sheet: HTMLElement, el: HTMLElement) {
+  for (const ms of [0, 120, 300, 500])
+    setTimeout(() => {
+      if (inside === el && selectable(sheet)[0] === el) sheet.scrollTop = 0;
+    }, ms);
+}
+
 // Applies the choice to Tender's list without touching its nodes' order: the list is a column, so
 // each row only gets its place in it.
 function applyAchievements(doc: Document) {
@@ -480,6 +512,9 @@ function applyAchievements(doc: Document) {
     return;
   }
   const rows = Array.from(sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row"));
+  // A view with nothing in it (no achievement earned yet, or all of them) is never shown: there
+  // would be nothing to select.
+  if (rows.length && !counts(rows)[filter]) filter = "all";
   const key = `${filter}|${order}|${rows.length}`;
   if (sheet.dataset.vzApplied !== key) {
     sheet.dataset.vzApplied = key;
@@ -503,10 +538,9 @@ function applyAchievements(doc: Document) {
   }
   // The three views as tabs with how many each holds, so X is seen stepping along them; the order
   // shows its current value by Y.
-  const earned = rows.filter((r) => r.classList.contains("romm-cheevo-row-earned")).length;
-  const count: Record<Filter, number> = { all: rows.length, earned, locked: rows.length - earned };
+  const count = counts(rows);
   const views = FILTERS.map(
-    (f) => `<b${f === filter ? ' class="on"' : ""}>${t.retroFilter[f]}<em>${count[f]}</em></b>`,
+    (f) => `<b class="${f === filter ? "on" : count[f] ? "" : "off"}">${t.retroFilter[f]}<em>${count[f]}</em></b>`,
   ).join("");
   const html = `<span><i>X</i><span class="vz-seg">${views}</span></span><span><i>Y</i><span class="vz-order">${t.retroOrder[order]}</span></span>`;
   if (!sheet.hasAttribute("data-vz-tools")) sheet.setAttribute("data-vz-tools", "");
@@ -542,13 +576,16 @@ function listen(doc: Document) {
     if (!page?.hasAttribute("data-vz-sheet")) return;
     const target = e.target as HTMLElement | null;
     if (!target) return;
-    if (target.closest(".romm-tab-content")) {
+    const sheet = sheetOf(doc);
+    if (sheet && sheet.contains(target)) {
       inside = target;
+      keepTop(sheet, target);
       return;
     }
-    const back = inside;
-    if (back?.isConnected) setTimeout(() => back.focus(), 0);
-    else if (!target.closest(".romm-tab")) closeSheet(doc, false);
+    // Back to where it was, or to the first thing the sheet shows; with nothing to select the sheet closes.
+    const back = inside?.isConnected && inside.offsetParent !== null ? inside : sheet ? selectable(sheet)[0] : null;
+    if (back) setTimeout(() => back.focus(), 0);
+    else closeSheet(doc, true);
   };
   // Among the pieces of the panel the selection moves by where they are on screen, not by the
   // order of Tender's tabs. With nothing in that direction the press goes on as usual (up reaches
@@ -638,16 +675,19 @@ function listen(doc: Document) {
     const button = Number((e as CustomEvent).detail?.button);
     if ((button !== 3 && button !== 4) || sheetName !== "ACHIEVEMENTS" || !pageOfRetro(doc)?.hasAttribute("data-vz-sheet")) return;
     e.stopPropagation();
-    if (button === 3) filter = FILTERS[(FILTERS.indexOf(filter) + 1) % FILTERS.length];
-    else order = ORDERS[(ORDERS.indexOf(order) + 1) % ORDERS.length];
-    applyAchievements(doc);
     const sheet = sheetOf(doc);
-    const first = sheet && visibleRows(sheet)[0];
-    if (sheet && first)
-      setTimeout(() => {
-        first.focus();
-        sheet.scrollTop = 0;
-      }, 0);
+    if (!sheet) return;
+    if (button === 3) {
+      // The next view that has something in it.
+      const count = counts(Array.from(sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row")));
+      let i = FILTERS.indexOf(filter);
+      do i = (i + 1) % FILTERS.length;
+      while (!count[FILTERS[i]] && FILTERS[i] !== filter);
+      filter = FILTERS[i];
+    } else order = ORDERS[(ORDERS.indexOf(order) + 1) % ORDERS.length];
+    applyAchievements(doc);
+    const first = visibleRows(sheet)[0];
+    if (first) setTimeout(() => first.focus(), 0);
   };
   const list: Array<[string, EventListener]> = [
     ["vgp_onbuttondown", onButton],
@@ -665,7 +705,10 @@ function unlisten(doc: Document) {
   handlers.delete(doc);
 }
 
-function clear(doc: Document | undefined) {
+const ON = "data-vz-retro-on";
+// Takes everything of ours off the page. `keep` leaves the style and the mark that hides Tender's
+// tabs from the first frame: the retro page is on, this just is not one (or not yet).
+function clear(doc: Document | undefined, keep = false) {
   if (!doc) return;
   doc.querySelectorAll(".vz-retro, .vz-retro-stats").forEach((n) => n.remove());
   doc.querySelectorAll("[data-vz-retro]").forEach((n) => {
@@ -687,6 +730,8 @@ function clear(doc: Document | undefined) {
     for (const k of ["left", "top", "width", "height"]) n.style.removeProperty(k);
   });
   unlisten(doc);
+  if (keep) return;
+  doc.documentElement.removeAttribute(ON);
   doc.getElementById(STYLE)?.remove();
 }
 
@@ -699,22 +744,30 @@ function sync() {
   const m = /^\/library\/app\/(\d+)$/.exec(String(win?.m_history?.location?.pathname ?? ""));
   const appid = m ? Number(m[1]) : 0;
   const row = appid ? (doc.querySelector(".romm-play-section-row") as HTMLElement | null) : null;
-  if (!row || !row.parentElement || !settings().retro) return clear(doc);
-  if (!cache.has(appid)) {
-    cache.set(appid, null);
-    load(appid);
-  }
-  const data = cache.get(appid);
-  if (!data) return;
-  if (data.retryAt && Date.now() >= data.retryAt) {
-    data.retryAt = undefined;
-    load(appid);
-  }
+  if (!settings().retro) return clear(doc);
+  watch(doc);
   if (!doc.getElementById(STYLE)) {
     const style = doc.createElement("style");
     style.id = STYLE;
     style.textContent = css();
     doc.head.appendChild(style);
+  }
+  const root = doc.documentElement;
+  if (!row || !row.parentElement) {
+    if (!root.hasAttribute(ON)) root.setAttribute(ON, "");
+    return clear(doc, true);
+  }
+  if (!cache.has(appid)) {
+    cache.set(appid, null);
+    load(appid);
+  }
+  const data = cache.get(appid);
+  // Nothing from Tender for this game: its own page shows as it is.
+  root.toggleAttribute(ON, !!data || !unavailable.has(appid));
+  if (!data) return clear(doc, true);
+  if (data.retryAt && Date.now() >= data.retryAt) {
+    data.retryAt = undefined;
+    load(appid);
   }
   let panel = row.parentElement.querySelector(":scope > .vz-retro") as HTMLElement | null;
   if (panel && panel.dataset.app !== String(appid)) {
@@ -791,6 +844,28 @@ function sync() {
   }
 }
 
+// The page is also looked at the moment Tender's row appears, not only on the next tick.
+let watched: Document | null = null;
+let observer: MutationObserver | null = null;
+let soon = false;
+let tickNow: () => void = () => {};
+function watch(doc: Document) {
+  if (watched === doc) return;
+  observer?.disconnect();
+  watched = doc;
+  const view = doc.defaultView as (Window & typeof globalThis) | null;
+  if (!view) return;
+  observer = new view.MutationObserver(() => {
+    if (soon || !doc.querySelector(".romm-play-section-row") || doc.querySelector(".vz-retro")) return;
+    soon = true;
+    view.requestAnimationFrame(() => {
+      soon = false;
+      tickNow();
+    });
+  });
+  observer.observe(doc.body, { childList: true, subtree: true });
+}
+
 export function watchRetroPages(): () => void {
   const tick = () => {
     if (isUnloaded()) return;
@@ -801,10 +876,15 @@ export function watchRetroPages(): () => void {
     }
   };
   listeners.add(tick);
+  tickNow = tick;
   const timer = setInterval(tick, 400);
   return () => {
     clearInterval(timer);
     listeners.delete(tick);
+    observer?.disconnect();
+    observer = null;
+    watched = null;
+    tickNow = () => {};
     clear(safe(() => SteamUIStore.WindowStore.GamepadUIMainWindowInstance.BrowserWindow.document, undefined as any));
   };
 }
