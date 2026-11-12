@@ -307,6 +307,9 @@ const css = () => `${pageCss()}
 [data-vz-sheet] .romm-tab-content[data-vz-filter="locked"] .romm-cheevo-row.romm-cheevo-row-earned,
 [data-vz-sheet] .romm-tab-content[data-vz-plain="0"] .romm-cheevo-section-title { display: none !important; }
 [data-vz-sheet] .romm-tab-content .romm-cheevo-summary { order: -3; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-summary[data-vz-state]::after {
+  content: attr(data-vz-state); margin-left: 18px; font-size: 14px; font-weight: 600; color: #f4f4f4;
+}
 [data-vz-sheet] .romm-tab-content .romm-cheevo-progress-bar { order: -2; }
 .vz-sheet-tools {
   position: fixed; z-index: 2147483000; display: flex; gap: 18px; align-items: center;
@@ -460,7 +463,15 @@ function applyAchievements(doc: Document) {
     el.className = "vz-sheet-tools";
     doc.body.appendChild(el);
   }
-  const html = `<span><i>X</i>${t.retroFilter[filter]}</span><span><i>Y</i>${t.retroOrder[order]}</span>`;
+  // The buttons say what they do, always the same; what is chosen shows as a fact by the count,
+  // and only when it is not the usual.
+  const html = `<span><i>X</i>${t.retroFilterAction}</span><span><i>Y</i>${t.retroOrderAction}</span>`;
+  const summary = sheet.querySelector(".romm-cheevo-summary") as HTMLElement | null;
+  const state = [filter === "all" ? "" : t.retroFilter[filter], order === "game" ? "" : t.retroOrder[order]].filter(Boolean).join(" · ");
+  if (summary && (summary.dataset.vzState ?? "") !== state) {
+    if (state) summary.dataset.vzState = state;
+    else summary.removeAttribute("data-vz-state");
+  }
   if (el.dataset.html !== html) {
     el.dataset.html = html;
     el.innerHTML = html;
@@ -628,6 +639,7 @@ function clear(doc: Document | undefined) {
   const sheet = doc.querySelector(".romm-tab-content") as HTMLElement | null;
   if (sheet) {
     for (const a of ["data-vz-filter", "data-vz-plain", "data-vz-applied", "data-vz-title"]) sheet.removeAttribute(a);
+    sheet.querySelector(".romm-cheevo-summary")?.removeAttribute("data-vz-state");
     sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row").forEach((r) => r.style.removeProperty("order"));
   }
   sheetName = "";
