@@ -351,6 +351,11 @@ export const homeCss = `
   transition: outline-color calc(260ms * var(--vh-motion)) cubic-bezier(0.3, 0, 0.3, 1),
     outline-offset 0s linear calc(260ms * var(--vh-motion));
 }
+/* Steam's search box opens over the corner when it is selected: the corner steps aside meanwhile. */
+:root:has(input[type="search"]:is(.gpfocus, :focus)) .vh-friends {
+  opacity: 0;
+  pointer-events: none;
+}
 /* Selected: a fine ring in the theme's tone, the same focus as a settings row. */
 .vh-friends.gpfocus {
   color: var(--vh-text);

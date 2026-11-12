@@ -137,8 +137,11 @@ const Friends = memo(function Friends() {
     const back = (e: any) => {
       if (e?.detail?.button !== GamepadButton.DIR_LEFT) return;
       const corner = dot.current?.closest<HTMLElement>(".vh-friends");
-      const btn = (e.target as Element | null)?.closest?.('[class*="2HnVd7wV6yVaTiXfrBe3gq"]');
+      const target = e.target as Element | null;
+      const btn = target?.closest?.('[class*="2HnVd7wV6yVaTiXfrBe3gq"], input[type="search"]');
       if (!corner || !btn || firstTopBarButton(corner) !== btn) return;
+      // With something typed in the search, left moves along the text.
+      if ((btn as HTMLInputElement).value) return;
       e.stopPropagation();
       e.preventDefault();
       corner.focus();
@@ -209,8 +212,11 @@ const Friends = memo(function Friends() {
   );
 });
 
-// The leftmost shown button of Steam's top bar (search, notifications…) to the right of `from`.
+// Where Steam's top bar starts: its search (the magnifying glass, a folded search box), or the
+// leftmost shown button (notifications…) to the right of `from` when there is no search.
 function firstTopBarButton(from: Element): HTMLElement | null {
+  const search = from.ownerDocument.querySelector<HTMLElement>('[class*="17M8gvakqjyaw_cLo6ntdl"] input[type="search"]');
+  if (search && search.getBoundingClientRect().width > 0) return search;
   const edge = from.getBoundingClientRect().right;
   let best: HTMLElement | null = null;
   let bestX = Infinity;
