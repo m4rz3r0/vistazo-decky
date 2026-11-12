@@ -40,9 +40,13 @@ interface Retro {
   total: number;
   hardcore: number;
   next: Next[] | null; // null: not read yet
+  retryAt?: number; // the slower reads did not get through: read again after this time
 }
 
 const cache = new Map<number, Retro | null>();
+// After RomM fails to answer, no more reads through it for a while.
+const QUIET = 2 * 60 * 1000;
+let quietUntil = 0;
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((fn) => fn());
 
@@ -73,12 +77,24 @@ async function load(appid: number): Promise<void> {
     cache.set(appid, retro);
     changed();
     // The slower reads fill in afterwards: which achievements are left, and the BIOS when Tender
-    // had not looked yet.
-    const [list, progress, bios] = await Promise.all([
-      tender("get_achievements", g.rom_id).catch(() => null),
-      tender("get_achievement_progress", g.rom_id).catch(() => null),
-      g.bios_level ? null : tender("get_bios_status", g.rom_id).catch(() => null),
-    ]);
+    // had not looked yet. They go through RomM, one at a time and never while it is not answering
+    // (an on-demand RomM takes a while to wake up): Tender needs its own calls to get through,
+    // the play button's among them.
+    let progress: any = null;
+    let list: any = null;
+    let bios: any = null;
+    if (Date.now() >= quietUntil) {
+      if (g.ra_id) progress = await tender("get_achievement_progress", g.rom_id).catch(() => null);
+      if (g.ra_id && !progress?.success) {
+        quietUntil = Date.now() + QUIET;
+        retro.retryAt = quietUntil;
+      } else {
+        if (g.ra_id) list = await tender("get_achievements", g.rom_id).catch(() => null);
+        if (!g.bios_level) bios = await tender("get_bios_status", g.rom_id).catch(() => null);
+      }
+    } else {
+      retro.retryAt = quietUntil;
+    }
     const b = bios?.bios_status;
     if (b?.needs_bios) retro.bios = b.bios_level === "ok" ? "ok" : "missing";
     if (progress?.success) {
@@ -103,7 +119,8 @@ async function load(appid: number): Promise<void> {
     }
     changed();
   } catch {
-    cache.delete(appid); // Tender missing or not ready: asked again on the next look
+    // Tender missing or not ready: asked again in a while, not on every look.
+    setTimeout(() => cache.delete(appid), 10000);
   }
 }
 
@@ -208,6 +225,9 @@ const css = () => `${pageCss()}
 /* Moving down to Tender's tabs brings them to the top of the screen, clear of the button hints,
    with their content below. */
 [data-vz-retro] .romm-tab { scroll-margin-bottom: 400px; }
+/* And moving back up to the play row brings the whole first screen back, not just the button. */
+[data-vz-retro] .romm-play-section-row button,
+[data-vz-retro] .romm-play-section-row .Focusable { scroll-margin-top: 100vh; }
 `;
 
 const HINT = 28; // room the "more below" line takes at the bottom of the first screen
@@ -240,6 +260,10 @@ function sync() {
   }
   const data = cache.get(appid);
   if (!data) return;
+  if (data.retryAt && Date.now() >= data.retryAt) {
+    data.retryAt = undefined;
+    load(appid);
+  }
   if (!doc.getElementById(STYLE)) {
     const style = doc.createElement("style");
     style.id = STYLE;
