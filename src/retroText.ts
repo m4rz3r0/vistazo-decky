@@ -93,6 +93,10 @@ const PATTERNS: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^Locked \((\d+)\)$/i, (m) => `Pendientes (${m[1]})`],
   [/^(\d+) players? earned this$/, (m) => (m[1] === "1" ? "Lo tiene 1 jugador" : `Lo tienen ${m[1]} jugadores`)],
   [/^(\d+) saves?$/, (m) => (m[1] === "1" ? "1 guardado" : `${m[1]} guardados`)],
+  [
+    /^(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}$/,
+    (m) => new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }),
+  ],
   [/^Synced (.+)$/, (m) => `Sincronizado el ${m[1]}`],
   [/^Extracting… (\d+)%$/, (m) => `Extrayendo… ${m[1]} %`],
   [/^(.*) \(optional\)$/, (m) => `${m[1]} (opcional)`],

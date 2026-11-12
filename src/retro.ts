@@ -308,24 +308,56 @@ const css = () => `${pageCss()}
 [data-vz-sheet] .romm-tab-content[data-vz-plain="0"] .romm-cheevo-section-title { display: none !important; }
 [data-vz-sheet] .romm-tab-content .romm-cheevo-summary { order: -3; }
 [data-vz-sheet] .romm-tab-content .romm-cheevo-progress-bar { order: -2; }
+/* The controls stay under the title while the list scrolls: the three views as tabs (the current
+   one white on grey, like every selector here) and the order's current value. */
+[data-vz-sheet] .romm-tab-content[data-vz-tools]::before { padding-bottom: 60px; }
+[data-vz-sheet] .romm-tab-content[data-vz-tools] { scroll-padding-top: 124px; }
 .vz-sheet-tools {
-  position: fixed; z-index: 2147483000; display: flex; gap: 30px; align-items: center;
+  position: fixed; z-index: 2147483000; display: flex; align-items: center; justify-content: space-between;
   font-size: 14px; pointer-events: none; font-family: "Motiva Sans", sans-serif;
 }
-.vz-sheet-tools span { display: flex; align-items: center; gap: 16px; }
+.vz-sheet-tools > span { display: flex; align-items: center; gap: 10px; }
 .vz-sheet-tools i {
   display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
-  margin-right: -4px; border-radius: 50%; background: rgba(255, 255, 255, 0.85); color: #000;
+  border-radius: 50%; background: rgba(255, 255, 255, 0.85); color: #000;
   font-style: normal; font-size: 12px; font-weight: 700;
 }
-.vz-sheet-tools b {
-  font-weight: 600; color: rgba(255, 255, 255, 0.42);
-  transition: color calc(160ms * var(--obs-motion, 0)) ease-out;
+.vz-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(255, 255, 255, 0.06); }
+.vz-seg b {
+  padding: 6px 14px; border-radius: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.55);
+  transition: background-color calc(160ms * var(--obs-motion, 0)) ease-out, color calc(160ms * var(--obs-motion, 0)) ease-out;
 }
-.vz-sheet-tools b.on { color: #f4f4f4; }
-.vz-sheet-tools em {
-  margin-left: 6px; font-style: normal; font-weight: 500; font-variant-numeric: tabular-nums; opacity: 0.6;
+.vz-seg b.on { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.vz-seg em { margin-left: 6px; font-style: normal; font-weight: 500; font-variant-numeric: tabular-nums; opacity: 0.6; }
+.vz-sheet-tools .vz-order { font-weight: 600; color: #f4f4f4; }
+/* Achievement rows on one grid: badge, text, date, points, each column at the same place in
+   every row. One date (Tender repeats it for hardcore), with the hardcore mark beside it. */
+[data-vz-sheet] .romm-tab-content .romm-cheevo-row { align-items: center !important; gap: 14px !important; padding: 8px 10px !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-img-wrap,
+[data-vz-sheet] .romm-tab-content .romm-cheevo-row > img.romm-cheevo-badge-img { flex: none !important; width: 48px !important; height: 48px !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-badge-img { border-radius: 8px !important; display: block !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-details { flex: 1 1 0 !important; min-width: 0 !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-title { font-size: 15px !important; font-weight: 600 !important; line-height: 20px !important; color: #f4f4f4 !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-desc { font-size: 13px !important; line-height: 18px !important; color: rgba(255, 255, 255, 0.7) !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-rarity { font-size: 12px !important; line-height: 17px !important; color: rgba(255, 255, 255, 0.45) !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-dates {
+  flex: none !important; width: 122px !important; flex-direction: row !important; align-items: center !important;
+  justify-content: flex-end !important; gap: 8px !important;
 }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-dates:has(.romm-cheevo-hc-badge) > .romm-cheevo-date { display: none !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-dates > span:not([class]) { gap: 8px !important; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-date { font-size: 12px !important; line-height: 17px !important; color: rgba(255, 255, 255, 0.55) !important; padding: 0 !important; white-space: nowrap; }
+[data-vz-sheet] .romm-tab-content .romm-cheevo-hc-badge {
+  font-size: 10px !important; font-weight: 700 !important; line-height: 16px !important; padding: 0 5px !important;
+  border-radius: 5px !important; color: var(--obs-reward, #f5cf5a) !important;
+  outline: 1px solid currentColor; outline-offset: -1px;
+}
+[data-vz-sheet] .romm-tab-content .romm-cheevo-points {
+  flex: none !important; width: 52px !important; text-align: right !important; padding: 0 !important;
+  font-size: 13px !important; font-weight: 600 !important; font-variant-numeric: tabular-nums;
+  color: var(--obs-reward, #f5cf5a) !important;
+}
+[data-vz-sheet] .romm-tab-content .romm-cheevo-points-locked { color: rgba(255, 255, 255, 0.55) !important; }
 /* Steam draws its own ring as a separate layer over the whole window, so it can run past the
    sheet: off while a sheet is open (the rows inside draw theirs, see above). */
 :root[data-vz-sheet-open] [class*="1wPplsegQqCoe06wXPhzKT"] { display: none !important; }
@@ -444,6 +476,7 @@ function applyAchievements(doc: Document) {
   const on = !!sheet && sheetName === "ACHIEVEMENTS" && !!pageOfRetro(doc)?.hasAttribute("data-vz-sheet");
   if (!on || !sheet) {
     tools?.remove();
+    sheet?.removeAttribute("data-vz-tools");
     return;
   }
   const rows = Array.from(sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row"));
@@ -468,21 +501,23 @@ function applyAchievements(doc: Document) {
     el.className = "vz-sheet-tools";
     doc.body.appendChild(el);
   }
-  // The three views side by side with how many each holds: the current one in white, the others
-  // dimmed, so X is seen stepping along them. The order shows its current value by Y.
+  // The three views as tabs with how many each holds, so X is seen stepping along them; the order
+  // shows its current value by Y.
   const earned = rows.filter((r) => r.classList.contains("romm-cheevo-row-earned")).length;
   const count: Record<Filter, number> = { all: rows.length, earned, locked: rows.length - earned };
   const views = FILTERS.map(
     (f) => `<b${f === filter ? ' class="on"' : ""}>${t.retroFilter[f]}<em>${count[f]}</em></b>`,
   ).join("");
-  const html = `<span><i>X</i>${views}</span><span><i>Y</i><b class="on">${t.retroOrder[order]}</b></span>`;
+  const html = `<span><i>X</i><span class="vz-seg">${views}</span></span><span><i>Y</i><span class="vz-order">${t.retroOrder[order]}</span></span>`;
+  if (!sheet.hasAttribute("data-vz-tools")) sheet.setAttribute("data-vz-tools", "");
   if (el.dataset.html !== html) {
     el.dataset.html = html;
     el.innerHTML = html;
   }
   const r = sheet.getBoundingClientRect();
-  el.style.top = `${Math.round(r.top + 25)}px`;
-  el.style.right = `${Math.round((doc.defaultView?.innerWidth ?? r.right) - r.right + 26)}px`;
+  el.style.top = `${Math.round(r.top + 62)}px`;
+  el.style.left = `${Math.round(r.left + 26)}px`;
+  el.style.width = `${Math.round(r.width - 52)}px`;
 }
 
 let last: HTMLElement | null = null; // what had the selection before
@@ -642,7 +677,7 @@ function clear(doc: Document | undefined) {
   doc.querySelector(".vz-sheet-tools")?.remove();
   const sheet = doc.querySelector(".romm-tab-content") as HTMLElement | null;
   if (sheet) {
-    for (const a of ["data-vz-filter", "data-vz-plain", "data-vz-applied", "data-vz-title"]) sheet.removeAttribute(a);
+    for (const a of ["data-vz-filter", "data-vz-plain", "data-vz-applied", "data-vz-title", "data-vz-tools"]) sheet.removeAttribute(a);
     sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row").forEach((r) => r.style.removeProperty("order"));
   }
   sheetName = "";
