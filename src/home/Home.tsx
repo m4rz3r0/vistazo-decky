@@ -128,6 +128,24 @@ const Friends = memo(function Friends() {
     }, 15000);
     return () => clearInterval(t);
   }, []);
+  // And back: left from the first button of that bar comes to the corner, instead of opening
+  // Steam's search box on top of it.
+  const dot = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const doc = dot.current?.ownerDocument;
+    if (!doc) return;
+    const back = (e: any) => {
+      if (e?.detail?.button !== GamepadButton.DIR_LEFT) return;
+      const corner = dot.current?.closest<HTMLElement>(".vh-friends");
+      const btn = (e.target as Element | null)?.closest?.('[class*="2HnVd7wV6yVaTiXfrBe3gq"]');
+      if (!corner || !btn || firstTopBarButton(corner) !== btn) return;
+      e.stopPropagation();
+      e.preventDefault();
+      corner.focus();
+    };
+    doc.addEventListener("vgp_ondirection", back, true);
+    return () => doc.removeEventListener("vgp_ondirection", back, true);
+  }, []);
   const opts = statusOptions();
   const me = opts.find((o) => o.id === status) ?? opts[0];
 
@@ -171,9 +189,16 @@ const Friends = memo(function Friends() {
       // would land on its search button. The corner is the top of the home.
       // Steam takes what this returns as "handled": true stops the move, and anything but false
       // counts as true, so every other direction must say false or the focus is stuck here.
-      onGamepadDirection={(evt: any) => evt?.detail?.button === GamepadButton.DIR_UP}
+      // Right goes on along that bar (search, notifications, wifi, battery…): Steam doesn't find it
+      // from here by itself.
+      onGamepadDirection={(evt: any) => {
+        const b = evt?.detail?.button;
+        if (b === GamepadButton.DIR_RIGHT) return toTopBar(evt?.currentTarget ?? evt?.target);
+        return b === GamepadButton.DIR_UP;
+      }}
     >
       <span
+        ref={dot}
         className="vh-dot vh-self"
         style={{ ["--vh-tone" as any]: me.tone }}
       />
@@ -183,6 +208,27 @@ const Friends = memo(function Friends() {
     </Focusable>
   );
 });
+
+// The leftmost shown button of Steam's top bar (search, notifications…) to the right of `from`.
+function firstTopBarButton(from: Element): HTMLElement | null {
+  const edge = from.getBoundingClientRect().right;
+  let best: HTMLElement | null = null;
+  let bestX = Infinity;
+  from.ownerDocument.querySelectorAll<HTMLElement>('[class*="2HnVd7wV6yVaTiXfrBe3gq"]').forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0 && r.left >= edge - 1 && r.left < bestX) {
+      best = el;
+      bestX = r.left;
+    }
+  });
+  return best;
+}
+// Focuses it; false when there is none, so Steam moves as it would.
+function toTopBar(from: Element | null | undefined): boolean {
+  const btn = from ? firstTopBarButton(from) : null;
+  btn?.focus();
+  return !!btn;
+}
 
 // Games whose own wide art didn't load this session: they go straight to the poster.
 const noHero = new Set<number>();
