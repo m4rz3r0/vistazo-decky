@@ -554,6 +554,17 @@ function applyAchievements(doc: Document) {
   el.style.width = `${Math.round(r.width - 52)}px`;
 }
 
+// The topmost piece of the panel that can be opened (the leftmost of a row).
+function firstPiece(doc: Document): HTMLElement | null {
+  const all = Array.from(doc.querySelectorAll<HTMLElement>("[data-vz-retro] .romm-tab[data-vz-at]"));
+  return (
+    all.sort((p, q) => {
+      const [a, b] = [p.getBoundingClientRect(), q.getBoundingClientRect()];
+      return Math.abs(a.top - b.top) > 20 ? a.top - b.top : a.left - b.left;
+    })[0] ?? null
+  );
+}
+
 let last: HTMLElement | null = null; // what had the selection before
 let inside: HTMLElement | null = null; // the last thing selected inside the open sheet
 const handlers = new WeakMap<Document, Array<[string, EventListener]>>();
@@ -619,6 +630,17 @@ function listen(doc: Document) {
       sheet.scrollBy({ top: (dir === 10 ? 1 : -1) * Math.round(sheet.clientHeight * 0.6), behavior: "smooth" });
       return;
     }
+    // Down from the play row goes straight to the first piece of the panel. Left to Steam it lands
+    // on whichever tab Tender has current (the description) and only then gets moved, which showed.
+    if (dir === 10 && (e.target as HTMLElement | null)?.closest?.("[data-vz-retro] .romm-play-section-row")) {
+      const first = firstPiece(doc);
+      if (first) {
+        e.stopPropagation();
+        last = first;
+        setTimeout(() => first.focus(), 0);
+      }
+      return;
+    }
     const from = (e.target as HTMLElement | null)?.closest?.("[data-vz-retro] .romm-tab") as HTMLElement | null;
     if (!from) return;
     const [dx, dy] = dir === 9 ? [0, -1] : dir === 10 ? [0, 1] : dir === 11 ? [-1, 0] : dir === 12 ? [1, 0] : [0, 0];
@@ -663,11 +685,7 @@ function listen(doc: Document) {
     const fromEl = last;
     last = target;
     if (!to || fromEl?.closest?.(".romm-tab, .romm-tab-content") || pageOfRetro(doc)?.hasAttribute("data-vz-sheet")) return;
-    const all = Array.from(doc.querySelectorAll<HTMLElement>("[data-vz-retro] .romm-tab[data-vz-at]"));
-    const first = all.sort((p, q) => {
-      const [a, b] = [p.getBoundingClientRect(), q.getBoundingClientRect()];
-      return Math.abs(a.top - b.top) > 20 ? a.top - b.top : a.left - b.left;
-    })[0];
+    const first = firstPiece(doc);
     if (first && first !== to) setTimeout(() => first.focus(), 0);
   };
   // X and Y in the achievements sheet: what to show, and the order.
