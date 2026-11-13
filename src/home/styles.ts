@@ -277,6 +277,13 @@ export const homeCss = `
   opacity: calc(0.62 - 0.1 * var(--vh-motion));
 }
 .vh-row .vh-cover.vh-library::after { content: none; }
+/* The eye on Vistazo's own entries: a quiet mark in the corner, over the cover. */
+.vh-own {
+  position: absolute; top: 8px; right: 8px; z-index: 1; width: 16px; height: 16px; padding: 5px;
+  border-radius: 50%; background: rgba(0, 0, 0, 0.72);
+}
+.vh-own path { fill: none; stroke: #f4f4f4; stroke-width: 2; stroke-linejoin: round; }
+.vh-own circle { fill: #f4f4f4; }
 @media (prefers-reduced-motion: reduce) {
   .vh-row { --vh-motion: 0; }
 }

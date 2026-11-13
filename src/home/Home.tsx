@@ -396,6 +396,13 @@ const Cover = memo(
           lazy
           fallback={<span className="vh-art vh-noart">{game.name}</span>}
         />
+        {/* Vistazo's own entry of a game Tender also has: the same cover, told apart by the eye. */}
+        {game.own && (
+          <svg className="vh-own" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12c2.6-4.4 6-6.6 10-6.6s7.4 2.2 10 6.6c-2.6 4.4-6 6.6-10 6.6S4.6 16.4 2 12z" />
+            <circle cx="12" cy="12" r="3.2" />
+          </svg>
+        )}
       </Focusable>
     );
   },
@@ -403,6 +410,7 @@ const Cover = memo(
     a.game.appid === b.game.appid &&
     a.game.name === b.game.name &&
     a.game.steam === b.game.steam &&
+    a.game.own === b.game.own &&
     a.first === b.first &&
     a.running === b.running &&
     a.aOpensPage === b.aOpensPage &&

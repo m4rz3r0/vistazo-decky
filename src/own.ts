@@ -54,6 +54,7 @@ export function loadOwned(again = false): Promise<void> {
     }));
 }
 export const ownedRom = (appid: number) => owned.get(appid) ?? 0;
+export const ownedApps = () => [...owned.keys()];
 // The RomM game behind a Steam entry, 0 when it is not Vistazo's. A Steam entry this copy does
 // not know is asked about once more: it may have been made a moment ago.
 const asked = new Set<number>();

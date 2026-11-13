@@ -1,5 +1,7 @@
 import { safe } from "../safe";
 import { locale, t } from "../i18n";
+import { ownedApps } from "../own";
+import { settings } from "../settings";
 declare const collectionStore: any;
 declare const appStore: any;
 declare const friendStore: any;
@@ -10,6 +12,7 @@ export interface Game {
   appid: number;
   name: string;
   steam: boolean; // false: RomM game handled by Tender
+  own?: boolean; // a RomM game Vistazo looks after itself (its own entry in Steam)
   platform: string | null;
   minutes: number;
   lastPlayed: number; // unix seconds, 0 = never
@@ -23,14 +26,17 @@ export interface Shelf {
   label: string;
 }
 
+// The RomM games that are Vistazo's own entries in Steam, for those who turned that on.
+const ownGames = (): number[] => (settings().ownGames ? ownedApps() : []);
+
 const isRomm = (c: any) => /^RomM:/.test(String(c?.displayName ?? ""));
 
 // Read from this Deck's own Steam collections every time, so each person sees theirs.
 export function availableShelves(): Shelf[] {
   const collections: any[] = safe(() => collectionStore.userCollections, []);
   const out: Shelf[] = [{ id: "installed", label: t.installed }];
-  // "Retro" only where Tender has added RomM games.
-  if (collections.some(isRomm)) out.push({ id: "retro", label: t.retro });
+  // "Retro" only where there are RomM games: Tender's, or the ones Vistazo looks after itself.
+  if (collections.some(isRomm) || ownGames().length) out.push({ id: "retro", label: t.retro });
   // Favourites and collections the user made (or a tool such as Steam ROM Manager made for them);
   // Steam's built-in ones (installed, soundtracks, uncategorised…) and Tender's RomM ones are left out.
   for (const c of collections) {
@@ -100,6 +106,10 @@ function readShelf(id: ShelfId): Game[] {
         seen.add(o.appid);
         games.push(toGame(o, false, m[1]));
       }
+    }
+    for (const appid of ownGames()) {
+      const o = overview(appid);
+      if (o && !seen.has(appid)) games.push({ ...toGame(o, false), own: true });
     }
     return games.sort(byRecent);
   } catch {
