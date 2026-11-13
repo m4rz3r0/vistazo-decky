@@ -41,7 +41,7 @@ sys.path.insert(0, REPO)
 import main  # noqa: E402
 
 BASIC = ["me.read", "me.write"]
-GAMES = BASIC + ["roms.read", "platforms.read", "assets.read", "assets.write"]
+GAMES = BASIC + ["roms.read", "platforms.read", "collections.read", "firmware.read", "assets.read", "assets.write"]
 NASTY = 'Po ké "mon" $(touch pwned); `id` \\ & .nds'
 DATA = os.urandom(300_000)
 
@@ -208,15 +208,23 @@ def leftovers():
     return sorted(n for _, _, names in os.walk(ROMS) for n in names if n.endswith(".part"))
 
 
+def pair(code, games=False):
+    return run(plugin.romm_pair(code, games))
+
+
 def test_key():
     tender(URL)
     check("no key yet", run(plugin.romm_status()), "unlinked")
+    check("nothing to check", run(plugin.romm_check()), "unlinked")
     check("games need a key", run(plugin.romm_game(5)), {"ok": False, "why": "unlinked"})
+    check("not a code", pair("abc")["result"], "code")
+    check("unknown code", pair("ZZZZZZZZ")["result"], "invalid")
 
     # A key for achievements only is still taken, as before, and says what it is.
     romm.codes["ABCDEFGH"] = (1, BASIC)
-    check("small key paired", run(plugin.romm_pair("abcd-efgh")), "ok")
+    check("small key paired", pair("abcd-efgh"), {"result": "ok", "missing": [], "extra": []})
     check("small key status", run(plugin.romm_status()), "limited")
+    check("small key works", run(plugin.romm_check()), "ok")
     check("key file private", mode(main.KEY_FILE), 0o600)
     check("small key reads achievements", run(plugin.romm_progress(77))["earned"], 2)
     check("small key sees no games", run(plugin.romm_game(5)), {"ok": False, "why": "limited"})
@@ -232,23 +240,40 @@ def test_key():
     check("old stored key", run(plugin.romm_status()), "limited")
     check("old stored key still reads achievements", run(plugin.romm_progress(77))["ok"], True)
 
-    # Asking for the wide set: a small key is refused and thrown away at RomM; so is a wider one.
-    romm.codes["JKMNPQRS"] = (2, BASIC)
-    check("small key refused for games", run(plugin.romm_pair("JKMNPQRS", True)), "scopes")
-    check("refused key revoked", romm.deleted[-1], (2, "tok-2"))
-    romm.codes["TUVWXYZ2"] = (3, GAMES + ["roms.write"])
-    check("wider key refused", run(plugin.romm_pair("TUVWXYZ2", True)), "scopes")
+    # Asked to look after the games, a key short of the set is kept for what it can do, and the
+    # answer names what it lacks.
+    romm.codes["JKMNPQRS"] = (2, BASIC + ["roms.read", "platforms.read", "assets.read", "assets.write"])
+    check("short key kept, with what it lacks", pair("JKMNPQRS", True),
+          {"result": "limited", "missing": ["collections.read", "firmware.read"], "extra": []})
+    check("short key status", run(plugin.romm_status()), "limited")
+    check("the key it replaced is revoked", romm.deleted[-1], (1, "tok-1"))
+
+    # A key that can do more than Vistazo should ever hold, or less than it always needs, is
+    # thrown away at RomM, and the answer names why. The stored one stays.
+    romm.codes["TUVWXYZ2"] = (3, GAMES + ["roms.write", "users.write"])
+    check("wider key refused", pair("TUVWXYZ2", True), {"result": "scopes", "missing": [], "extra": ["roms.write", "users.write"]})
     check("wider key revoked", romm.deleted[-1], (3, "tok-3"))
-    romm.codes["23456789"] = (4, GAMES)
-    check("wide key refused for achievements only", run(plugin.romm_pair("23456789")), "scopes")
+    romm.codes["23456789"] = (4, ["me.read", "roms.read"])
+    check("key without the basics refused", pair("23456789"), {"result": "scopes", "missing": ["me.write"], "extra": []})
+    check("it is revoked too", romm.deleted[-1], (4, "tok-4"))
     check("kept key untouched", run(plugin.romm_status()), "limited")
 
+    # The whole set, whichever way it was asked for: good for everything.
     romm.codes["HGFEDCBA"] = (5, list(reversed(GAMES)))
-    check("wide key paired", run(plugin.romm_pair("HGFEDCBA", True)), "ok")
+    check("wide key paired", pair("HGFEDCBA"), {"result": "ok", "missing": [], "extra": []})
     check("wide key status", run(plugin.romm_status()), "linked")
     check("key file private", mode(main.KEY_FILE), 0o600)
-    check("the key it replaced is revoked", romm.deleted[-1], (1, "tok-1"))
+    check("the key it replaced is revoked", romm.deleted[-1], (2, "tok-2"))
     check("wide key still reads achievements", run(plugin.romm_progress(77))["hardcore"], 1)
+
+    # A key RomM no longer accepts is forgotten when asked about.
+    kept = dict(romm.tokens)
+    romm.tokens.clear()
+    check("revoked at RomM", run(plugin.romm_check()), "refused")
+    check("forgotten", run(plugin.romm_status()), "unlinked")
+    romm.tokens.update(kept)
+    romm.codes["HGFEDCBA"] = (5, GAMES)
+    check("paired again", pair("HGFEDCBA", True)["result"], "ok")
 
 
 def test_detail():
@@ -488,7 +513,7 @@ def test_download():
     check("refused key forgotten", run(plugin.romm_status()), "unlinked")
     romm.refuse.clear()
     romm.codes["ABCDEFGH"] = (6, GAMES)
-    check("paired again", run(plugin.romm_pair("ABCDEFGH", True)), "ok")
+    check("paired again", pair("ABCDEFGH", True)["result"], "ok")
     run(plugin.game_release(500))
 
 

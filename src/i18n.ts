@@ -1,4 +1,5 @@
 import { safe } from "./safe";
+import { scopeNames } from "./romm";
 // Interface text in Spanish or English, following Steam's own interface language
 // (Spanish for any Spanish locale, English for everything else).
 declare const LocalizationManager: any;
@@ -133,17 +134,36 @@ const es = {
   rommPair: "Conectar con RomM",
   rommUnlink: "Desconectar",
   rommPairSteps:
-    "En RomM, en Ajustes › Client API Tokens, crea una clave marcando solo me.read y me.write y pulsa «Emparejar dispositivo». Escribe aquí el código que aparece: caduca en un minuto.",
+    "En RomM, en Ajustes › Client API Tokens, crea una clave con solo el permiso Me (read y write) y pulsa «Emparejar dispositivo». Escribe aquí el código que aparece: caduca en un minuto.",
   rommCode: "Código",
-  rommResult: {
-    ok: "Conectado.",
-    code: "El código tiene 8 letras y números.",
-    invalid: "Código incorrecto o caducado: pide otro en RomM.",
-    scopes: "La clave tiene que tener solo me.read y me.write. Se ha borrado en RomM; crea otra.",
-    "no-server": "Tender no tiene RomM configurado.",
-    unreachable: "RomM no responde. Prueba otra vez en un momento.",
-    error: "No se pudo conectar.",
-  } as Record<string, string>,
+  rommAsking: "Preguntando a RomM…",
+  rommDone: "Hecho",
+  rommAsleep: "Conectado, pero RomM no responde ahora mismo.",
+  rommDropped: "RomM ya no acepta la clave que había: vuelve a conectar.",
+  rommAnswer: (a: { result: string; missing: string[]; extra: string[] }, games: boolean) => {
+    switch (a.result) {
+      case "ok":
+        return games ? "Conectado: juegos y logros." : "Conectado: los logros se actualizarán al cerrar un juego.";
+      case "limited":
+        return `Conectado, pero solo para los logros. Para llevar los juegos a la clave le falta: ${scopeNames(a.missing)}. Crea otra con todo y vuelve a conectar.`;
+      case "code":
+        return "El código tiene 8 letras y números.";
+      case "invalid":
+        return "RomM no reconoce ese código: es incorrecto o ha caducado (dura un minuto). Pide otro.";
+      case "scopes":
+        return a.extra.length
+          ? `Esa clave puede hacer más de lo que Vistazo debe tener: ${scopeNames(a.extra)}. Se ha borrado en RomM; crea otra sin eso.`
+          : `A esa clave le falta: ${scopeNames(a.missing)}. Se ha borrado en RomM; crea otra.`;
+      case "no-server":
+        return "Tender no tiene RomM configurado.";
+      case "unreachable":
+        return "RomM no responde. Si estaba dormido, tarda un poco en arrancar: pide otro código y prueba de nuevo.";
+      case "busy":
+        return "RomM pide esperar un momento antes de probar otro código.";
+      default:
+        return "No se pudo conectar. El código ya no vale: pide otro.";
+    }
+  },
   // Vistazo looking after RomM games itself
   ownGamesLabel: "Juegos con Vistazo",
   ownGamesDesc: "Vistazo descarga e inicia por sí mismo los juegos de RomM que le pases, uno a uno. En pruebas.",
@@ -154,7 +174,7 @@ const es = {
   rommLimited: "Conectado solo para los logros. Para llevar los juegos hace falta otra clave: vuelve a conectar.",
   rommAgain: "Conectar de nuevo",
   rommPairStepsGames:
-    "En RomM, en Ajustes › Client API Tokens, crea una clave marcando solo me.read, me.write, roms.read, platforms.read, assets.read y assets.write, y pulsa «Emparejar dispositivo». Escribe aquí el código que aparece: caduca en un minuto.",
+    "En RomM, en Ajustes › Client API Tokens, crea una clave con estos permisos: Assets (read y write), Collections (read), Firmware (read), Me (read y write), Platforms (read) y Roms (read). Pulsa «Emparejar dispositivo» y escribe aquí el código que aparece: caduca en un minuto.",
   ownName: (game: string) => `${game} · Vistazo`,
   ownOffer:
     "Crea en Steam una segunda entrada de este juego, a cargo de Vistazo: la descarga de RomM y la inicia. La de Tender sigue igual. Las dos usan la misma partida guardada, y Tender no sincroniza lo que juegues desde la de Vistazo.",
@@ -181,8 +201,6 @@ const es = {
       steam: "Steam no dejó crear la entrada.",
       game: "RomM no tiene ese juego.",
     }) as Record<string, string>)[why] ?? "No se pudo completar.",
-  rommScopesGames:
-    "La clave tiene que tener solo me.read, me.write, roms.read, platforms.read, assets.read y assets.write. Se ha borrado en RomM; crea otra.",
   // Retro game page (RomM games, with Tender)
   retroPageLabel: "Ficha de juegos retro",
   retroPageDesc: "Logros y datos en los juegos de RomM. Sin esto, la ficha original de Tender.",
@@ -328,17 +346,36 @@ const en: typeof es = {
   rommPair: "Connect to RomM",
   rommUnlink: "Disconnect",
   rommPairSteps:
-    "In RomM, under Settings › Client API Tokens, create a token with only me.read and me.write and press “Pair device”. Type the code it shows here: it expires in a minute.",
+    "In RomM, under Settings › Client API Tokens, create a token with only the Me permission (read and write) and press “Pair device”. Type the code it shows here: it expires in a minute.",
   rommCode: "Code",
-  rommResult: {
-    ok: "Connected.",
-    code: "The code is 8 letters and numbers.",
-    invalid: "Wrong or expired code: get another one in RomM.",
-    scopes: "The token must have only me.read and me.write. It was deleted in RomM; create another.",
-    "no-server": "Tender has no RomM set up.",
-    unreachable: "RomM is not answering. Try again in a moment.",
-    error: "Could not connect.",
-  } as Record<string, string>,
+  rommAsking: "Asking RomM…",
+  rommDone: "Done",
+  rommAsleep: "Connected, but RomM is not answering right now.",
+  rommDropped: "RomM no longer accepts the key that was here: connect again.",
+  rommAnswer: (a: { result: string; missing: string[]; extra: string[] }, games: boolean) => {
+    switch (a.result) {
+      case "ok":
+        return games ? "Connected: games and achievements." : "Connected: achievements will update when a game closes.";
+      case "limited":
+        return `Connected, but for achievements only. To run the games the key lacks: ${scopeNames(a.missing)}. Create another with everything and connect again.`;
+      case "code":
+        return "The code is 8 letters and numbers.";
+      case "invalid":
+        return "RomM does not know that code: it is wrong or has expired (it lasts a minute). Get another.";
+      case "scopes":
+        return a.extra.length
+          ? `That key can do more than Vistazo should hold: ${scopeNames(a.extra)}. It was deleted in RomM; create another without those.`
+          : `That key lacks: ${scopeNames(a.missing)}. It was deleted in RomM; create another.`;
+      case "no-server":
+        return "Tender has no RomM set up.";
+      case "unreachable":
+        return "RomM is not answering. If it was asleep it takes a while to start: get another code and try again.";
+      case "busy":
+        return "RomM asks to wait a moment before trying another code.";
+      default:
+        return "Could not connect. The code is used up: get another.";
+    }
+  },
   // Vistazo looking after RomM games itself
   ownGamesLabel: "Games by Vistazo",
   ownGamesDesc: "Vistazo downloads and starts the RomM games you hand it by itself, one at a time. Experimental.",
@@ -349,7 +386,7 @@ const en: typeof es = {
   rommLimited: "Connected for achievements only. Running the games needs another key: connect again.",
   rommAgain: "Connect again",
   rommPairStepsGames:
-    "In RomM, under Settings › Client API Tokens, create a token with only me.read, me.write, roms.read, platforms.read, assets.read and assets.write, and press “Pair device”. Type the code it shows here: it expires in a minute.",
+    "In RomM, under Settings › Client API Tokens, create a token with these permissions: Assets (read and write), Collections (read), Firmware (read), Me (read and write), Platforms (read) and Roms (read). Press “Pair device” and type the code it shows here: it expires in a minute.",
   ownName: (game: string) => `${game} · Vistazo`,
   ownOffer:
     "Adds a second entry of this game to Steam, run by Vistazo: it downloads it from RomM and starts it. Tender's entry stays as it is. Both use the same save, and Tender does not sync what you play from Vistazo's.",
@@ -376,8 +413,6 @@ const en: typeof es = {
       steam: "Steam did not let the entry be made.",
       game: "RomM does not have that game.",
     }) as Record<string, string>)[why] ?? "It could not be completed.",
-  rommScopesGames:
-    "The token must have only me.read, me.write, roms.read, platforms.read, assets.read and assets.write. It was deleted in RomM; create another.",
   // Retro game page (RomM games, with Tender)
   retroPageLabel: "Retro game page",
   retroPageDesc: "Achievements and facts on RomM games. Off: Tender's own page.",

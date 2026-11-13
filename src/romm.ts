@@ -7,7 +7,15 @@ import { useEffect, useState } from "react";
 
 // "limited": a key for achievements only. "linked": one that may also look after the games.
 export type RommStatus = "linked" | "limited" | "unlinked" | "moved" | "no-server";
-export type PairResult = "ok" | "code" | "invalid" | "scopes" | "no-server" | "unreachable" | "error";
+export type PairResult = "ok" | "limited" | "code" | "invalid" | "scopes" | "no-server" | "unreachable" | "busy" | "error";
+// What came of a pairing code, with the permissions the key lacks or has too many of.
+export interface PairAnswer {
+  result: PairResult;
+  missing: string[];
+  extra: string[];
+}
+// Whether RomM still takes the stored key, asked on the spot.
+export type RommHealth = "ok" | "refused" | "unreachable";
 export interface Progress {
   ok: boolean;
   why?: string;
@@ -20,7 +28,8 @@ export interface Progress {
 }
 
 const status = callable<[], RommStatus>("romm_status");
-const pair = callable<[code: string, games: boolean], PairResult>("romm_pair");
+const pair = callable<[code: string, games: boolean], PairAnswer>("romm_pair");
+const check = callable<[], string>("romm_check");
 const unlink = callable<[], RommStatus>("romm_unlink");
 export const rommProgress = callable<[raId: number, refresh: boolean], Progress>("romm_progress");
 
@@ -40,16 +49,38 @@ export async function rommStatus(): Promise<RommStatus | null> {
   return current;
 }
 
-export async function pairRomm(code: string, games: boolean): Promise<PairResult> {
-  let result: PairResult = "error";
+export async function pairRomm(code: string, games: boolean): Promise<PairAnswer> {
+  let answer: PairAnswer = { result: "error", missing: [], extra: [] };
   try {
-    result = await pair(code, games);
+    const got = await pair(code, games);
+    if (got && typeof got.result === "string") answer = { result: got.result, missing: got.missing ?? [], extra: got.extra ?? [] };
   } catch (e) {
     console.warn("[Vistazo] RomM pair", e);
   }
   await rommStatus();
-  return result;
+  return answer;
 }
+
+export async function checkRomm(): Promise<RommHealth | null> {
+  let health: RommHealth | null = null;
+  try {
+    const got = await check();
+    if (got === "ok" || got === "refused" || got === "unreachable") health = got;
+  } catch (e) {
+    console.warn("[Vistazo] RomM check", e);
+  }
+  if (health === "refused") await rommStatus();
+  return health;
+}
+
+// A permission as RomM's own screen shows it: "assets.write" -> "Assets (write)".
+export const scopeNames = (scopes: string[]) =>
+  scopes
+    .map((s) => {
+      const [group, what] = s.split(".");
+      return `${group.charAt(0).toUpperCase()}${group.slice(1)}${what ? ` (${what})` : ""}`;
+    })
+    .join(", ");
 
 export async function unlinkRomm(): Promise<void> {
   try {

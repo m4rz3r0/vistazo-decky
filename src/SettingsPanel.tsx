@@ -3,7 +3,7 @@ import { ButtonItem, ConfirmModal, DropdownItem, PanelSection, PanelSectionRow, 
 import { useEffect, useState } from "react";
 import { GameState, addOwn, gameState, loadOwned, ownedApp, ownedRom, removeOwn, retryOwn } from "./own";
 import { openPage } from "./retro";
-import { PairResult, pairRomm, unlinkRomm, useRomm } from "./romm";
+import { PairAnswer, RommHealth, checkRomm, pairRomm, unlinkRomm, useRomm } from "./romm";
 import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 import { availableShelves } from "./home/data";
@@ -89,50 +89,103 @@ export function SettingsPanel() {
 // Vistazo's own RomM key, to see a retro game's achievements as soon as it closes and, with
 // `games`, to look after the games themselves. One row: what state it is in and the one thing to
 // do about it. A key for achievements only is enough until the games are Vistazo's: then the row
-// asks to connect again, with a key that can see them.
-let lastResult: PairResult | null = null;
+// asks to connect again, with a key that can see them. Opening the settings asks RomM whether the
+// key still works, so the row never says "connected" about a key RomM has dropped.
 function RommRow({ games }: { games: boolean }) {
   const status = useRomm();
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<PairResult | null>(lastResult);
+  const [health, setHealth] = useState<RommHealth | null>(null);
+  const has = status === "linked" || status === "limited";
+  useEffect(() => {
+    let alive = true;
+    if (has) checkRomm().then((h) => alive && setHealth(h));
+    else setHealth(null);
+    return () => {
+      alive = false;
+    };
+  }, [has]);
   if (!status || status === "no-server") return null;
   const short = games && status === "limited";
-  const linked = (status === "linked" || status === "limited") && !short;
-  const note = result && result !== "ok" ? (games && result === "scopes" ? t.rommScopesGames : t.rommResult[result]) : undefined;
-  const description =
-    note ??
-    (short
-      ? t.rommLimited
-      : linked
-        ? games ? t.rommLinkedGames : t.rommLinked
-        : status === "moved"
-          ? t.rommMoved
-          : games ? t.rommUnlinkedGames : t.rommUnlinked);
-  const connect = (code: string) => {
-    setBusy(true);
-    pairRomm(code, games).then((r) => {
-      lastResult = r;
-      setResult(r);
-      setBusy(false);
-    });
-  };
+  const linked = has && !short;
+  const description = short
+    ? t.rommLimited
+    : linked
+      ? health === "unreachable"
+        ? t.rommAsleep
+        : games ? t.rommLinkedGames : t.rommLinked
+      : status === "moved"
+        ? t.rommMoved
+        : health === "refused"
+          ? t.rommDropped
+          : games ? t.rommUnlinkedGames : t.rommUnlinked;
   return (
     <PanelSectionRow>
       <ButtonItem
         layout="below"
         label={games ? t.rommLabelGames : t.rommLabel}
         description={description}
-        disabled={busy}
-        onClick={() => {
-          lastResult = null;
-          setResult(null);
-          if (linked) unlinkRomm();
-          else showModal(<PairModal games={games} onCode={connect} />);
-        }}
+        onClick={() => (linked ? unlinkRomm() : showModal(<PairModal games={games} />))}
       >
         {linked ? t.rommUnlink : short ? t.rommAgain : t.rommPair}
       </ButtonItem>
     </PanelSectionRow>
+  );
+}
+
+// Where RomM's pairing code is typed: 8 letters and numbers, dashes and spaces ignored. It stays
+// open while RomM is asked and says what came of it: connected, or exactly what is wrong (the
+// code, RomM not answering, which permissions the key lacks or has too many of), ready for
+// another code.
+function PairModal({ games, closeModal }: { games: boolean; closeModal?: () => void }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [answer, setAnswer] = useState<PairAnswer | null>(null);
+  const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const done = answer?.result === "ok";
+  const submit = () => {
+    setBusy(true);
+    setAnswer(null);
+    pairRomm(clean, games).then((a) => {
+      setAnswer(a);
+      setBusy(false);
+      // A code is good for one try.
+      if (a.result !== "ok" && a.result !== "code") setCode("");
+    });
+  };
+  const note = busy ? t.rommAsking : answer ? t.rommAnswer(answer, games) : "";
+  return (
+    <ConfirmModal
+      strTitle={t.rommPair}
+      strDescription={games ? t.rommPairStepsGames : t.rommPairSteps}
+      strOKButtonText={done ? t.rommDone : t.rommPair}
+      bOKDisabled={busy || (!done && clean.length !== 8)}
+      bCancelDisabled={busy}
+      bHideCloseIcon
+      // The dialog closes itself on either button: it only does when there is nothing left to say.
+      closeModal={() => undefined}
+      onCancel={closeModal}
+      onOK={() => (done ? closeModal?.() : submit())}
+    >
+      {!done && (
+        <TextField
+          label={t.rommCode}
+          value={code}
+          disabled={busy}
+          focusOnMount
+          onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 12))}
+        />
+      )}
+      {note && (
+        <div
+          style={{
+            marginTop: 14,
+            lineHeight: 1.45,
+            color: busy ? "rgba(255,255,255,0.6)" : done ? "#7fe0a8" : "var(--obs-warn, #ffb040)",
+          }}
+        >
+          {note}
+        </div>
+      )}
+    </ConfirmModal>
   );
 }
 
@@ -211,29 +264,6 @@ function OwnRow() {
         </PanelSectionRow>
       )}
     </>
-  );
-}
-
-// Where RomM's pairing code is typed: 8 letters and numbers, dashes and spaces ignored.
-function PairModal({ games, onCode, closeModal }: { games: boolean; onCode: (code: string) => void; closeModal?: () => void }) {
-  const [code, setCode] = useState("");
-  const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return (
-    <ConfirmModal
-      strTitle={t.rommPair}
-      strDescription={games ? t.rommPairStepsGames : t.rommPairSteps}
-      strOKButtonText={t.rommPair}
-      bOKDisabled={clean.length !== 8}
-      closeModal={closeModal}
-      onOK={() => onCode(clean)}
-    >
-      <TextField
-        label={t.rommCode}
-        value={code}
-        focusOnMount
-        onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 12))}
-      />
-    </ConfirmModal>
   );
 }
 

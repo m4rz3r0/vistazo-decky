@@ -46,11 +46,13 @@ def _version(manifest):
 # needs "modify your profile". Tender's key leaves that out on purpose, so Vistazo gets its own,
 # with only "view your profile" and "modify your profile", through RomM's pairing code: the user
 # makes the key in RomM, presses Pair and types the short code here. The key never leaves this file.
-# Looking after the games needs more: to see them and their platforms and, for save games, to read
-# and write the player's own files. A key is taken only with exactly one of the two sets.
+# Looking after the games needs more: to see them, their platforms, their collections and the
+# BIOS files they need and, for save games, to read and write the player's own files. A key is
+# kept when it has at least the first pair and nothing beyond the whole set; what it lacks of the
+# set only decides what it is good for (achievements, or the games too).
 KEY_FILE = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "romm.json")
 SCOPES = {"me.read", "me.write"}
-SCOPES_GAMES = SCOPES | {"roms.read", "platforms.read", "assets.read", "assets.write"}
+SCOPES_GAMES = SCOPES | {"roms.read", "platforms.read", "collections.read", "firmware.read", "assets.read", "assets.write"}
 CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # RomM's pairing alphabet
 TIMEOUT = 10
 # Decky's Python brings no certificates of its own: the system's are used to check RomM's.
@@ -146,7 +148,7 @@ def _games_key():
         return None, "unlinked"
     if not server or key["url"] != server["url"]:
         return None, "moved"
-    if _key_scopes(key) != SCOPES_GAMES:
+    if not _key_scopes(key) >= SCOPES_GAMES:
         return None, "limited"
     return server, key
 
@@ -654,30 +656,48 @@ class Plugin:
             return "unlinked"
         if key["url"] != server["url"]:
             return "moved"
-        return "linked" if _key_scopes(key) == SCOPES_GAMES else "limited"
+        return "linked" if _key_scopes(key) >= SCOPES_GAMES else "limited"
 
     async def romm_pair(self, code, games=False):
-        """Swaps RomM's pairing code for a key: one for achievements, or with `games` one that
-        may also look after the games. "ok", "code" (not a code), "invalid" (wrong or expired),
-        "scopes" (the key can do more or less than it should), "no-server", "unreachable" or
-        "error"."""
-        wanted = SCOPES_GAMES if games else SCOPES
+        """Swaps RomM's pairing code for a key. Answers {"result", "missing", "extra"}; the result
+        is "ok", "limited" (kept, but with `games` it lacks `missing` to look after them), "code"
+        (not a code), "invalid" (wrong or expired), "scopes" (thrown away: it lacks `missing` or
+        can do `extra`, more than Vistazo should ever hold), "no-server", "unreachable", "busy"
+        (RomM asks to wait) or "error"."""
+        result, missing, extra = await self._pair(code, games)
+        return {"result": result, "missing": sorted(missing), "extra": sorted(extra)}
+
+    async def romm_check(self):
+        """Asks RomM whether the stored key still works: "ok", "refused" (forgotten here),
+        "unreachable", or romm_status's answer when there is no key for this server."""
+        key = _read_key()
+        server = _tender_server()
+        if not key or not server or key["url"] != server["url"]:
+            return await self.romm_status()
+        status, me = await asyncio.get_running_loop().run_in_executor(None, _request, server, "GET", "/api/users/me", key["token"])
+        if status in (401, 403):
+            _forget_key()
+            return "refused"
+        return "ok" if status == 200 and isinstance(me, dict) else "unreachable"
+
+    async def _pair(self, code, games):
+        none = set()
         code = "".join(c for c in str(code or "").upper() if c.isalnum())
         if len(code) != 8 or any(c not in CODE_CHARS for c in code):
-            return "code"
+            return "code", none, none
         server = _tender_server()
         if not server:
-            return "no-server"
+            return "no-server", none, none
         loop = asyncio.get_running_loop()
         status, reply = await loop.run_in_executor(None, _request, server, "POST", "/api/client-tokens/exchange", None, {"code": code})
         if status == 0:
-            return "unreachable"
+            return "unreachable", none, none
         if status in (400, 404, 422):
-            return "invalid"
+            return "invalid", none, none
         if status == 429:
-            return "unreachable"
+            return "busy", none, none
         if status not in (200, 201) or not isinstance(reply, dict) or not reply.get("raw_token"):
-            return "error"
+            return "error", none, none
         token = str(reply["raw_token"])
         scopes = reply.get("scopes")
         scopes = {str(x) for x in scopes} if isinstance(scopes, list) else set()
@@ -688,18 +708,21 @@ class Plugin:
             if token_id is not None:
                 await loop.run_in_executor(None, _request, server, "DELETE", "/api/client-tokens/%d" % token_id, token)
 
-        if scopes != wanted:
+        # Less than the pair it always needs, or more than Vistazo should ever hold: not kept.
+        extra = scopes - SCOPES_GAMES
+        if extra or not scopes >= SCOPES:
             await revoke()
-            return "scopes"
+            return "scopes", SCOPES - scopes, extra
         old = _read_key()
         if not _write_key({"url": server["url"], "token": token, "id": token_id, "scopes": sorted(scopes)}):
             await revoke()
-            return "error"
+            return "error", none, none
         # The key this one replaces is of no use any more: thrown away at RomM too.
         if old and old["url"] == server["url"] and isinstance(old.get("id"), int) and old["token"] != token:
             await loop.run_in_executor(None, _request, server, "DELETE", "/api/client-tokens/%d" % old["id"], old["token"])
         decky.logger.info("RomM key paired")
-        return "ok"
+        missing = SCOPES_GAMES - scopes
+        return ("limited" if games and missing else "ok"), (missing if games else none), none
 
     async def romm_unlink(self):
         """Forgets the key, and removes it at RomM when RomM answers."""
