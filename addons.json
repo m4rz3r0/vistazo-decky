@@ -20,8 +20,8 @@
       "contract": 1,
       "name": { "es": "GeForce NOW", "en": "GeForce NOW" },
       "about": {
-        "es": "Un botón para jugar en la nube los juegos de Steam que ofrece GeForce NOW.",
-        "en": "A button to play in the cloud the Steam games GeForce NOW carries."
+        "es": "Juegos de GeForce NOW como entradas en Steam, con su estantería. En pruebas.",
+        "en": "GeForce NOW games as entries in Steam, with their own shelf. Experimental."
       }
     }
   ]
