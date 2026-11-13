@@ -345,9 +345,9 @@ def test_launcher():
     os.makedirs(fake_bin)
     seen = os.path.join(TMP, "flatpak-args.json")
     with open(os.path.join(fake_bin, "flatpak"), "w") as f:
-        f.write("#!/usr/bin/python3\nimport json, os, sys\njson.dump([sys.argv[1:], os.environ.get('LD_PRELOAD')], open(%r, 'w'))\n" % seen)
+        f.write("#!/usr/bin/python3\nimport json, sys\njson.dump(sys.argv[1:], open(%r, 'w'))\n" % seen)
     os.chmod(os.path.join(fake_bin, "flatpak"), 0o755)
-    env = {"PATH": fake_bin + ":/usr/bin:/bin", "LD_PRELOAD": "overlay.so", "HOME": HOME}
+    env = {"PATH": fake_bin + ":/usr/bin:/bin", "HOME": HOME}
     work = os.path.join(TMP, "cwd")
     os.makedirs(work)
 
@@ -358,7 +358,7 @@ def test_launcher():
     check("launcher ran", done.returncode, 0)
     with open(seen) as f:
         check("flatpak got the file as one argument", json.load(f),
-              [["run", "net.retrodeck.retrodeck", os.path.realpath(nasty)], None])
+              ["run", "net.retrodeck.retrodeck", os.path.realpath(nasty)])
     check("the name ran nothing", os.listdir(work), [])
     os.remove(seen)
     for bad in (["7"], ["6", "extra"], [], ["6; touch x"], ["../6"], ["-6"], ["٦"]):

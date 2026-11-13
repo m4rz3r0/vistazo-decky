@@ -44,12 +44,8 @@ def main(argv):
     path, why = game_path(os.path.join(here, "launch.json"), argv[1])
     if path is None:
         return fail(why)
-    env = dict(os.environ)
-    # Steam's own libraries and overlay are for the games it starts, not for flatpak.
-    for name in ("LD_PRELOAD", "LD_LIBRARY_PATH"):
-        env.pop(name, None)
     try:
-        os.execvpe("flatpak", ["flatpak", "run", RETRODECK, path], env)
+        os.execvp("flatpak", ["flatpak", "run", RETRODECK, path])
     except OSError as e:
         return fail("flatpak did not start: %s" % e)
 

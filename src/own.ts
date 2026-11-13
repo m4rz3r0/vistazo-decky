@@ -101,6 +101,8 @@ export async function removeOwn(appid: number): Promise<string | null> {
   }
   const freed = await release(appid).catch(() => null);
   if (!freed?.ok && freed?.why !== "game") return freed?.why ?? "error";
+  // The cover Vistazo set goes with the entry.
+  safe(() => SteamClient.Apps.ClearCustomArtworkForApp(appid, 0), undefined);
   SteamClient.Apps.RemoveShortcut(appid);
   owned.delete(appid);
   return null;
