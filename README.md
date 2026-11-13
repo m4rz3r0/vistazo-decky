@@ -22,6 +22,12 @@ get the same page. To see the achievements you just earned as soon as the game c
 settings: in RomM, under Settings › Client API Tokens, create a token with only `me.read` and `me.write`, press
 **Pair device** and type the short code on the Deck.
 
+**Games by Vistazo** (experimental, off by default) lets Vistazo look after a RomM game by itself, one game at a
+time, next to Tender. From the game's page, the settings add a second entry of it to Steam that Vistazo downloads
+from RomM and starts in RetroDECK, with its own page; removing it takes away that entry and only the files Vistazo
+brought. It needs a token that can also see the games: Assets (read and write), Collections (read), Firmware (read),
+Me (read and write), Platforms (read) and Roms (read). Save games are not synced from that entry yet.
+
 ## Sounds
 
 Every menu sound becomes a short, soft tone, made by the plugin and played through Steam's own output.
@@ -56,7 +62,8 @@ To update, open Vistazo in the quick access menu and press **Update** under Vers
 Everything comes from Steam on the Deck. The ProtonDB rating asks `protondb.com` with the game's number only,
 and can be turned off. Once a day Vistazo asks `api.github.com` whether there is a newer version, sending nothing
 about you; that can be turned off too. Connected to RomM, Vistazo asks your own RomM server to read your
-achievements again after a retro game, with its own token kept only on the Deck. No telemetry.
+achievements again after a retro game and, with Games by Vistazo on, for the games it looks after and their files,
+with its own token kept only on the Deck. No telemetry.
 
 ## Build
 

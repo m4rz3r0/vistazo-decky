@@ -10,6 +10,7 @@ import { safe } from "./safe";
 // Vistazo's launcher. Taking it away removes that entry and only the files Vistazo brought.
 declare const SteamClient: any;
 declare const appStore: any;
+declare const SteamUIStore: any;
 
 export interface GameState {
   ok?: boolean;
@@ -56,6 +57,15 @@ export const ownedRom = (appid: number) => owned.get(appid) ?? 0;
 // The RomM game behind a Steam entry, 0 when it is not Vistazo's. A Steam entry this copy does
 // not know is asked about once more: it may have been made a moment ago.
 const asked = new Set<number>();
+// Tells a page that something about Vistazo's games changed (one was closed, added or removed).
+export function useOwnChanges(fn: () => void) {
+  useEffect(() => {
+    watchers.add(fn);
+    return () => {
+      watchers.delete(fn);
+    };
+  }, [fn]);
+}
 export function useOwnedRom(appid: number): number {
   const [romId, set] = useState(ownedRom(appid));
   useEffect(() => {
@@ -76,6 +86,27 @@ export const ownedApp = (romId: number) => {
   for (const [appid, rom] of owned) if (rom === romId) return appid;
   return 0;
 };
+
+// One of Vistazo's games was closed: its page asks RomM to read its achievements again the next
+// time it shows (it is usually not on screen at that moment).
+const played = new Set<number>();
+export const takePlayed = (appid: number) => played.delete(appid);
+export function watchOwnGames(): () => void {
+  const reg = safe(
+    () =>
+      SteamClient.GameSessions.RegisterForAppLifetimeNotifications((u: any) => {
+        const appid = Number(u?.unAppID);
+        if (u && u.bRunning === false && owned.has(appid)) {
+          played.add(appid);
+          changed();
+        }
+      }),
+    null as any,
+  );
+  return () => safe(() => reg?.unregister(), undefined);
+}
+const isRunning = (appid: number) =>
+  safe(() => (SteamUIStore.RunningApps as any[]).some((a) => Number(a.appid) === appid), false);
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function untilKnown(appid: number) {
@@ -118,6 +149,8 @@ export const cancelOwn = (appid: number) => cancel(appid).catch(() => null);
 // Takes Vistazo's entry away: the files Vistazo brought, its record and the Steam entry. A file
 // that was already there (another program's) stays.
 export async function removeOwn(appid: number): Promise<string | null> {
+  // Never from under a game that is being played.
+  if (isRunning(appid)) return "running";
   let state = await cancel(appid).catch(() => null);
   for (let i = 0; i < 50 && state?.job?.state === "downloading"; i++) {
     await wait(100);

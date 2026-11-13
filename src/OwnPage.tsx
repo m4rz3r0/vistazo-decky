@@ -1,9 +1,9 @@
 import { Focusable, ModalRoot, appActionButtonClasses, showModal } from "@decky/ui";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { medal } from "./data";
 import { num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
-import { GameState, cancelOwn, gameState, retryOwn } from "./own";
+import { GameState, cancelOwn, gameState, retryOwn, takePlayed, useOwnChanges } from "./own";
 import { Ring, fitPanel, formatSize, markPage, pageOf } from "./Panel";
 import { wordInSpanish } from "./retroText";
 import { Progress, RommGame, rommGame, rommProgress } from "./romm";
@@ -14,8 +14,6 @@ import { pageCss } from "./styles";
 // achievements and what comes next on the left, the game on the right. Everything on it comes
 // straight from RomM with Vistazo's key. While the game's file is not on the Deck, a row above
 // says so and brings it.
-declare const SteamClient: any;
-
 interface Loaded {
   game: RommGame;
   progress: Progress | null;
@@ -28,6 +26,9 @@ const badge = (u: string) => (/^https:\/\/media\.retroachievements\.org\/[\w/.-]
 function useGame(romId: number, appid: number): Loaded | null | undefined {
   // undefined: asking; null: RomM did not answer.
   const [data, setData] = useState<Loaded | null | undefined>(seen.get(romId));
+  // The game was closed since the page last asked: RomM reads its achievements again.
+  const [round, setRound] = useState(0);
+  useOwnChanges(useCallback(() => setRound((n) => n + 1), []));
   useEffect(() => {
     let alive = true;
     const read = async (refresh: boolean) => {
@@ -48,16 +49,11 @@ function useGame(romId: number, appid: number): Loaded | null | undefined {
       seen.set(romId, next);
       setData(next);
     };
-    read(false);
-    // When the game closes RomM reads its achievements again and the page shows them.
-    const reg = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((u: any) => {
-      if (u && u.bRunning === false && Number(u.unAppID) === appid) read(true);
-    });
+    read(takePlayed(appid));
     return () => {
       alive = false;
-      reg?.unregister?.();
     };
-  }, [romId, appid]);
+  }, [romId, appid, round]);
   return data;
 }
 

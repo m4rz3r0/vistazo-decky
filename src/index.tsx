@@ -8,7 +8,7 @@ import {
 import { createElement } from "react";
 import { Panel } from "./Panel";
 import { OwnPage } from "./OwnPage";
-import { loadOwned, useOwnedRom } from "./own";
+import { loadOwned, useOwnedRom, watchOwnGames } from "./own";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
@@ -328,6 +328,7 @@ export default definePlugin(() => {
   const stopUpdates = watchUpdates();
   const stopRetro = watchRetroPages();
   loadOwned();
+  const stopOwn = watchOwnGames();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,
@@ -340,6 +341,7 @@ export default definePlugin(() => {
       stopWatching();
       stopUpdates();
       stopRetro();
+      stopOwn();
       routerHook.removePatch(ROUTE, patch);
       routerHook.removePatch(HOME, homePatch);
     },
