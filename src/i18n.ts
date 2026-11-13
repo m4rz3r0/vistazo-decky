@@ -179,7 +179,7 @@ const es = {
   ownOffer:
     "Crea en Steam una segunda entrada de este juego, a cargo de Vistazo: la descarga de RomM y la inicia. La de Tender sigue igual. Las dos usan la misma partida guardada, y Tender no sincroniza lo que juegues desde la de Vistazo.",
   ownAdd: "Pasarlo a Vistazo",
-  ownRemove: "Quitar la entrada de Vistazo",
+  ownRemove: "Quitar de Vistazo",
   ownDownload: "Descargar de nuevo",
   ownDownloading: (p: number) => `Descargando: ${p} %`,
   ownReady: "Listo: está en tu biblioteca, entre los juegos que no son de Steam.",
@@ -391,7 +391,7 @@ const en: typeof es = {
   ownOffer:
     "Adds a second entry of this game to Steam, run by Vistazo: it downloads it from RomM and starts it. Tender's entry stays as it is. Both use the same save, and Tender does not sync what you play from Vistazo's.",
   ownAdd: "Hand it to Vistazo",
-  ownRemove: "Remove Vistazo's entry",
+  ownRemove: "Remove from Vistazo",
   ownDownload: "Download again",
   ownDownloading: (p: number) => `Downloading: ${p}%`,
   ownReady: "Ready: it is in your library, among the non-Steam games.",
