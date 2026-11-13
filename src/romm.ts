@@ -27,6 +27,24 @@ export interface Progress {
   hardcore_ids?: string[];
 }
 
+// One game as RomM has it, for its page.
+export interface RommGame {
+  ok: boolean;
+  why?: string;
+  rom_id: number;
+  name: string;
+  platform: string;
+  system: string;
+  released: number; // milliseconds
+  genres: string[];
+  rating: number;
+  summary: string;
+  ra_id: number;
+  size: number;
+  achievements: { badge_id: string; title: string; description: string; points: number; num_awarded: number; badge_url: string; badge_url_lock: string }[];
+}
+export const rommGame = callable<[romId: number], RommGame>("romm_game");
+
 const status = callable<[], RommStatus>("romm_status");
 const pair = callable<[code: string, games: boolean], PairAnswer>("romm_pair");
 const check = callable<[], string>("romm_check");

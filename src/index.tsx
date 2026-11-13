@@ -7,6 +7,8 @@ import {
 } from "@decky/ui";
 import { createElement } from "react";
 import { Panel } from "./Panel";
+import { OwnPage } from "./OwnPage";
+import { loadOwned, useOwnedRom } from "./own";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
@@ -155,9 +157,16 @@ const isBody = (x: any) =>
   x?.props?.setSections &&
   x?.props?.overview;
 
+// A RomM game that is Vistazo's own entry in Steam (for those who turned that on) gets the same
+// first screen, with RomM's data. Any non-Steam entry may be one: what is put on its page looks
+// it up and stays out of the way when it is not.
+const isOwnGame = (overview: any) =>
+  !!overview && settings().ownGames && settings().retro && safe(() => !!overview.BIsShortcut?.(), false);
+
 function afterBody(props: any, out: any) {
   const overview = props?.overview;
-  if (!isSteamGame(overview)) return out;
+  const own = isOwnGame(overview);
+  if (!own && !isSteamGame(overview)) return out;
   const list = findInReactTree(
     out,
     (x: any) =>
@@ -178,7 +187,7 @@ function afterBody(props: any, out: any) {
   // matters on it and nothing below to scroll to. Kept inside a switch, so turning the panel off
   // in the settings brings them back at once.
   if (children[idx]?.key !== "vistazo-tabs")
-    children[idx] = createElement(TabsSwitch, { key: "vistazo-tabs" }, children[idx]);
+    children[idx] = createElement(TabsSwitch, { key: "vistazo-tabs", own: own ? overview.appid : 0 }, children[idx]);
   // The sticky copy (shown while scrolling) never gets the panel.
   if (
     !props?.bStickyHeader &&
@@ -187,14 +196,16 @@ function afterBody(props: any, out: any) {
     children.splice(
       idx,
       0,
-      createElement(PagePanel, { key: "vistazo-panel", appid: overview.appid }),
+      own
+        ? createElement(OwnPanel, { key: "vistazo-panel", appid: overview.appid })
+        : createElement(PagePanel, { key: "vistazo-panel", appid: overview.appid }),
     );
   }
   return out;
 }
 
 function afterDetails(props: any, out: any) {
-  if (!isSteamGame(props?.overview)) return out;
+  if (!isSteamGame(props?.overview) && !isOwnGame(props?.overview)) return out;
   for (const body of findAll(out, isBody)) wrapType(body, "body", afterBody);
   return out;
 }
@@ -247,8 +258,17 @@ function HomeSwitch({ steam }: { steam: any }) {
     ? createElement(Guard, { name: "home", fallback: steam }, createElement(Home))
     : steam;
 }
-function TabsSwitch({ children }: { children?: any }) {
-  return useSettings().page ? null : children;
+function TabsSwitch({ own, children }: { own: number; children?: any }) {
+  const s = useSettings();
+  const romId = useOwnedRom(own);
+  return (own ? s.retro && s.ownGames && romId : s.page) ? null : children;
+}
+function OwnPanel({ appid }: { appid: number }) {
+  const s = useSettings();
+  const romId = useOwnedRom(appid);
+  return s.retro && s.ownGames && romId
+    ? createElement(Guard, { name: "own page", key: appid }, createElement(OwnPage, { appid, romId }))
+    : null;
 }
 // Keyed by appid: a new game starts with fresh state.
 function PagePanel({ appid }: { appid: number }) {
@@ -307,6 +327,7 @@ export default definePlugin(() => {
   const stopWatching = watchGames();
   const stopUpdates = watchUpdates();
   const stopRetro = watchRetroPages();
+  loadOwned();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,

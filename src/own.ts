@@ -1,4 +1,5 @@
 import { callable } from "@decky/api";
+import { useEffect, useState } from "react";
 import { safe } from "./safe";
 
 // RomM games Vistazo looks after itself (for those who turn it on). While Tender is installed it
@@ -32,13 +33,19 @@ const cancel = callable<[appid: number], GameState>("game_cancel");
 const remove = callable<[appid: number], GameState>("game_remove");
 export const gameState = callable<[appid: number], GameState>("game_state");
 
-// Steam number -> RomM number of the games that are Vistazo's.
+// Steam number -> RomM number of the games that are Vistazo's. The backend's record is the truth;
+// this copy is read from it and told about every change, so whatever shows a game follows it.
 const owned = new Map<number, number>();
+const watchers = new Set<() => void>();
+const changed = () => watchers.forEach((fn) => fn());
 let loaded: Promise<void> | null = null;
-export function loadOwned(): Promise<void> {
+export function loadOwned(again = false): Promise<void> {
+  if (again) loaded = null;
   return (loaded ??= list()
     .then((all) => {
+      owned.clear();
       for (const [appid, romId] of Object.entries(all ?? {})) owned.set(Number(appid), Number(romId));
+      changed();
     })
     .catch((e) => {
       loaded = null;
@@ -46,6 +53,25 @@ export function loadOwned(): Promise<void> {
     }));
 }
 export const ownedRom = (appid: number) => owned.get(appid) ?? 0;
+// The RomM game behind a Steam entry, 0 when it is not Vistazo's. A Steam entry this copy does
+// not know is asked about once more: it may have been made a moment ago.
+const asked = new Set<number>();
+export function useOwnedRom(appid: number): number {
+  const [romId, set] = useState(ownedRom(appid));
+  useEffect(() => {
+    const read = () => set(ownedRom(appid));
+    watchers.add(read);
+    read();
+    if (appid > 0 && !ownedRom(appid) && !asked.has(appid)) {
+      asked.add(appid);
+      loadOwned(true);
+    }
+    return () => {
+      watchers.delete(read);
+    };
+  }, [appid]);
+  return romId;
+}
 export const ownedApp = (romId: number) => {
   for (const [appid, rom] of owned) if (rom === romId) return appid;
   return 0;
@@ -78,6 +104,7 @@ export async function addOwn(romId: number, name: string): Promise<string | null
   // All Steam is told about the game: its number in RomM.
   SteamClient.Apps.SetAppLaunchOptions(appid, taken.options);
   owned.set(appid, romId);
+  changed();
   cover(romId)
     .then((c) => c?.ok && SteamClient.Apps.SetCustomArtworkForApp(appid, c.data, c.kind, 0))
     .catch(() => undefined);
@@ -86,6 +113,7 @@ export async function addOwn(romId: number, name: string): Promise<string | null
 }
 
 export const retryOwn = (appid: number) => download(appid).catch(() => null);
+export const cancelOwn = (appid: number) => cancel(appid).catch(() => null);
 
 // Takes Vistazo's entry away: the files Vistazo brought, its record and the Steam entry. A file
 // that was already there (another program's) stays.
@@ -105,5 +133,7 @@ export async function removeOwn(appid: number): Promise<string | null> {
   safe(() => SteamClient.Apps.ClearCustomArtworkForApp(appid, 0), undefined);
   SteamClient.Apps.RemoveShortcut(appid);
   owned.delete(appid);
+  asked.delete(appid);
+  changed();
   return null;
 }

@@ -78,7 +78,7 @@ function ProtonIcon() {
 const footerReserve = 44; // Steam's button-hint bar overlays the bottom of the page.
 const ad = appDetailsClasses as Record<string, string>;
 
-function formatSize(bytes: number): string | null {
+export function formatSize(bytes: number): string | null {
   if (!bytes) return null;
   const gb = bytes / 1024 ** 3;
   if (gb >= 1) return `${num(gb, 1)} GB`;
@@ -98,7 +98,7 @@ function pct(n: number): string {
 // Progress ring: 54px, 5px stroke. The share sits in the middle; the count goes beside it.
 // All achievements: the ring closes in platinum around a cut gem, the one thing on the page that
 // only a finished game gets.
-function Ring({ share }: { share: number }) {
+export function Ring({ share }: { share: number }) {
   const r = 24;
   const c = 2 * Math.PI * r;
   const done = share >= 100;
@@ -193,7 +193,7 @@ export function fitPanel(el: HTMLElement, open: boolean): boolean {
 
 // The page and the panel's parent get marker attributes, so the page CSS needs no :has() lookups.
 // Attributes, not classes: Steam rewrites those elements' class lists as focus moves.
-function markPage(el: HTMLElement, on: boolean) {
+export function markPage(el: HTMLElement, on: boolean) {
   const page = pageOf(el);
   page?.toggleAttribute("data-vz-page", on);
   el.parentElement?.toggleAttribute("data-vz-host", on);
