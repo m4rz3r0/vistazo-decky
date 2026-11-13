@@ -201,7 +201,7 @@ export function markPage(el: HTMLElement, on: boolean) {
 }
 
 // What add-ons offer to do with this game ("play on …"): quiet buttons over the panel.
-function useActions(appid: number): AddonAction[] {
+export function useActions(appid: number): AddonAction[] {
   const [actions, setActions] = useState<AddonAction[]>([]);
   const round = useAddons();
   useEffect(() => {
@@ -223,7 +223,7 @@ function useActions(appid: number): AddonAction[] {
   return actions;
 }
 
-const ACTIONS_CSS = `
+export const ACTIONS_CSS = `
 .vz-acts { display: flex; gap: 12px; margin: 0 0 16px; }
 .vz-act {
   padding: 10px 18px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #f4f4f4;
@@ -231,6 +231,24 @@ const ACTIONS_CSS = `
 }
 .vz-act.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent)); outline-offset: 2px; }
 `;
+
+export function Actions({ actions }: { actions: AddonAction[] }) {
+  if (!actions.length) return null;
+  return (
+    <Focusable className="vz-acts" flow-children="row">
+      {actions.map((a) => (
+        <Focusable
+          key={a.id}
+          className="vz-act"
+          noFocusRing
+          onActivate={() => Promise.resolve().then(() => a.run()).catch((e) => console.warn("[Vistazo] action", e))}
+        >
+          {a.label}
+        </Focusable>
+      ))}
+    </Focusable>
+  );
+}
 
 export const Panel = memo(function Panel({ appid }: { appid: number }) {
   const actions = useActions(appid);
@@ -356,20 +374,7 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
     <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
       <style>{pageCss() + ACTIONS_CSS}</style>
 
-      {actions.length > 0 && (
-        <Focusable className="vz-acts" flow-children="row">
-          {actions.map((a) => (
-            <Focusable
-              key={a.id}
-              className="vz-act"
-              noFocusRing
-              onActivate={() => Promise.resolve().then(() => a.run()).catch((e) => console.warn("[Vistazo] action", e))}
-            >
-              {a.label}
-            </Focusable>
-          ))}
-        </Focusable>
-      )}
+      <Actions actions={actions} />
 
       {/* A row for the gamepad too: right from the achievements reaches the description. */}
       <Focusable className={`vz-cols${ach === null ? " vz-solo" : ""}`} flow-children="row">

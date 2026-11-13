@@ -88,7 +88,8 @@ export interface Addon {
   shelf?(): number[];
   // Shelves of its own on the home (cloud games, say): the player turns each on in the settings.
   shelves?(): AddonShelf[];
-  // Things to do on a Steam game's page ("play on …"). None: an empty list.
+  // Things to do on a game's page: a Steam game's ("play on …") or one of its own ("uninstall").
+  // None: an empty list.
   actions?(appid: number): Promise<AddonAction[]>;
   // Achievements straight from the add-on's source, for pages another program draws.
   progress?(raId: number, refresh: boolean): Promise<AddonProgress | null>;

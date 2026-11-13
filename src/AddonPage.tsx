@@ -4,7 +4,7 @@ import { Addon, AddonAchievement, AddonFile, AddonGame, useAddons } from "./addo
 import { medal } from "./data";
 import { num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
-import { Ring, fitPanel, formatSize, markPage, pageOf } from "./Panel";
+import { ACTIONS_CSS, Actions, Ring, fitPanel, formatSize, markPage, pageOf, useActions } from "./Panel";
 import { safe } from "./safe";
 import { wordInSpanish } from "./retroText";
 import { pageCss } from "./styles";
@@ -89,6 +89,8 @@ function useFile(addon: Addon, appid: number): [AddonFile | null, () => void] {
 export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: number; addon: Addon }) {
   const game = useGame(addon, appid);
   const [file, again] = useFile(addon, appid);
+  // What add-ons offer to do with this game (uninstall it, say), as on a Steam game's page.
+  const actions = useActions(appid);
   const root = useRef<HTMLDivElement>(null);
   const [clipped, setClipped] = useState(false);
   const [open, setOpen] = useState(false);
@@ -122,7 +124,7 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
     if (!el) return;
     markPage(el, true);
     setClipped(fitPanel(el, openRef.current));
-  }, [game, file?.here, file?.downloading, file?.problem, open]);
+  }, [game, file?.here, file?.downloading, file?.problem, open, actions.length]);
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -162,7 +164,7 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
 
   return (
     <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
-      <style>{pageCss() + OWN_CSS}</style>
+      <style>{pageCss() + OWN_CSS + ACTIONS_CSS}</style>
       {missing && (
         <Focusable className="vz-own-bar" flow-children="row" ref={bar as any}>
           <Focusable
@@ -181,6 +183,7 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
           </span>
         </Focusable>
       )}
+      {!missing && <Actions actions={actions} />}
       <Focusable className={`vz-cols${total > 0 ? "" : " vz-solo"}`} flow-children="row">
         {total > 0 && game && (
           <Focusable
