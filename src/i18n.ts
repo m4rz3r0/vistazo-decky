@@ -145,7 +145,7 @@ const es = {
     error: "No se pudo conectar.",
   } as Record<string, string>,
   // Vistazo looking after RomM games itself
-  ownGamesLabel: "Juegos retro a cargo de Vistazo",
+  ownGamesLabel: "Juegos con Vistazo",
   ownGamesDesc: "Vistazo descarga e inicia por sí mismo los juegos de RomM que le pases, uno a uno. En pruebas.",
   needsRetro: "Necesita la ficha de juegos retro.",
   rommLabelGames: "Conexión con RomM",
@@ -340,7 +340,7 @@ const en: typeof es = {
     error: "Could not connect.",
   } as Record<string, string>,
   // Vistazo looking after RomM games itself
-  ownGamesLabel: "Retro games run by Vistazo",
+  ownGamesLabel: "Games by Vistazo",
   ownGamesDesc: "Vistazo downloads and starts the RomM games you hand it by itself, one at a time. Experimental.",
   needsRetro: "Needs the retro game page.",
   rommLabelGames: "RomM connection",
