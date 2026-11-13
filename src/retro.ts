@@ -5,7 +5,7 @@ import { isUnloaded } from "./lifecycle";
 import { fitPanel } from "./Panel";
 import { safe } from "./safe";
 import { inSpanish, keepTranslated, restoreText, wordInSpanish } from "./retroText";
-import { isLinked, rommProgress, rommStatus } from "./romm";
+import { Progress, isLinked, rommProgress, rommStatus } from "./romm";
 import { settings } from "./settings";
 import { pageCss } from "./styles";
 
@@ -84,6 +84,14 @@ function nextOf(list: any[], got: Set<string>): Next[] {
     }));
 }
 
+const toFresh = (p: Progress): Fresh => ({
+  ids: new Set(p.ids ?? []),
+  hardcoreIds: new Set(p.hardcore_ids ?? []),
+  earned: Number(p.earned) || 0,
+  hardcore: Number(p.hardcore) || 0,
+  total: Number(p.total) || 0,
+});
+
 function applyFresh(appid: number, retro: Retro) {
   const f = fresh.get(appid);
   if (!f) return;
@@ -150,6 +158,14 @@ async function load(appid: number): Promise<void> {
       }
     } else {
       retro.retryAt = quietUntil;
+    }
+    // With Vistazo's own key, the figures come straight from RomM: Tender keeps its reading for an
+    // hour, and what Vistazo learnt after a game is gone once the plugin reloads.
+    // Asked again when not known yet: at Steam's start the backend may not have answered.
+    if (retro.raId && Date.now() >= quietUntil && (isLinked() || (await rommStatus()) === "linked")) {
+      const p = await rommProgress(retro.raId, false).catch(() => null);
+      if (p?.ok) fresh.set(appid, toFresh(p));
+      else if (p?.why === "refused") rommStatus();
     }
     const b = bios?.bios_status;
     if (b?.needs_bios) retro.bios = b.bios_level === "ok" ? "ok" : "missing";
@@ -978,19 +994,12 @@ function afterGame(appid: number) {
     if (!isLinked()) return;
     return rommProgress(data.raId, true).then((p) => {
       if (isUnloaded()) return;
-      // Only a reading RomM has just made counts; anything else would hide what Tender reads later.
-      if (!p?.ok || !p.changed) {
-        fresh.delete(appid);
+      // RomM's figures are never behind Tender's (Tender reads them from RomM, then keeps them).
+      if (!p?.ok) {
         if (p?.why === "refused") rommStatus();
         return;
       }
-      fresh.set(appid, {
-        ids: new Set(p.ids ?? []),
-        hardcoreIds: new Set(p.hardcore_ids ?? []),
-        earned: Number(p.earned) || 0,
-        hardcore: Number(p.hardcore) || 0,
-        total: Number(p.total) || 0,
-      });
+      fresh.set(appid, toFresh(p));
       const now = cache.get(appid);
       if (now) applyFresh(appid, now);
       changed();
