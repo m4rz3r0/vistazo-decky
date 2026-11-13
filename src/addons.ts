@@ -45,6 +45,13 @@ export interface AddonFile {
   problem?: string;
 }
 
+// A shelf an add-on brings to the home: Steam entries it made, under its own name.
+export interface AddonShelf {
+  id: string;
+  label: string;
+  apps: number[];
+}
+
 // Something to do with a game, shown as a quiet button on its page.
 export interface AddonAction {
   id: string;
@@ -79,6 +86,8 @@ export interface Addon {
   cancelFile?(appid: number): Promise<void>;
   // Its entries for the home's Retro shelf (marked with the eye).
   shelf?(): number[];
+  // Shelves of its own on the home (cloud games, say): the player turns each on in the settings.
+  shelves?(): AddonShelf[];
   // Things to do on a Steam game's page ("play on …"). None: an empty list.
   actions?(appid: number): Promise<AddonAction[]>;
   // Achievements straight from the add-on's source, for pages another program draws.

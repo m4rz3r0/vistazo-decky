@@ -26,6 +26,7 @@ import {
   statusOptions,
 } from "./data";
 import { homeCss, headerCss } from "./styles";
+import { useAddons } from "../addons";
 import { useSettings } from "../settings";
 import { AchievementCount, DAY, Medal, loadCount, medal, runningAppIds, savedCount } from "../data";
 import { PlatinumIcon } from "../gem";
@@ -418,6 +419,8 @@ const Cover = memo(
 );
 
 export function Home() {
+  // Add-ons bring shelves and games too: read again when they say something changed.
+  const addonsRound = useAddons();
   const shelves = activeShelves(useSettings().shelves);
   const [shelf, setShelf] = useState<ShelfId>(() =>
     shelves.some((s) => s.id === lastShelf) ? lastShelf : shelves[0].id,
@@ -440,6 +443,7 @@ export function Home() {
       reload().length === 0
         ? [setTimeout(reload, 3000), setTimeout(reload, 10000)]
         : [];
+    void addonsRound;
     const doc = titleRef.current?.ownerDocument ?? document;
     const onVisible = () => !doc.hidden && reload();
     doc.addEventListener("visibilitychange", onVisible);
@@ -447,7 +451,7 @@ export function Home() {
       timers.forEach(clearTimeout);
       doc.removeEventListener("visibilitychange", onVisible);
     };
-  }, [shelf]);
+  }, [shelf, addonsRound]);
   // The cover a shelf opens on: the one it was left on. Worked out when the shelf is read, not on
   // every move, so moving doesn't hand the "start here" mark from cover to cover.
   const startAt = useMemo(

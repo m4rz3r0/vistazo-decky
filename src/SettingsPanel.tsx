@@ -16,10 +16,11 @@ import { COLOR, COLORS, MOTION, TEXT, setThemeEnabled, setThemeOption, useTheme 
 type Flag = { [K in keyof Settings]: Settings[K] extends boolean ? K : never }[keyof Settings];
 
 const shelfDesc = (id: string) =>
-  id === "installed" ? t.installedDesc : id === "retro" ? t.retroDesc : t.collectionDesc;
+  id === "installed" ? t.installedDesc : id === "retro" ? t.retroDesc : id.startsWith("addon:") ? t.addonShelfDesc : t.collectionDesc;
 
 export function SettingsPanel() {
   const s = useSettings();
+  useAddons(); // their shelves come and go
   // A setting that depends on another says why it is off instead of its usual line.
   const toggle = (key: Flag, label: string, description: string, blockedBy?: string) => (
     <PanelSectionRow>

@@ -35,6 +35,18 @@ const ownGames = (): number[] =>
     }
   });
 
+// Add-ons' own shelves, each under an id that cannot be taken for a Steam collection's.
+const addonShelves = (): { id: string; label: string; apps: number[] }[] =>
+  allAddons().flatMap((a) => {
+    try {
+      return (a.shelves?.() ?? [])
+        .filter((s) => s && /^[a-z0-9-]{2,32}$/.test(String(s.id)) && typeof s.label === "string" && Array.isArray(s.apps))
+        .map((s) => ({ id: `addon:${a.id}:${s.id}`, label: s.label.slice(0, 30), apps: s.apps.map(Number).filter((n) => n > 0) }));
+    } catch {
+      return [];
+    }
+  });
+
 const isRomm = (c: any) => /^RomM:/.test(String(c?.displayName ?? ""));
 
 // Read from this Deck's own Steam collections every time, so each person sees theirs.
@@ -45,6 +57,8 @@ export function availableShelves(): Shelf[] {
   if (collections.some(isRomm) || ownGames().length) out.push({ id: "retro", label: t.retro });
   // Favourites and collections the user made (or a tool such as Steam ROM Manager made for them);
   // Steam's built-in ones (installed, soundtracks, uncategorised…) and Tender's RomM ones are left out.
+  // Shelves add-ons bring (cloud games, say), while they have something on them.
+  for (const s of addonShelves()) if (s.apps.length) out.push({ id: s.id, label: s.label });
   for (const c of collections) {
     const id = String(c?.id ?? "");
     if ((id === "favorite" || /^(uc|srm)-/.test(id)) && !isRomm(c))
@@ -93,6 +107,14 @@ function readShelf(id: ShelfId): Game[] {
       return (collectionStore.localGamesCollection?.allApps ?? [])
         .filter(isSteamApp)
         .map((o: any) => toGame(o, true))
+        .sort(byRecent);
+    }
+    if (id.startsWith("addon:")) {
+      const shelf = addonShelves().find((s) => s.id === id);
+      return (shelf?.apps ?? [])
+        .map((appid) => overview(appid))
+        .filter(Boolean)
+        .map((o: any) => toGame(o, false))
         .sort(byRecent);
     }
     if (id !== "retro") {
