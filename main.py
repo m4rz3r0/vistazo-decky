@@ -76,6 +76,17 @@ def _tender_server():
     return None
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """RomM never redirects its API: a redirect is refused, so the key is never sent anywhere else."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _opener(ctx):
+    return urllib.request.build_opener(_NoRedirect(), urllib.request.HTTPSHandler(context=ctx))
+
+
 def _read_key():
     try:
         with open(KEY_FILE, encoding="utf-8") as f:
@@ -88,12 +99,31 @@ def _read_key():
 
 
 def _write_key(data):
-    os.makedirs(os.path.dirname(KEY_FILE), exist_ok=True)
+    """True when the key is safely on disk; a half-written copy never stays behind."""
     tmp = KEY_FILE + ".tmp"
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(data, f)
-    os.replace(tmp, KEY_FILE)
+    try:
+        os.makedirs(os.path.dirname(KEY_FILE), exist_ok=True)
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, KEY_FILE)
+        return True
+    except OSError as e:
+        decky.logger.error("RomM key not saved: %s", e)
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        return False
+
+
+def _forget_key():
+    try:
+        os.remove(KEY_FILE)
+    except OSError:
+        pass
 
 
 def _request(server, method, path, token=None, body=None):
@@ -114,7 +144,7 @@ def _request(server, method, path, token=None, body=None):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
     try:
-        with urllib.request.urlopen(req, data=data, timeout=TIMEOUT, context=ctx) as r:
+        with _opener(ctx).open(req, data=data, timeout=TIMEOUT) as r:
             raw = r.read()
             return r.status, (json.loads(raw) if raw else None)
     except urllib.error.HTTPError as e:
@@ -125,15 +155,25 @@ def _request(server, method, path, token=None, body=None):
         return 0, None
 
 
+def _number(v):
+    try:
+        return int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _game(me, ra_id):
-    """This game's progress in a /api/users/me answer."""
-    results = ((me or {}).get("ra_progression") or {}).get("results") or []
+    """This game's progress in a /api/users/me answer; zeros for anything unexpected."""
+    progression = me.get("ra_progression") if isinstance(me, dict) else None
+    results = progression.get("results") if isinstance(progression, dict) else None
+    results = [g for g in results if isinstance(g, dict)] if isinstance(results, list) else []
     entry = next((g for g in results if str(g.get("rom_ra_id")) == str(ra_id)), None) or {}
-    earned = entry.get("earned_achievements") or []
+    earned = entry.get("earned_achievements")
+    earned = [a for a in earned if isinstance(a, dict)] if isinstance(earned, list) else []
     return {
-        "earned": int(entry.get("num_awarded") or 0),
-        "hardcore": int(entry.get("num_awarded_hardcore") or 0),
-        "total": int(entry.get("max_possible") or 0),
+        "earned": _number(entry.get("num_awarded")),
+        "hardcore": _number(entry.get("num_awarded_hardcore")),
+        "total": _number(entry.get("max_possible")),
         "ids": [str(a.get("id")) for a in earned if a.get("id") is not None],
         "hardcore_ids": [str(a.get("id")) for a in earned if a.get("id") is not None and a.get("date_hardcore")],
     }
@@ -205,13 +245,21 @@ class Plugin:
         if status not in (200, 201) or not isinstance(reply, dict) or not reply.get("raw_token"):
             return "error"
         token = str(reply["raw_token"])
-        scopes = set(reply.get("scopes") or [])
+        scopes = reply.get("scopes")
+        scopes = {str(x) for x in scopes} if isinstance(scopes, list) else set()
+        token_id = reply.get("id") if isinstance(reply.get("id"), int) else None
+
+        async def revoke():
+            # A key that is not kept is thrown away at RomM too (a key may always delete itself).
+            if token_id is not None:
+                await loop.run_in_executor(None, _request, server, "DELETE", "/api/client-tokens/%d" % token_id, token)
+
         if scopes != SCOPES:
-            # More than needed is not kept either: the key is thrown away at RomM.
-            if reply.get("id") is not None and "me.write" in scopes:
-                await loop.run_in_executor(None, _request, server, "DELETE", "/api/client-tokens/%d" % int(reply["id"]), token)
+            await revoke()
             return "scopes"
-        _write_key({"url": server["url"], "token": token, "id": reply.get("id")})
+        if not _write_key({"url": server["url"], "token": token, "id": token_id}):
+            await revoke()
+            return "error"
         decky.logger.info("RomM key paired")
         return "ok"
 
@@ -219,13 +267,10 @@ class Plugin:
         """Forgets the key, and removes it at RomM when RomM answers."""
         key = _read_key()
         server = _tender_server()
-        if key and server and key["url"] == server["url"] and key.get("id") is not None:
+        if key and server and key["url"] == server["url"] and isinstance(key.get("id"), int):
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, _request, server, "DELETE", "/api/client-tokens/%d" % int(key["id"]), key["token"])
-        try:
-            os.remove(KEY_FILE)
-        except OSError:
-            pass
+        _forget_key()
         return "unlinked"
 
     async def romm_progress(self, ra_id, refresh=False):
@@ -246,13 +291,16 @@ class Plugin:
         get = lambda *a: loop.run_in_executor(None, _request, server, *a)
         status, me = await get("GET", "/api/users/me", key["token"])
         if status in (401, 403):
+            # Revoked or expired in RomM: forgotten here, so the settings ask to connect again.
+            _forget_key()
             return {"ok": False, "why": "refused"}
         if status != 200 or not isinstance(me, dict):
             return {"ok": False, "why": "unreachable"}
         before = _game(me, ra_id)
-        if refresh and me.get("id") is not None:
-            status, _ = await get("POST", "/api/users/%d/ra/refresh" % int(me["id"]), key["token"], {"incremental": True})
+        if refresh and isinstance(me.get("id"), int):
+            status, _ = await get("POST", "/api/users/%d/ra/refresh" % me["id"], key["token"], {"incremental": True})
             if status in (401, 403):
+                _forget_key()
                 return {"ok": False, "why": "refused"}
             if status in (200, 202, 204):
                 # RomM does it in the background: its answer changes when it is done.
@@ -262,10 +310,11 @@ class Plugin:
                     status, now = await get("GET", "/api/users/me", key["token"])
                     if status == 200 and isinstance(now, dict):
                         game = _game(now, ra_id)
-                        if game != before or (now.get("ra_progression") or {}) != (me.get("ra_progression") or {}):
-                            return {"ok": True, **game}
-                return {"ok": True, **before}
-        return {"ok": True, **before}
+                        if game != before or now.get("ra_progression") != me.get("ra_progression"):
+                            return {"ok": True, "changed": True, **game}
+                # RomM did not finish in time: these figures are not newer than anyone else's.
+                return {"ok": True, "changed": False, **before}
+        return {"ok": True, "changed": False, **before}
 
     async def _main(self):
         pass

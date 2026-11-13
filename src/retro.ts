@@ -87,6 +87,11 @@ function nextOf(list: any[], got: Set<string>): Next[] {
 function applyFresh(appid: number, retro: Retro) {
   const f = fresh.get(appid);
   if (!f) return;
+  // Tender caught up (or got further): its figures are the newer ones from now on.
+  if (retro.earned > f.earned) {
+    fresh.delete(appid);
+    return;
+  }
   retro.earned = f.earned;
   retro.hardcore = f.hardcore;
   if (f.total) retro.total = f.total;
@@ -972,7 +977,13 @@ function afterGame(appid: number) {
   rommStatus().then(() => {
     if (!isLinked()) return;
     return rommProgress(data.raId, true).then((p) => {
-      if (!p?.ok || isUnloaded()) return;
+      if (isUnloaded()) return;
+      // Only a reading RomM has just made counts; anything else would hide what Tender reads later.
+      if (!p?.ok || !p.changed) {
+        fresh.delete(appid);
+        if (p?.why === "refused") rommStatus();
+        return;
+      }
       fresh.set(appid, {
         ids: new Set(p.ids ?? []),
         hardcoreIds: new Set(p.hardcore_ids ?? []),

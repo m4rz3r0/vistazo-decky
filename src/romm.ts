@@ -9,6 +9,7 @@ export type PairResult = "ok" | "code" | "invalid" | "scopes" | "no-server" | "u
 export interface Progress {
   ok: boolean;
   why?: string;
+  changed?: boolean; // RomM read RetroAchievements again and these figures came from that
   earned?: number;
   hardcore?: number;
   total?: number;
