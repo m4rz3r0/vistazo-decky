@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 
 import { medal } from "./data";
 import { num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
-import { GameState, cancelOwn, gameState, retryOwn, takePlayed, useOwnChanges } from "./own";
+import { GameState, cancelOwn, gameState, refreshArt, retryOwn, takePlayed, useOwnChanges } from "./own";
 import { Ring, fitPanel, formatSize, markPage, pageOf } from "./Panel";
 import { wordInSpanish } from "./retroText";
 import { Progress, RommGame, rommGame, rommProgress } from "./romm";
@@ -80,6 +80,7 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
   const data = useGame(romId, appid);
   const [file, again] = useFile(appid);
   const root = useRef<HTMLDivElement>(null);
+  useEffect(() => refreshArt(appid), [appid]);
   const [clipped, setClipped] = useState(false);
   const [open, setOpen] = useState(false);
   const openRef = useRef(open);

@@ -143,13 +143,39 @@ async function picture(urls: string[]): Promise<[string, string] | null> {
   return null;
 }
 
-// The new entry looks like the one it comes from: the wide picture and the logo are copied from
-// it (they are on the Deck already); the cover comes from RomM.
-async function dress(appid: number, romId: number, from: number) {
+// Which Steam entry each of Vistazo's came from, kept on the Deck: its pictures may arrive later.
+const FROM = "vistazo:own-from";
+const sources = (): Record<string, number> => safe(() => JSON.parse(localStorage.getItem(FROM) ?? "{}") ?? {}, {});
+function setSource(appid: number, from: number | null) {
+  const all = sources();
+  if (from) all[appid] = from;
+  else delete all[appid];
+  safe(() => localStorage.setItem(FROM, JSON.stringify(all)), undefined);
+}
+
+// The wide picture and the logo of the entry Vistazo's came from, for the ones Vistazo's lacks
+// (they are on the Deck already).
+async function borrowArt(appid: number, from: number) {
+  const mine = safe(() => appStore.GetAppOverviewByAppID(appid), null);
   const source = safe(() => appStore.GetAppOverviewByAppID(from), null);
-  for (const [type, method] of source ? ART : []) {
+  if (!mine || !source) return;
+  for (const [type, method] of ART) {
+    if (safe(() => (appStore[method](mine) as string[]).length, 0)) continue;
     const got = await picture(safe(() => appStore[method](source) as string[], []));
     if (got) safe(() => SteamClient.Apps.SetCustomArtworkForApp(appid, got[0], got[1], type), undefined);
+  }
+}
+// Asked again when the entry's page shows: the other entry may have got its pictures since.
+export const refreshArt = (appid: number) => {
+  const from = sources()[appid];
+  if (from) borrowArt(appid, from).catch(() => undefined);
+};
+
+// The new entry looks like the one it comes from; its cover comes from RomM.
+async function dress(appid: number, romId: number, from: number) {
+  if (from) {
+    setSource(appid, from);
+    await borrowArt(appid, from);
   }
   const c = await cover(romId).catch(() => null);
   if (c?.ok) safe(() => SteamClient.Apps.SetCustomArtworkForApp(appid, c.data, c.kind, COVER), undefined);
@@ -232,6 +258,7 @@ export async function removeOwn(appid: number): Promise<string | null> {
   for (const type of [COVER, ...ART.map(([n]) => n)])
     safe(() => SteamClient.Apps.ClearCustomArtworkForApp(appid, type), undefined);
   SteamClient.Apps.RemoveShortcut(appid);
+  setSource(appid, null);
   owned.delete(appid);
   asked.delete(appid);
   changed();
