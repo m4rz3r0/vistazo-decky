@@ -1,7 +1,7 @@
 import { t } from "./i18n";
 import { ButtonItem, ConfirmModal, DropdownItem, PanelSection, PanelSectionRow, TextField, ToggleField, showModal } from "@decky/ui";
-import { useEffect, useState } from "react";
-import { GameState, addOwn, gameState, loadOwned, ownedApp, ownedRom, removeOwn, retryOwn } from "./own";
+import { useCallback, useEffect, useState } from "react";
+import { GameState, addOwn, clearLostOwn, gameState, loadOwned, lostOwn, ownedApp, ownedRom, removeOwn, retryOwn, useOwnChanges } from "./own";
 import { openPage } from "./retro";
 import { PairAnswer, RommHealth, checkRomm, pairRomm, unlinkRomm, useRomm } from "./romm";
 import { Settings, setSetting, useSettings } from "./settings";
@@ -68,6 +68,7 @@ export function SettingsPanel() {
         {toggle("ownGames", t.ownGamesLabel, t.ownGamesDesc, s.retro ? undefined : t.needsRetro)}
         {s.retro && <RommRow games={s.ownGames} />}
         {s.retro && s.ownGames && <OwnRow />}
+        {s.retro && s.ownGames && <LostRow />}
       </PanelSection>
       <ThemeSection />
       <PanelSection title={t.sound}>
@@ -190,6 +191,40 @@ function PairModal({ games, closeModal }: { games: boolean; closeModal?: () => v
 }
 
 declare const appStore: any;
+// Games of Vistazo's whose entry was removed in Steam itself: one row, only while there are any,
+// to clear what Vistazo still keeps of them (its record, and the files it brought).
+function LostRow() {
+  const [lost, setLost] = useState<number[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [why, setWhy] = useState<string | null>(null);
+  const read = useCallback(() => setLost(lostOwn()), []);
+  useOwnChanges(read);
+  // Read afresh every time the settings open.
+  useEffect(() => {
+    loadOwned(true).then(read);
+  }, [read]);
+  if (!lost.length) return null;
+  return (
+    <PanelSectionRow>
+      <ButtonItem
+        layout="below"
+        label={t.ownLost(lost.length)}
+        description={why ? t.ownWhy(why) : t.ownLostDesc}
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          clearLostOwn().then((w) => {
+            setWhy(w);
+            setBusy(false);
+          });
+        }}
+      >
+        {t.ownLostClear}
+      </ButtonItem>
+    </PanelSectionRow>
+  );
+}
+
 // The game whose page is open, handed to Vistazo or taken back. Vistazo makes a second entry of
 // its own in Steam for it (Tender keeps the one it made) and brings its file; one row says how
 // that goes and holds the one thing to do next.

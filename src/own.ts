@@ -184,6 +184,31 @@ export async function addOwn(romId: number, name: string, from = 0): Promise<str
   return null;
 }
 
+// Games of Vistazo's whose Steam entry is gone (removed by hand in Steam): what Vistazo keeps of
+// them is of no use any more. Clearing them is the player's call, never done unasked.
+export const lostOwn = () => ownedApps().filter((appid) => !safe(() => appStore.GetAppOverviewByAppID(appid), null));
+export async function clearLostOwn(): Promise<string | null> {
+  let why: string | null = null;
+  for (const appid of lostOwn()) {
+    const state = await gameState(appid).catch(() => null);
+    if (state?.removable) {
+      const gone = await remove(appid).catch(() => null);
+      if (!gone?.ok) {
+        why = gone?.why ?? "error";
+        continue;
+      }
+    }
+    const freed = await release(appid).catch(() => null);
+    if (!freed?.ok && freed?.why !== "game") {
+      why = freed?.why ?? "error";
+      continue;
+    }
+    owned.delete(appid);
+  }
+  changed();
+  return why;
+}
+
 export const retryOwn = (appid: number) => download(appid).catch(() => null);
 export const cancelOwn = (appid: number) => cancel(appid).catch(() => null);
 
