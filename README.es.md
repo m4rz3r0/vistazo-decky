@@ -17,6 +17,11 @@ cualquiera de tus colecciones de Steam. <kbd>L1</kbd> <kbd>R1</kbd> pasan de una
 Logros, datos y los veredictos de Deck y ProtonDB en la primera pantalla, sin pestañas. <kbd>A</kbd> sobre los logros abre
 la lista completa.
 
+Los juegos retro de [RomM](https://github.com/rommapp/romm) con [Tender](https://github.com/danielcopper/romm-tender)
+tienen la misma ficha. Para ver los logros que acabas de conseguir nada más cerrar el juego, conecta Vistazo con RomM en
+sus ajustes: en RomM, en Ajustes › Client API Tokens, crea una clave con solo `me.read` y `me.write`, pulsa
+**Emparejar dispositivo** y escribe el código corto en la Deck.
+
 ## Sonidos
 
 Cada sonido de los menús pasa a ser un tono corto y suave, generado por el plugin y reproducido por la salida de
@@ -51,7 +56,8 @@ Para actualizar, abre Vistazo en el menú de acceso rápido y pulsa **Actualizar
 
 Todo sale de Steam en la Deck. La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, y se
 puede desactivar. Una vez al día Vistazo pregunta a `api.github.com` si hay una versión nueva, sin enviar nada
-sobre ti; también se puede desactivar. Sin telemetría.
+sobre ti; también se puede desactivar. Conectado a RomM, Vistazo pide a tu propio servidor RomM que vuelva a leer tus
+logros tras un juego retro, con una clave propia que solo se guarda en la Deck. Sin telemetría.
 
 ## Compilar
 

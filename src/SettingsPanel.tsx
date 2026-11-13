@@ -1,5 +1,7 @@
 import { t } from "./i18n";
-import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
+import { ButtonItem, ConfirmModal, DropdownItem, PanelSection, PanelSectionRow, TextField, ToggleField, showModal } from "@decky/ui";
+import { useState } from "react";
+import { PairResult, pairRomm, unlinkRomm, useRomm } from "./romm";
 import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 import { availableShelves } from "./home/data";
@@ -61,6 +63,7 @@ export function SettingsPanel() {
         {toggle("page", t.pageLabel, t.pageDesc)}
         {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
         {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
+        {s.retro && <RommRow />}
       </PanelSection>
       <ThemeSection />
       <PanelSection title={t.sound}>
@@ -76,6 +79,68 @@ export function SettingsPanel() {
         {toggle("updates", t.updatesLabel, t.updatesDesc)}
       </PanelSection>
     </>
+  );
+}
+
+// Vistazo's own RomM key, to see a retro game's achievements as soon as it closes. One row: what
+// state it is in and the one thing to do about it.
+let lastResult: PairResult | null = null;
+function RommRow() {
+  const status = useRomm();
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<PairResult | null>(lastResult);
+  if (!status || status === "no-server") return null;
+  const linked = status === "linked";
+  const note = result && result !== "ok" ? t.rommResult[result] : undefined;
+  const description = note ?? (linked ? t.rommLinked : status === "moved" ? t.rommMoved : t.rommUnlinked);
+  const connect = (code: string) => {
+    setBusy(true);
+    pairRomm(code).then((r) => {
+      lastResult = r;
+      setResult(r);
+      setBusy(false);
+    });
+  };
+  return (
+    <PanelSectionRow>
+      <ButtonItem
+        layout="below"
+        label={t.rommLabel}
+        description={description}
+        disabled={busy}
+        onClick={() => {
+          lastResult = null;
+          setResult(null);
+          if (linked) unlinkRomm();
+          else showModal(<PairModal onCode={connect} />);
+        }}
+      >
+        {linked ? t.rommUnlink : t.rommPair}
+      </ButtonItem>
+    </PanelSectionRow>
+  );
+}
+
+// Where RomM's pairing code is typed: 8 letters and numbers, dashes and spaces ignored.
+function PairModal({ onCode, closeModal }: { onCode: (code: string) => void; closeModal?: () => void }) {
+  const [code, setCode] = useState("");
+  const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return (
+    <ConfirmModal
+      strTitle={t.rommPair}
+      strDescription={t.rommPairSteps}
+      strOKButtonText={t.rommPair}
+      bOKDisabled={clean.length !== 8}
+      closeModal={closeModal}
+      onOK={() => onCode(clean)}
+    >
+      <TextField
+        label={t.rommCode}
+        value={code}
+        focusOnMount
+        onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 12))}
+      />
+    </ConfirmModal>
   );
 }
 

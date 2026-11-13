@@ -4,7 +4,8 @@ import { locale, num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
 import { fitPanel } from "./Panel";
 import { safe } from "./safe";
-import { keepTranslated, restoreText, wordInSpanish } from "./retroText";
+import { inSpanish, keepTranslated, restoreText, wordInSpanish } from "./retroText";
+import { isLinked, rommProgress, rommStatus } from "./romm";
 import { settings } from "./settings";
 import { pageCss } from "./styles";
 
@@ -22,6 +23,7 @@ import { pageCss } from "./styles";
 declare const DeckyBackend: any;
 declare const SteamUIStore: any;
 declare const appStore: any;
+declare const SteamClient: any;
 
 const tender = (method: string, ...args: unknown[]): Promise<any> =>
   DeckyBackend.call("loader/call_plugin_method", "Tender", method, ...args);
@@ -43,6 +45,7 @@ interface Retro {
   total: number;
   hardcore: number;
   next: Next[] | null; // null: not read yet
+  raId: number; // 0: no achievements
   retryAt?: number; // the slower reads did not get through: read again after this time
 }
 
@@ -55,6 +58,42 @@ let quietUntil = 0;
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((fn) => fn());
 
+// What RomM said right after a game was closed, newer than what Tender keeps (Tender holds its
+// reading for an hour). It wins over Tender's until Steam restarts.
+interface Fresh {
+  ids: Set<string>;
+  hardcoreIds: Set<string>;
+  earned: number;
+  hardcore: number;
+  total: number;
+}
+const fresh = new Map<number, Fresh>();
+// The game's achievement list as Tender gave it, to work out the next ones again.
+const lists = new Map<number, any[]>();
+
+function nextOf(list: any[], got: Set<string>): Next[] {
+  // The ones most players have come first: they are the nearest.
+  return list
+    .filter((a: any) => !got.has(String(a.badge_id)))
+    .sort((a: any, b2: any) => (Number(b2.num_awarded) || 0) - (Number(a.num_awarded) || 0))
+    .slice(0, 3)
+    .map((a: any) => ({
+      title: String(a.title ?? ""),
+      badge: String(a.badge_url_lock ?? a.badge_url ?? ""),
+      awarded: Number(a.num_awarded) || 0,
+    }));
+}
+
+function applyFresh(appid: number, retro: Retro) {
+  const f = fresh.get(appid);
+  if (!f) return;
+  retro.earned = f.earned;
+  retro.hardcore = f.hardcore;
+  if (f.total) retro.total = f.total;
+  const list = lists.get(appid);
+  if (list) retro.next = nextOf(list, f.ids);
+}
+
 async function load(appid: number): Promise<void> {
   try {
     const g = await tender("get_cached_game_detail", appid);
@@ -65,6 +104,7 @@ async function load(appid: number): Promise<void> {
       return;
     }
     unavailable.delete(appid);
+    const before = cache.get(appid);
     const meta = g.metadata ?? {};
     const sum = g.achievement_summary ?? {};
     const status = String(g.save_sync_display?.status ?? "");
@@ -80,8 +120,11 @@ async function load(appid: number): Promise<void> {
       earned: Number(sum.earned) || 0,
       total: Number(sum.total) || 0,
       hardcore: Number(sum.earned_hardcore) || 0,
-      next: null,
+      // Read again after a game: what was shown stays until the new list is in.
+      next: before?.next ?? null,
+      raId: Number(g.ra_id) || 0,
     };
+    applyFresh(appid, retro);
     cache.set(appid, retro);
     changed();
     // The slower reads fill in afterwards: which achievements are left, and the BIOS when Tender
@@ -111,20 +154,13 @@ async function load(appid: number): Promise<void> {
       retro.hardcore = Number(progress.earned_hardcore) || 0;
     }
     if (Array.isArray(list?.achievements) && progress?.success) {
-      const got = new Set((progress.earned_achievements ?? []).map((e: any) => String(e.id)));
-      // The ones most players have come first: they are the nearest.
-      retro.next = list.achievements
-        .filter((a: any) => !got.has(String(a.badge_id)))
-        .sort((a: any, b2: any) => (Number(b2.num_awarded) || 0) - (Number(a.num_awarded) || 0))
-        .slice(0, 3)
-        .map((a: any) => ({
-          title: String(a.title ?? ""),
-          badge: String(a.badge_url_lock ?? a.badge_url ?? ""),
-          awarded: Number(a.num_awarded) || 0,
-        }));
-    } else {
+      lists.set(appid, list.achievements);
+      const got = new Set<string>((progress.earned_achievements ?? []).map((e: any) => String(e.id)));
+      retro.next = nextOf(list.achievements, got);
+    } else if (retro.next === null) {
       retro.next = [];
     }
+    applyFresh(appid, retro);
     changed();
   } catch {
     // Tender missing or not ready: asked again in a while, not on every look.
@@ -502,6 +538,34 @@ function keepTop(sheet: HTMLElement, el: HTMLElement) {
 
 // Applies the choice to Tender's list without touching its nodes' order: the list is a column, so
 // each row only gets its place in it.
+// RomM's newer reading after a game, put over Tender's list (which keeps its older one for an
+// hour): the rows earned since are marked as Tender marks them, with their own badge, and the
+// summary and bar count them. Tender drawing the list again undoes it; this runs again then.
+const BADGE = /\/Badge\/(\d+)(_lock)?\.png/;
+function patchSheet(sheet: HTMLElement, f: Fresh): boolean {
+  let any = false;
+  sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row").forEach((row) => {
+    const img = row.querySelector<HTMLImageElement>("img.romm-cheevo-badge-img");
+    const m = img ? BADGE.exec(img.getAttribute("src") ?? "") : null;
+    if (!m || !f.ids.has(m[1]) || row.classList.contains("romm-cheevo-row-earned")) return;
+    any = true;
+    row.classList.add("romm-cheevo-row-earned");
+    row.dataset.vzEarned = "";
+    if (m[2]) img!.setAttribute("src", img!.getAttribute("src")!.replace("_lock.png", ".png"));
+    img!.style.removeProperty("filter");
+    if (f.hardcoreIds.has(m[1])) img!.classList.add("romm-cheevo-badge-img-hc");
+    row.querySelector(".romm-cheevo-points-locked")?.classList.remove("romm-cheevo-points-locked");
+  });
+  const summary = sheet.querySelector(".romm-cheevo-summary-text");
+  const text = inSpanish(`${f.earned} / ${f.total} Achievements`);
+  if (summary && f.total && summary.textContent !== text) summary.textContent = text;
+  const fill = sheet.querySelector<HTMLElement>(".romm-cheevo-progress-fill");
+  const width = `${f.total ? (f.earned / f.total) * 100 : 0}%`;
+  if (fill && f.total && fill.style.width !== width) fill.style.width = width;
+  return any || !!sheet.querySelector("[data-vz-earned]");
+}
+
+let shownApp = 0; // the game whose page is open
 function applyAchievements(doc: Document) {
   const sheet = sheetOf(doc);
   const tools = doc.querySelector(".vz-sheet-tools") as HTMLElement | null;
@@ -511,16 +575,22 @@ function applyAchievements(doc: Document) {
     sheet?.removeAttribute("data-vz-tools");
     return;
   }
+  const f = fresh.get(shownApp);
+  const patched = f ? patchSheet(sheet, f) : false;
   const rows = Array.from(sheet.querySelectorAll<HTMLElement>(".romm-cheevo-row"));
   // A view with nothing in it (no achievement earned yet, or all of them) is never shown: there
   // would be nothing to select.
   if (rows.length && !counts(rows)[filter]) filter = "all";
-  const key = `${filter}|${order}|${rows.length}`;
+  const key = `${filter}|${order}|${rows.length}|${patched ? counts(rows).earned : "-"}`;
   if (sheet.dataset.vzApplied !== key) {
     sheet.dataset.vzApplied = key;
     sheet.dataset.vzFilter = filter;
-    sheet.dataset.vzPlain = filter === "all" && order === "game" ? "1" : "0";
-    if (order === "game") rows.forEach((r) => r.style.removeProperty("order"));
+    // Rows marked here sit where Tender put them, among the pending ones: its headings would lie,
+    // so they go and the earned come first.
+    sheet.dataset.vzPlain = filter === "all" && order === "game" && !patched ? "1" : "0";
+    if (order === "game" && patched) {
+      rows.forEach((r, i) => (r.style.order = String(r.classList.contains("romm-cheevo-row-earned") ? i + 1 : rows.length + i + 1)));
+    } else if (order === "game") rows.forEach((r) => r.style.removeProperty("order"));
     else {
       const value = (r: HTMLElement) =>
         order === "points" ? -firstNumber(r.querySelector(".romm-cheevo-points")) : firstNumber(r.querySelector(".romm-cheevo-rarity")) * (order === "common" ? -1 : 1);
@@ -775,6 +845,7 @@ function sync() {
     if (!root.hasAttribute(ON)) root.setAttribute(ON, "");
     return clear(doc, true);
   }
+  shownApp = appid;
   if (!cache.has(appid)) {
     cache.set(appid, null);
     load(appid);
@@ -884,6 +955,53 @@ function watch(doc: Document) {
   observer.observe(doc.body, { childList: true, subtree: true });
 }
 
+// After a retro game: RomM reads its achievements again (with Vistazo's own key) and the page
+// shows them; without the key, what Tender has is read again a little later and a while later
+// (Tender reads RomM again when the game ends, and RomM 5.5 reads RetroAchievements by itself
+// after a game).
+const pending = new Map<number, number[]>();
+function afterGame(appid: number) {
+  const data = cache.get(appid);
+  if (!data || isUnloaded()) return;
+  pending.get(appid)?.forEach(clearTimeout);
+  const again = () => {
+    if (!isUnloaded() && cache.has(appid)) load(appid);
+  };
+  pending.set(appid, [setTimeout(again, 20 * 1000), setTimeout(again, 3 * 60 * 1000)] as unknown as number[]);
+  if (!data.raId) return;
+  rommStatus().then(() => {
+    if (!isLinked()) return;
+    return rommProgress(data.raId, true).then((p) => {
+      if (!p?.ok || isUnloaded()) return;
+      fresh.set(appid, {
+        ids: new Set(p.ids ?? []),
+        hardcoreIds: new Set(p.hardcore_ids ?? []),
+        earned: Number(p.earned) || 0,
+        hardcore: Number(p.hardcore) || 0,
+        total: Number(p.total) || 0,
+      });
+      const now = cache.get(appid);
+      if (now) applyFresh(appid, now);
+      changed();
+    });
+  }).catch((e) => console.warn("[Vistazo] achievements after a game", e));
+}
+
+function watchGames(): () => void {
+  const reg = safe(
+    () =>
+      SteamClient.GameSessions.RegisterForAppLifetimeNotifications((u: any) => {
+        if (u && u.bRunning === false && cache.get(Number(u.unAppID))) afterGame(Number(u.unAppID));
+      }),
+    null as any,
+  );
+  return () => {
+    safe(() => reg?.unregister(), undefined);
+    pending.forEach((ts) => ts.forEach(clearTimeout));
+    pending.clear();
+  };
+}
+
 export function watchRetroPages(): () => void {
   const tick = () => {
     if (isUnloaded()) return;
@@ -896,8 +1014,11 @@ export function watchRetroPages(): () => void {
   listeners.add(tick);
   tickNow = tick;
   const timer = setInterval(tick, 400);
+  const stopGames = watchGames();
+  rommStatus();
   return () => {
     clearInterval(timer);
+    stopGames();
     listeners.delete(tick);
     observer?.disconnect();
     observer = null;

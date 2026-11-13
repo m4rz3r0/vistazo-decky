@@ -125,6 +125,25 @@ const es = {
   updateCheck: "Buscar ahora",
   updateToastTitle: (v: string) => `Vistazo ${v} disponible`,
   updateToastBody: "Pulsa para actualizar.",
+  // RomM key for achievements after a game
+  rommLabel: "Logros al terminar de jugar",
+  rommUnlinked: "Para verlos nada más cerrar un juego retro, Vistazo pide a RomM que los vuelva a leer. Necesita su propia clave de RomM.",
+  rommLinked: "Conectado: al cerrar un juego retro, sus logros se actualizan.",
+  rommMoved: "RomM tiene otra dirección en Tender: vuelve a conectar.",
+  rommPair: "Conectar con RomM",
+  rommUnlink: "Desconectar",
+  rommPairSteps:
+    "En RomM, en Ajustes › Client API Tokens, crea una clave marcando solo me.read y me.write y pulsa «Emparejar dispositivo». Escribe aquí el código que aparece: caduca en un minuto.",
+  rommCode: "Código",
+  rommResult: {
+    ok: "Conectado.",
+    code: "El código tiene 8 letras y números.",
+    invalid: "Código incorrecto o caducado: pide otro en RomM.",
+    scopes: "La clave tiene que tener solo me.read y me.write. Se ha borrado en RomM; crea otra.",
+    "no-server": "Tender no tiene RomM configurado.",
+    unreachable: "RomM no responde. Prueba otra vez en un momento.",
+    error: "No se pudo conectar.",
+  } as Record<string, string>,
   // Retro game page (RomM games, with Tender)
   retroPageLabel: "Ficha de juegos retro",
   retroPageDesc: "Logros y datos en los juegos de RomM. Sin esto, la ficha original de Tender.",
@@ -262,6 +281,25 @@ const en: typeof es = {
   updateCheck: "Check now",
   updateToastTitle: (v: string) => `Vistazo ${v} is out`,
   updateToastBody: "Press to update.",
+  // RomM key for achievements after a game
+  rommLabel: "Achievements after playing",
+  rommUnlinked: "To see them as soon as a retro game closes, Vistazo asks RomM to read them again. It needs its own RomM key.",
+  rommLinked: "Connected: when a retro game closes, its achievements are updated.",
+  rommMoved: "Tender points to another RomM address: connect again.",
+  rommPair: "Connect to RomM",
+  rommUnlink: "Disconnect",
+  rommPairSteps:
+    "In RomM, under Settings › Client API Tokens, create a token with only me.read and me.write and press “Pair device”. Type the code it shows here: it expires in a minute.",
+  rommCode: "Code",
+  rommResult: {
+    ok: "Connected.",
+    code: "The code is 8 letters and numbers.",
+    invalid: "Wrong or expired code: get another one in RomM.",
+    scopes: "The token must have only me.read and me.write. It was deleted in RomM; create another.",
+    "no-server": "Tender has no RomM set up.",
+    unreachable: "RomM is not answering. Try again in a moment.",
+    error: "Could not connect.",
+  } as Record<string, string>,
   // Retro game page (RomM games, with Tender)
   retroPageLabel: "Retro game page",
   retroPageDesc: "Achievements and facts on RomM games. Off: Tender's own page.",

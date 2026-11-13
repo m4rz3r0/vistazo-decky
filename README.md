@@ -17,6 +17,11 @@ your Steam collections. <kbd>L1</kbd> <kbd>R1</kbd> move between them, <kbd>A</k
 Achievements, facts and the Deck and ProtonDB verdicts on the first screen, no tabs. Press <kbd>A</kbd> on the
 achievements for the full list.
 
+Retro games from [RomM](https://github.com/rommapp/romm) through [Tender](https://github.com/danielcopper/romm-tender)
+get the same page. To see the achievements you just earned as soon as the game closes, connect Vistazo to RomM in its
+settings: in RomM, under Settings › Client API Tokens, create a token with only `me.read` and `me.write`, press
+**Pair device** and type the short code on the Deck.
+
 ## Sounds
 
 Every menu sound becomes a short, soft tone, made by the plugin and played through Steam's own output.
@@ -50,7 +55,8 @@ To update, open Vistazo in the quick access menu and press **Update** under Vers
 
 Everything comes from Steam on the Deck. The ProtonDB rating asks `protondb.com` with the game's number only,
 and can be turned off. Once a day Vistazo asks `api.github.com` whether there is a newer version, sending nothing
-about you; that can be turned off too. No telemetry.
+about you; that can be turned off too. Connected to RomM, Vistazo asks your own RomM server to read your
+achievements again after a retro game, with its own token kept only on the Deck. No telemetry.
 
 ## Build
 
