@@ -1,5 +1,5 @@
 import { t } from "./i18n";
-import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
+import { ButtonItem, DropdownItem, Field, Focusable, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useState } from "react";
 import { OfferState, installAddon, readAddonList, useAddonList } from "./addonList";
 import { allAddons, useAddons } from "./addons";
@@ -33,7 +33,7 @@ export function SettingsPanel() {
       />
     </PanelSectionRow>
   );
-  return (
+  const home = (
     <>
       <PanelSection title={t.homeSection}>
         {toggle("home", t.homeLabel, t.homeDesc)}
@@ -62,13 +62,17 @@ export function SettingsPanel() {
           );
         })}
       </PanelSection>
-      <PanelSection title={t.pageSection}>
-        {toggle("page", t.pageLabel, t.pageDesc)}
-        {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
-        {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
-      </PanelSection>
-      <AddonSections />
-      <AddonList />
+    </>
+  );
+  const page = (
+    <PanelSection title={t.pageSection}>
+      {toggle("page", t.pageLabel, t.pageDesc)}
+      {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
+      {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
+    </PanelSection>
+  );
+  const look = (
+    <>
       <ThemeSection />
       <PanelSection title={t.sound}>
         {toggle("sounds", t.soundsLabel, t.soundsDesc)}
@@ -78,6 +82,62 @@ export function SettingsPanel() {
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
+    </>
+  );
+
+  // The settings are a short menu of groups, each opening its own few settings: nothing to scroll
+  // through to find one. Each row says in a few words how that group stands now.
+  const [group, setGroup] = useState<string | null>(lastGroup);
+  const open = (g: string | null) => {
+    lastGroup = g;
+    setGroup(g);
+  };
+  const addons = allAddons().filter((a) => a.Settings);
+  const addon = group?.startsWith("addon:") ? addons.find((a) => `addon:${a.id}` === group) : undefined;
+  const AddonRows = addon?.Settings;
+  const body =
+    group === "home" ? home : group === "page" ? page : group === "look" ? look : group === "addons" ? <AddonList /> : addon && AddonRows ? (
+      <Guard name={`add-on ${addon.id}`}>
+        <AddonRows />
+      </Guard>
+    ) : null;
+  if (body)
+    return (
+      <Focusable onCancelButton={() => open(null)}>
+        <PanelSection>
+          <PanelSectionRow>
+            <Field focusable highlightOnFocus onActivate={() => open(null)} onClick={() => open(null)} label={`‹  ${t.settingsBack}`} bottomSeparator="none" />
+          </PanelSectionRow>
+        </PanelSection>
+        {body}
+      </Focusable>
+    );
+  const shelvesOn = availableShelves().filter((x) => s.shelves.includes(x.id)).length;
+  const pageBits = [s.page && t.pageLabel, s.page && s.protondb && "ProtonDB", s.retro && t.retro].filter(Boolean).join(" · ");
+  const row = (g: string, label: string, summary: string) => (
+    <PanelSectionRow key={g}>
+      <Field
+        focusable
+        highlightOnFocus
+        onActivate={() => open(g)}
+        onClick={() => open(g)}
+        label={label}
+        description={summary || undefined}
+        bottomSeparator="none"
+      >
+        <span style={{ opacity: 0.5 }}>›</span>
+      </Field>
+    </PanelSectionRow>
+  );
+  return (
+    <>
+      <PanelSection>
+        {row("home", t.homeSection, s.home ? t.shelvesCount(shelvesOn) : t.off)}
+        {row("page", t.pageSection, pageBits || t.off)}
+        {row("look", t.lookSection, s.sounds ? t.soundsLabel : "")}
+        {addons.map((a) => row(`addon:${a.id}`, a.name, t.addonRow))}
+        {row("addons", t.addonsSection, t.addonsCount(addons.length))}
+      </PanelSection>
       <PanelSection title={t.updateSection}>
         <UpdateRows />
         {toggle("updates", t.updatesLabel, t.updatesDesc)}
@@ -86,21 +146,8 @@ export function SettingsPanel() {
   );
 }
 
-// What each installed add-on has to set up, in its own section. A failing one shows nothing.
-function AddonSections() {
-  useAddons();
-  return (
-    <>
-      {allAddons().map((a) =>
-        a.Settings ? (
-          <Guard key={a.id} name={`add-on ${a.id}`}>
-            <a.Settings />
-          </Guard>
-        ) : null,
-      )}
-    </>
-  );
-}
+// The group that was open stays open while Steam runs (coming back from a dialog, say).
+let lastGroup: string | null = null;
 
 // The add-ons there are, each with what it is for and one button: install it, or bring it up to
 // date. Decky does the installing and asks first; taking one away is done from Decky's own list.
