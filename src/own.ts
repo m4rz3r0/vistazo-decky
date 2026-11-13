@@ -114,9 +114,51 @@ async function untilKnown(appid: number) {
   for (let i = 0; i < 20 && !safe(() => appStore.GetAppOverviewByAppID(appid), null); i++) await wait(100);
 }
 
-// Makes Vistazo's own entry for a RomM game and starts bringing its file. Returns why it could
-// not, or null when it is under way. Nothing is left in Steam when it fails.
-export async function addOwn(romId: number, name: string): Promise<string | null> {
+// The pictures Steam shows for an entry, by Steam's own numbers: cover, wide picture behind the
+// page, and logo.
+const COVER = 0;
+const ART: [number, string][] = [
+  [1, "GetCustomHeroImageURLs"],
+  [2, "GetCustomLogoImageURLs"],
+];
+
+// One of an entry's pictures as Steam wants it handed over: [base64, kind], or null.
+async function picture(urls: string[]): Promise<[string, string] | null> {
+  for (const url of urls) {
+    try {
+      const blob = await (await fetch(url)).blob();
+      const kind = blob.type === "image/png" ? "png" : blob.type === "image/jpeg" ? "jpg" : "";
+      if (!kind || blob.size > 8 * 1024 * 1024) continue;
+      const data = await new Promise<string>((done, fail) => {
+        const reader = new FileReader();
+        reader.onload = () => done(String(reader.result).split(",")[1] ?? "");
+        reader.onerror = () => fail(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      if (data) return [data, kind];
+    } catch {
+      /* the next one */
+    }
+  }
+  return null;
+}
+
+// The new entry looks like the one it comes from: the wide picture and the logo are copied from
+// it (they are on the Deck already); the cover comes from RomM.
+async function dress(appid: number, romId: number, from: number) {
+  const source = safe(() => appStore.GetAppOverviewByAppID(from), null);
+  for (const [type, method] of source ? ART : []) {
+    const got = await picture(safe(() => appStore[method](source) as string[], []));
+    if (got) safe(() => SteamClient.Apps.SetCustomArtworkForApp(appid, got[0], got[1], type), undefined);
+  }
+  const c = await cover(romId).catch(() => null);
+  if (c?.ok) safe(() => SteamClient.Apps.SetCustomArtworkForApp(appid, c.data, c.kind, COVER), undefined);
+}
+
+// Makes Vistazo's own entry for a RomM game and starts bringing its file. `from` is the Steam
+// entry it was asked from (Tender's). Returns why it could not, or null when it is under way.
+// Nothing is left in Steam when it fails.
+export async function addOwn(romId: number, name: string, from = 0): Promise<string | null> {
   await loadOwned();
   if (ownedApp(romId)) return null;
   const l = await launcher();
@@ -137,9 +179,7 @@ export async function addOwn(romId: number, name: string): Promise<string | null
   SteamClient.Apps.SetAppLaunchOptions(appid, taken.options);
   owned.set(appid, romId);
   changed();
-  cover(romId)
-    .then((c) => c?.ok && SteamClient.Apps.SetCustomArtworkForApp(appid, c.data, c.kind, 0))
-    .catch(() => undefined);
+  dress(appid, romId, from).catch((e) => console.warn("[Vistazo] pictures", e));
   if (!taken.installed) await download(appid).catch(() => null);
   return null;
 }
@@ -163,8 +203,9 @@ export async function removeOwn(appid: number): Promise<string | null> {
   }
   const freed = await release(appid).catch(() => null);
   if (!freed?.ok && freed?.why !== "game") return freed?.why ?? "error";
-  // The cover Vistazo set goes with the entry.
-  safe(() => SteamClient.Apps.ClearCustomArtworkForApp(appid, 0), undefined);
+  // The pictures Vistazo set go with the entry.
+  for (const type of [COVER, ...ART.map(([n]) => n)])
+    safe(() => SteamClient.Apps.ClearCustomArtworkForApp(appid, type), undefined);
   SteamClient.Apps.RemoveShortcut(appid);
   owned.delete(appid);
   asked.delete(appid);

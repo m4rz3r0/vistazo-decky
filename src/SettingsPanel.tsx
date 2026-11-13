@@ -259,7 +259,7 @@ function OwnRow() {
           label={name}
           description={description}
           disabled={busy}
-          onClick={() => (appid ? act(() => removeOwn(appid)) : act(() => addOwn(romId, t.ownName(name))))}
+          onClick={() => (appid ? act(() => removeOwn(appid)) : act(() => addOwn(romId, t.ownName(name), page.appid)))}
         >
           {appid ? t.ownRemove : t.ownAdd}
         </ButtonItem>

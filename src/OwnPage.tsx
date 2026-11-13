@@ -66,10 +66,11 @@ function useFile(appid: number): [GameState | null, () => void] {
     let alive = true;
     const read = () => gameState(appid).then((s) => alive && setState(s)).catch(() => undefined);
     read();
-    const timer = downloading ? setInterval(read, 700) : undefined;
+    // Often while a download runs; now and then otherwise (one may be started from the settings).
+    const timer = setInterval(read, downloading ? 700 : 3000);
     return () => {
       alive = false;
-      if (timer) clearInterval(timer);
+      clearInterval(timer);
     };
   }, [appid, tick, downloading]);
   return [state, () => setTick((n) => n + 1)];
