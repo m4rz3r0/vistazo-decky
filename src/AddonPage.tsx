@@ -152,12 +152,24 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
     .sort((a, b) => b.players - a.players)
     .slice(0, 3);
 
-  const cells: [string, string][] = [];
+  const cells: [string, any][] = [];
   if (game?.platform) cells.push([t.retroPlatform, game.platform]);
   if (game?.year) cells.push([t.year, String(game.year)]);
   if (game?.genres?.length) cells.push([t.genre, game.genres.slice(0, 2).map(wordInSpanish).join(", ")]);
   const size = formatSize(game?.size ?? 0);
   if (size) cells.push([missing ? t.ownSize : t.onDisk, size]);
+  if (game?.save)
+    cells.push([
+      t.retroSave,
+      <span className={game.save === "synced" ? "vz-own-ok" : "vz-own-warn"}>
+        {game.save === "synced" ? t.retroSaveSynced : game.save === "conflict" ? t.retroSaveConflict : t.ownSavePending}
+      </span>,
+    ]);
+  if (game?.bios)
+    cells.push([
+      t.retroBios,
+      <span className={game.bios === "ok" ? "vz-own-ok" : "vz-own-warn"}>{game.bios === "ok" ? t.retroBiosOk : t.retroBiosMissing}</span>,
+    ]);
   if (game?.rating && game.rating > 0) cells.push([t.retroRating, `${num(Math.round(game.rating))} %`]);
 
   const downloading = !!file?.downloading;
@@ -332,6 +344,12 @@ const OWN_CSS = `
 }
 .vz-own-get.vz-own-stop { background: rgba(255, 255, 255, 0.08); color: #f4f4f4; }
 .vz-own-get.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent, #b8f35a)); outline-offset: 3px; }
+.vz-own-ok::before, .vz-own-warn::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; margin-right: 7px; vertical-align: 1px;
+}
+.vz-own-ok { color: #7fe0a8; }
+.vz-own-warn { color: var(--obs-warn, #ffb040); }
 .vz-own-kept { margin: 0 0 12px; font-size: 13px; color: rgba(255, 255, 255, 0.5); }
 .vz-own-note { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
 .vz-own-note.vz-own-bad { color: var(--obs-warn, #ffb040); }

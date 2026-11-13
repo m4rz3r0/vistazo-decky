@@ -34,6 +34,11 @@ export interface AddonGame {
   summary?: string;
   achievements?: { earned: number; total: number; hardcore: number; got: string[]; list: AddonAchievement[] };
   stale?: boolean; // the source did not answer: this is from the last time it did
+  // The game's save against the add-on's source: in step, waiting (not sent or not checked yet)
+  // or changed on both sides (the add-on then offers the two ways out as actions).
+  save?: "synced" | "pending" | "conflict";
+  // The files the console needs to run (its BIOS): all here, or some missing.
+  bios?: "ok" | "missing";
 }
 
 // The game's file, when the add-on is what brings it: whether it is on the Deck, and how a
