@@ -1,6 +1,8 @@
 import { t } from "./i18n";
 import { ButtonItem, ConfirmModal, DropdownItem, PanelSection, PanelSectionRow, TextField, ToggleField, showModal } from "@decky/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { GameState, addOwn, gameState, loadOwned, ownedApp, ownedRom, removeOwn, retryOwn } from "./own";
+import { openPage } from "./retro";
 import { PairResult, pairRomm, unlinkRomm, useRomm } from "./romm";
 import { Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
@@ -65,6 +67,7 @@ export function SettingsPanel() {
         {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
         {toggle("ownGames", t.ownGamesLabel, t.ownGamesDesc, s.retro ? undefined : t.needsRetro)}
         {s.retro && <RommRow games={s.ownGames} />}
+        {s.retro && s.ownGames && <OwnRow />}
       </PanelSection>
       <ThemeSection />
       <PanelSection title={t.sound}>
@@ -130,6 +133,84 @@ function RommRow({ games }: { games: boolean }) {
         {linked ? t.rommUnlink : short ? t.rommAgain : t.rommPair}
       </ButtonItem>
     </PanelSectionRow>
+  );
+}
+
+declare const appStore: any;
+// The game whose page is open, handed to Vistazo or taken back. Vistazo makes a second entry of
+// its own in Steam for it (Tender keeps the one it made) and brings its file; one row says how
+// that goes and holds the one thing to do next.
+function OwnRow() {
+  const status = useRomm();
+  const [page] = useState(openPage);
+  const [ready, setReady] = useState(false);
+  const [state, setState] = useState<GameState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [why, setWhy] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    loadOwned().then(() => setReady(true));
+  }, []);
+  // The open page is Vistazo's own entry, or a game of Tender's that may have one.
+  const romId = ownedRom(page.appid) || page.romId;
+  const appid = ownedRom(page.appid) ? page.appid : ownedApp(romId);
+  useEffect(() => {
+    if (!ready || !appid) return setState(null);
+    let alive = true;
+    const read = () => gameState(appid).then((s) => alive && setState(s)).catch(() => undefined);
+    read();
+    const timer = setInterval(read, 1000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [ready, appid, tick]);
+  if (status !== "linked" || !ready || !romId) return null;
+  const name = String(appStore.GetAppOverviewByAppID(page.appid)?.display_name ?? "");
+  if (!name) return null;
+  const act = (what: () => Promise<string | null>) => {
+    setBusy(true);
+    setWhy(null);
+    what().then((w) => {
+      setWhy(w);
+      setBusy(false);
+      setTick((n) => n + 1);
+    });
+  };
+  const job = state?.job?.state;
+  const failed = !!job && !["downloading", "installed", "cancelled"].includes(job);
+  const description = why
+    ? t.ownWhy(why)
+    : !appid
+      ? t.ownOffer
+      : job === "downloading"
+        ? t.ownDownloading(state?.job?.total ? Math.floor((100 * state.job.done) / state.job.total) : 0)
+        : state?.installed
+          ? t.ownReady
+          : failed
+            ? t.ownWhy(job)
+            : t.ownNoFile;
+  return (
+    <>
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          label={name}
+          description={description}
+          disabled={busy}
+          onClick={() => (appid ? act(() => removeOwn(appid)) : act(() => addOwn(romId, t.ownName(name))))}
+        >
+          {appid ? t.ownRemove : t.ownAdd}
+        </ButtonItem>
+      </PanelSectionRow>
+      {!!appid && !!state && !state.installed && job !== "downloading" && (
+        <PanelSectionRow>
+          <ButtonItem layout="below" disabled={busy} onClick={() => act(() => retryOwn(appid).then(() => null))}>
+            {t.ownDownload}
+          </ButtonItem>
+        </PanelSectionRow>
+      )}
+    </>
   );
 }
 

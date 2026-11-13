@@ -46,6 +46,7 @@ interface Retro {
   hardcore: number;
   next: Next[] | null; // null: not read yet
   raId: number; // 0: no achievements
+  romId: number; // the game in RomM
   retryAt?: number; // the slower reads did not get through: read again after this time
 }
 
@@ -136,6 +137,7 @@ async function load(appid: number): Promise<void> {
       // Read again after a game: what was shown stays until the new list is in.
       next: before?.next ?? null,
       raId: Number(g.ra_id) || 0,
+      romId: Number(g.rom_id) || 0,
     };
     applyFresh(appid, retro);
     cache.set(appid, retro);
@@ -587,6 +589,14 @@ function patchSheet(sheet: HTMLElement, f: Fresh): boolean {
 }
 
 let shownApp = 0; // the game whose page is open
+// The Steam game whose page is open now (0 when it is another screen), and which RomM game it is
+// when it is one of Tender's.
+export function openPage(): { appid: number; romId: number } {
+  const win = safe(() => SteamUIStore.WindowStore.GamepadUIMainWindowInstance, null as any);
+  const m = /^\/library\/app\/(\d+)/.exec(String(win?.m_history?.location?.pathname ?? ""));
+  const appid = m ? Number(m[1]) : 0;
+  return { appid, romId: cache.get(appid)?.romId ?? 0 };
+}
 function applyAchievements(doc: Document) {
   const sheet = sheetOf(doc);
   const tools = doc.querySelector(".vz-sheet-tools") as HTMLElement | null;

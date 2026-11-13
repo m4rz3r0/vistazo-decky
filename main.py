@@ -3,6 +3,7 @@
 # game and, for those who turn it on, to look after RomM games itself (their data, their files and
 # how they start). Everything else runs in the frontend.
 import asyncio
+import base64
 import json
 import os
 import re
@@ -376,6 +377,29 @@ def _rom(server, key, rom_id):
     return rom, None
 
 
+COVER_MAX = 6 * 1024 * 1024
+COVER_KINDS = ((b"\x89PNG\r\n\x1a\n", "png"), (b"\xff\xd8\xff", "jpg"))
+
+
+def _cover(server, key, rom):
+    """The game's cover as RomM keeps it: (bytes, "png" or "jpg"), or None. Only a picture of a
+    sensible size, from RomM's own folder of covers, is taken."""
+    path = _text(rom.get("path_cover_large")).split("?")[0]
+    parts = path.split("/")
+    if not path or any(p in ("", ".", "..") for p in parts):
+        return None
+    req, _, ctx = _prepare(server, "GET", "/assets/romm/resources/" + urllib.parse.quote(path), key["token"], accept="image/*")
+    try:
+        with _opener(ctx).open(req, timeout=TIMEOUT) as r:
+            raw = r.read(COVER_MAX + 1)
+    except (urllib.error.URLError, OSError, ValueError):
+        return None
+    if len(raw) > COVER_MAX:
+        return None
+    kind = next((name for magic, name in COVER_KINDS if raw.startswith(magic)), None)
+    return (raw, kind) if kind else None
+
+
 def _rom_files(rom):
     """The names and sizes of a game's files, as RomM lists them."""
     files = rom.get("files") if isinstance(rom.get("files"), list) else []
@@ -743,6 +767,33 @@ class Plugin:
         if not rom:
             return {"ok": False, "why": why}
         return {"ok": True, **_detail(rom)}
+
+    async def game_list(self):
+        """The Steam games Vistazo looks after: {Steam number: RomM number}."""
+        with _lock:
+            return {appid: _number(g.get("rom_id")) for appid, g in _read_games()["games"].items() if isinstance(g, dict)}
+
+    async def game_launcher(self):
+        """Where the launcher is, for a new Steam shortcut: {"ok": True, "exe", "start_dir"}."""
+        if not _install_launcher():
+            return {"ok": False, "why": "disk"}
+        return {"ok": True, "exe": LAUNCHER, "start_dir": RUNTIME}
+
+    async def game_cover(self, rom_id):
+        """The game's cover from RomM, for its Steam shortcut: {"ok": True, "data" (base64),
+        "kind"}. A game without one, or a RomM that does not hand it over, is {"ok": False}."""
+        rom_id = _number(rom_id)
+        server, key = _games_key()
+        if not server or rom_id <= 0:
+            return {"ok": False, "why": key if not server else "game"}
+        loop = asyncio.get_running_loop()
+        rom, why = await loop.run_in_executor(None, _rom, server, key, rom_id)
+        if not rom:
+            return {"ok": False, "why": why}
+        cover = await loop.run_in_executor(None, _cover, server, key, rom)
+        if not cover:
+            return {"ok": False, "why": "cover"}
+        return {"ok": True, "data": base64.b64encode(cover[0]).decode("ascii"), "kind": cover[1]}
 
     async def game_state(self, appid):
         """Whether Vistazo looks after this Steam game, has its file, and how a download goes."""

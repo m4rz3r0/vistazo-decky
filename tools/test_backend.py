@@ -58,6 +58,7 @@ class RomM:
         self.content = {}  # rom id -> bytes, or a callable(handler)
         self.redirect_to = None
         self.refuse = set()  # rom ids answered with 401
+        self.covers = {}  # file name -> bytes
 
 
 romm = RomM()
@@ -115,6 +116,15 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, {"id": 1, "ra_progression": {"results": [
                 {"rom_ra_id": 77, "num_awarded": 2, "num_awarded_hardcore": 1, "max_possible": 130,
                  "earned_achievements": [{"id": "100", "date_hardcore": "x"}, {"id": "101"}]}]}})
+        if parts[:4] == ["assets", "romm", "resources", "roms"]:
+            raw = romm.covers.get(parts[-1])
+            if raw is None:
+                return self.reply(404)
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+            return
         if parts[:2] == ["api", "roms"] and len(parts) == 3:
             rom_id = int(parts[2])
             if romm.redirect_to:
@@ -267,6 +277,24 @@ def test_detail():
     tender(URL)
 
 
+def test_cover():
+    png = b"\x89PNG\r\n\x1a\n" + b"picture"
+    romm.covers = {"big.png": png, "page.png": b"<html>sign in</html>", "huge.png": b"\x89PNG\r\n\x1a\n" + b"x" * main.COVER_MAX}
+    romm.roms[20] = rom(20, "Cover.nds", path_cover_large="roms/20/cover/big.png?ts=1")
+    got = run(plugin.game_cover(20))
+    check("cover", (got["ok"], got["kind"], __import__("base64").b64decode(got["data"])), (True, "png", png))
+    for name, path in (("not a picture", "roms/20/cover/page.png"), ("too big", "roms/20/cover/huge.png"),
+                       ("missing", "roms/20/cover/none.png"), ("outside the covers", "roms/../../api/users/me"), ("none", None)):
+        romm.roms[20]["path_cover_large"] = path
+        before = len(romm.calls)
+        check("cover %s" % name, run(plugin.game_cover(20)), {"ok": False, "why": "cover"})
+        if name in ("outside the covers", "none"):
+            check("cover %s: only the game was asked for" % name, len(romm.calls) - before, 1)
+    got = run(plugin.game_launcher())
+    check("launcher ready", (got["ok"], got["exe"], mode(main.LAUNCHER)), (True, main.LAUNCHER, 0o700))
+    check("no games yet", run(plugin.game_list()), {})
+
+
 def test_launcher():
     nasty = os.path.join(ROMS, "nds", NASTY)
     with open(nasty, "wb") as f:
@@ -284,6 +312,7 @@ def test_launcher():
     check("launch list private", mode(main.LAUNCH_FILE), 0o600)
     with open(main.LAUNCH_FILE) as f:
         check("launch list", json.load(f), {"6": os.path.realpath(nasty)})
+    check("listed", run(plugin.game_list()), {"600": 6})
     check("taking it twice changes nothing", run(plugin.game_take(600, 6, "x", "y", "z"))["ok"], True)
 
     # The launcher hands the file to flatpak as one argument, whatever its name holds.
@@ -508,6 +537,7 @@ def test_archive():
 try:
     test_key()
     test_detail()
+    test_cover()
     test_launcher()
     test_download()
     test_archive()

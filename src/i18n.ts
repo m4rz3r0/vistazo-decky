@@ -155,6 +155,32 @@ const es = {
   rommAgain: "Conectar de nuevo",
   rommPairStepsGames:
     "En RomM, en Ajustes › Client API Tokens, crea una clave marcando solo me.read, me.write, roms.read, platforms.read, assets.read y assets.write, y pulsa «Emparejar dispositivo». Escribe aquí el código que aparece: caduca en un minuto.",
+  ownName: (game: string) => `${game} · Vistazo`,
+  ownOffer:
+    "Crea en Steam una segunda entrada de este juego, a cargo de Vistazo: la descarga de RomM y la inicia. La de Tender sigue igual. Las dos usan la misma partida guardada, y Tender no sincroniza lo que juegues desde la de Vistazo.",
+  ownAdd: "Pasarlo a Vistazo",
+  ownRemove: "Quitar la entrada de Vistazo",
+  ownDownload: "Descargar de nuevo",
+  ownDownloading: (p: number) => `Descargando: ${p} %`,
+  ownReady: "Listo: está en tu biblioteca, entre los juegos que no son de Steam.",
+  ownNoFile: "La entrada está creada, pero falta el juego.",
+  ownWhy: (why: string) =>
+    (({
+      unreachable: "RomM no responde o la descarga se cortó. Prueba otra vez.",
+      refused: "RomM ha rechazado la clave: vuelve a conectar.",
+      unlinked: "Falta conectar con RomM.",
+      limited: "La conexión con RomM solo sirve para los logros: vuelve a conectar.",
+      moved: "RomM tiene otra dirección en Tender: vuelve a conectar.",
+      space: "No hay sitio en el disco.",
+      exists: "Ya hay otro archivo con ese nombre en la carpeta del juego. No se ha tocado.",
+      system: "Vistazo aún no sabe dónde guarda RetroDECK los juegos de esta consola.",
+      retrodeck: "No se encuentra la carpeta de juegos de RetroDECK.",
+      archive: "El juego llegó en un archivo que no se pudo abrir.",
+      disk: "No se pudo escribir en el disco.",
+      busy: "Hay una descarga en marcha.",
+      steam: "Steam no dejó crear la entrada.",
+      game: "RomM no tiene ese juego.",
+    }) as Record<string, string>)[why] ?? "No se pudo completar.",
   rommScopesGames:
     "La clave tiene que tener solo me.read, me.write, roms.read, platforms.read, assets.read y assets.write. Se ha borrado en RomM; crea otra.",
   // Retro game page (RomM games, with Tender)
@@ -324,6 +350,32 @@ const en: typeof es = {
   rommAgain: "Connect again",
   rommPairStepsGames:
     "In RomM, under Settings › Client API Tokens, create a token with only me.read, me.write, roms.read, platforms.read, assets.read and assets.write, and press “Pair device”. Type the code it shows here: it expires in a minute.",
+  ownName: (game: string) => `${game} · Vistazo`,
+  ownOffer:
+    "Adds a second entry of this game to Steam, run by Vistazo: it downloads it from RomM and starts it. Tender's entry stays as it is. Both use the same save, and Tender does not sync what you play from Vistazo's.",
+  ownAdd: "Hand it to Vistazo",
+  ownRemove: "Remove Vistazo's entry",
+  ownDownload: "Download again",
+  ownDownloading: (p: number) => `Downloading: ${p}%`,
+  ownReady: "Ready: it is in your library, among the non-Steam games.",
+  ownNoFile: "The entry is there, but the game is missing.",
+  ownWhy: (why: string) =>
+    (({
+      unreachable: "RomM is not answering or the download was cut short. Try again.",
+      refused: "RomM refused the key: connect again.",
+      unlinked: "Connect to RomM first.",
+      limited: "The RomM connection is for achievements only: connect again.",
+      moved: "Tender points to another RomM address: connect again.",
+      space: "There is no room on the disk.",
+      exists: "Another file with that name is already in the game's folder. It was left alone.",
+      system: "Vistazo does not know yet where RetroDECK keeps this console's games.",
+      retrodeck: "RetroDECK's games folder was not found.",
+      archive: "The game came in an archive that could not be opened.",
+      disk: "The disk could not be written.",
+      busy: "A download is under way.",
+      steam: "Steam did not let the entry be made.",
+      game: "RomM does not have that game.",
+    }) as Record<string, string>)[why] ?? "It could not be completed.",
   rommScopesGames:
     "The token must have only me.read, me.write, roms.read, platforms.read, assets.read and assets.write. It was deleted in RomM; create another.",
   // Retro game page (RomM games, with Tender)
