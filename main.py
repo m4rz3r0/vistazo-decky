@@ -380,6 +380,7 @@ def _rom(server, key, rom_id):
 
 
 COVER_MAX = 6 * 1024 * 1024
+COVERS = "/assets/romm/resources/"  # where RomM serves its covers from
 COVER_KINDS = ((b"\x89PNG\r\n\x1a\n", "png"), (b"\xff\xd8\xff", "jpg"))
 
 
@@ -387,10 +388,9 @@ def _cover(server, key, rom):
     """The game's cover as RomM keeps it: (bytes, "png" or "jpg"), or None. Only a picture of a
     sensible size, from RomM's own folder of covers, is taken."""
     path = _text(rom.get("path_cover_large")).split("?")[0]
-    parts = path.split("/")
-    if not path or any(p in ("", ".", "..") for p in parts):
+    if not path.startswith(COVERS) or any(p in ("", ".", "..") for p in path[len(COVERS):].split("/")):
         return None
-    req, _, ctx = _prepare(server, "GET", "/assets/romm/resources/" + urllib.parse.quote(path), key["token"], accept="image/*")
+    req, _, ctx = _prepare(server, "GET", urllib.parse.quote(path), key["token"], accept="image/*")
     try:
         with _opener(ctx).open(req, timeout=TIMEOUT) as r:
             raw = r.read(COVER_MAX + 1)

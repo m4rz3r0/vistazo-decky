@@ -305,15 +305,15 @@ def test_detail():
 def test_cover():
     png = b"\x89PNG\r\n\x1a\n" + b"picture"
     romm.covers = {"big.png": png, "page.png": b"<html>sign in</html>", "huge.png": b"\x89PNG\r\n\x1a\n" + b"x" * main.COVER_MAX}
-    romm.roms[20] = rom(20, "Cover.nds", path_cover_large="roms/20/cover/big.png?ts=1")
+    romm.roms[20] = rom(20, "Cover.nds", path_cover_large="/assets/romm/resources/roms/20/cover/big.png?ts=1")
     got = run(plugin.game_cover(20))
     check("cover", (got["ok"], got["kind"], __import__("base64").b64decode(got["data"])), (True, "png", png))
-    for name, path in (("not a picture", "roms/20/cover/page.png"), ("too big", "roms/20/cover/huge.png"),
-                       ("missing", "roms/20/cover/none.png"), ("outside the covers", "roms/../../api/users/me"), ("none", None)):
+    for name, path in (("not a picture", "/assets/romm/resources/roms/20/cover/page.png"), ("too big", "/assets/romm/resources/roms/20/cover/huge.png"),
+                       ("missing", "/assets/romm/resources/roms/20/cover/none.png"), ("outside the covers", "/assets/romm/resources/roms/../../../api/users/me"), ("elsewhere", "/api/users/me"), ("another site", "https://example.org/x.png"), ("none", None)):
         romm.roms[20]["path_cover_large"] = path
         before = len(romm.calls)
         check("cover %s" % name, run(plugin.game_cover(20)), {"ok": False, "why": "cover"})
-        if name in ("outside the covers", "none"):
+        if name in ("outside the covers", "elsewhere", "another site", "none"):
             check("cover %s: only the game was asked for" % name, len(romm.calls) - before, 1)
     got = run(plugin.game_launcher())
     check("launcher ready", (got["ok"], got["exe"], mode(main.LAUNCHER)), (True, main.LAUNCHER, 0o700))
