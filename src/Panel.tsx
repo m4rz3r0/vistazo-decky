@@ -134,7 +134,7 @@ export function Ring({ share }: { share: number }) {
   );
 }
 
-const pageOf = (el: HTMLElement) =>
+export const pageOf = (el: HTMLElement) =>
   el.closest(`.${ad.ScrollContainer}`) as HTMLElement | null;
 
 // The panel fills the first screen exactly, whatever rows Steam adds above (family library, cloud…):

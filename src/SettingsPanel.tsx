@@ -195,7 +195,15 @@ declare const appStore: any;
 // that goes and holds the one thing to do next.
 function OwnRow() {
   const status = useRomm();
-  const [page] = useState(openPage);
+  // The page's game is read again while the settings are open: its data may still be on the way.
+  const [page, setPage] = useState(openPage);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = openPage();
+      setPage((was) => (was.appid === now.appid && was.romId === now.romId ? was : now));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<GameState | null>(null);
   const [busy, setBusy] = useState(false);

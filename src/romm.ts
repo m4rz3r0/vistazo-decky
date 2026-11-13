@@ -41,7 +41,7 @@ export interface RommGame {
   summary: string;
   ra_id: number;
   size: number;
-  achievements: { badge_id: string; title: string; description: string; points: number; num_awarded: number; badge_url: string; badge_url_lock: string }[];
+  achievements: { badge_id: string; title: string; description: string; points: number; num_awarded: number; badge_url: string; badge_url_lock: string; order: number }[];
 }
 export const rommGame = callable<[romId: number], RommGame>("romm_game");
 

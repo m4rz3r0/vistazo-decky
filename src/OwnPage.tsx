@@ -1,10 +1,10 @@
-import { DialogButton, Focusable, ModalRoot, showModal } from "@decky/ui";
+import { Focusable, ModalRoot, appActionButtonClasses, showModal } from "@decky/ui";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { medal } from "./data";
 import { num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
 import { GameState, cancelOwn, gameState, retryOwn } from "./own";
-import { Ring, fitPanel, formatSize, markPage } from "./Panel";
+import { Ring, fitPanel, formatSize, markPage, pageOf } from "./Panel";
 import { wordInSpanish } from "./retroText";
 import { Progress, RommGame, rommGame, rommProgress } from "./romm";
 import { pageCss } from "./styles";
@@ -87,6 +87,29 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
   const [open, setOpen] = useState(false);
   const openRef = useRef(open);
   openRef.current = open;
+  // Without its file the game cannot start: Steam's play button steps aside and the button that
+  // brings the file takes its place, and the selection.
+  const bar = useRef<HTMLDivElement>(null);
+  const missing = !!file && !file.installed;
+  useLayoutEffect(() => {
+    const el = bar.current;
+    const play = (root.current ? pageOf(root.current) : null)?.querySelector(`.${playClass}`) as HTMLElement | null;
+    if (!missing || !el || !play) return;
+    play.style.visibility = "hidden";
+    el.style.marginTop = "0px";
+    el.style.marginTop = `${play.getBoundingClientRect().top - el.getBoundingClientRect().top}px`;
+    el.style.height = `${play.offsetHeight}px`;
+    el.style.setProperty("--vz-play-width", `${play.offsetWidth}px`);
+    (el.querySelector(".vz-own-get") as HTMLElement | null)?.focus();
+    return () => {
+      play.style.removeProperty("visibility");
+      // The file is here now: the selection goes to the play button that came back.
+      setTimeout(() => {
+        if (play.isConnected) ((play.querySelector(".Focusable") as HTMLElement | null) ?? play).focus();
+      }, 0);
+    };
+  }, [missing]);
+
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -122,7 +145,7 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
   if (game?.released) cells.push([t.year, String(new Date(game.released).getUTCFullYear())]);
   if (game?.genres.length) cells.push([t.genre, game.genres.slice(0, 2).map(wordInSpanish).join(", ")]);
   const size = formatSize(game?.size ?? 0);
-  if (size) cells.push([t.onDisk, size]);
+  if (size) cells.push([missing ? t.ownSize : t.onDisk, size]);
   if (game && game.rating > 0) cells.push([t.retroRating, `${num(Math.round(game.rating))} %`]);
 
   const job = file?.job?.state;
@@ -133,14 +156,15 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
   return (
     <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
       <style>{pageCss() + OWN_CSS}</style>
-      {file && !file.installed && (
-        <Focusable className="vz-own-bar" flow-children="row">
-          <DialogButton
-            className="vz-own-get"
-            onClick={() => (downloading ? cancelOwn(appid) : retryOwn(appid)).then(again)}
+      {missing && (
+        <Focusable className="vz-own-bar" flow-children="row" ref={bar as any}>
+          <Focusable
+            className={`vz-own-get${downloading ? " vz-own-stop" : ""}`}
+            noFocusRing
+            onActivate={() => (downloading ? cancelOwn(appid) : retryOwn(appid)).then(again)}
           >
             {downloading ? t.ownCancel : t.ownGet}
-          </DialogButton>
+          </Focusable>
           <span className={`vz-own-note${failed ? " vz-own-bad" : ""}`}>
             {downloading ? t.ownDownloading(share) : failed ? t.ownWhy(job) : t.ownNotHere}
           </span>
@@ -218,7 +242,8 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
   );
 });
 
-// Every achievement of the game: the earned ones first, then the rest from the most common.
+// Every achievement of the game: the earned ones first, in the game's order, then the rest from
+// the one most players have (the nearest).
 function Achievements({
   name,
   list,
@@ -230,9 +255,11 @@ function Achievements({
   got: Set<string>;
   closeModal?: () => void;
 }) {
-  const rows = [...list].sort(
-    (a, b) => Number(got.has(b.badge_id)) - Number(got.has(a.badge_id)) || b.num_awarded - a.num_awarded,
-  );
+  const rows = [...list].sort((a, b) => {
+    const [mine, theirs] = [got.has(a.badge_id), got.has(b.badge_id)];
+    if (mine !== theirs) return mine ? -1 : 1;
+    return mine ? a.order - b.order : b.num_awarded - a.num_awarded;
+  });
   return (
     <ModalRoot closeModal={closeModal} bAllowFullSize>
       <style>{OWN_CSS}</style>
@@ -243,10 +270,17 @@ function Achievements({
         </span>
       </div>
       <Focusable className="vz-own-list">
-        {rows.map((a) => {
+        {rows.map((a, i) => {
           const mine = got.has(a.badge_id);
           const img = badge(mine ? a.badge_url : a.badge_url_lock || a.badge_url);
-          return (
+          // Each of the two groups under its name.
+          const cap = i === 0 || mine !== got.has(rows[i - 1].badge_id);
+          return [
+            cap && (
+              <div className="vz-own-cap" key={mine ? "earned" : "locked"}>
+                {mine ? t.retroFilter.earned : t.retroFilter.locked}
+              </div>
+            ),
             <Focusable
               key={a.badge_id}
               className={`vz-own-row${mine ? " vz-own-mine" : ""}`}
@@ -261,17 +295,26 @@ function Achievements({
               </div>
               <i>{a.num_awarded > 0 ? t.retroPlayers(num(a.num_awarded)) : ""}</i>
               <em>{num(a.points)}</em>
-            </Focusable>
-          );
+            </Focusable>,
+          ];
         })}
       </Focusable>
     </ModalRoot>
   );
 }
 
+const playClass = (appActionButtonClasses as Record<string, string>).PlayButtonContainer;
+
 const OWN_CSS = `
-.vz-own-bar { display: flex; align-items: center; gap: 16px; margin: 0 0 18px; }
-.vz-own-bar .vz-own-get.DialogButton { width: auto; min-width: 190px; flex: none; }
+.vz-own-bar { position: relative; z-index: 1; display: flex; align-items: center; gap: 18px; margin: 0 0 22px; }
+.vz-own-get {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  width: var(--vz-play-width, 214px); height: 100%; min-height: 48px; flex: none; border-radius: 14px;
+  background: var(--obs-accent, var(--vz-accent, #b8f35a)); color: var(--obs-on-accent, #0b0b0b);
+  font-size: 16px; font-weight: 700; outline: 1.5px solid transparent; outline-offset: 3px;
+}
+.vz-own-get.vz-own-stop { background: rgba(255, 255, 255, 0.08); color: #f4f4f4; }
+.vz-own-get.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent, #b8f35a)); outline-offset: 3px; }
 .vz-own-note { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
 .vz-own-note.vz-own-bad { color: var(--obs-warn, #ffb040); }
 .vz-own-title {
@@ -279,13 +322,15 @@ const OWN_CSS = `
   margin: 0 0 14px; font-size: 22px; font-weight: 700; color: #f4f4f4;
 }
 .vz-own-title span { font-size: 15px; font-weight: 600; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
-.vz-own-list { display: flex; flex-direction: column; gap: 6px; max-height: 62vh; overflow-y: auto; padding: 3px; }
+.vz-own-list { display: flex; flex-direction: column; gap: 6px; max-height: 63vh; overflow-y: auto; padding: 3px; }
 .vz-own-list::-webkit-scrollbar { display: none; }
+.vz-own-cap { margin: 10px 10px 2px; font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.55); }
+.vz-own-cap:first-child { margin-top: 0; }
 .vz-own-row {
   display: grid; grid-template-columns: 48px minmax(0, 1fr) auto 44px; align-items: center; gap: 14px;
   padding: 8px 10px; border-radius: 12px; outline: 1.5px solid transparent; outline-offset: -1.5px;
 }
-.vz-own-row.gpfocus { outline-color: var(--obs-ring, #b8f35a); }
+.vz-own-row.vz-own-row.gpfocus { outline: 1.5px solid var(--obs-ring, #b8f35a); outline-offset: -1.5px; }
 .vz-own-row img, .vz-own-noimg { width: 48px; height: 48px; border-radius: 8px; display: block; }
 .vz-own-row:not(.vz-own-mine) img { opacity: 0.55; }
 .vz-own-row b { display: block; font-size: 15px; font-weight: 600; color: rgba(255, 255, 255, 0.7); }
