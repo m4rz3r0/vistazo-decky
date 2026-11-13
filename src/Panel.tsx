@@ -141,7 +141,8 @@ export const pageOf = (el: HTMLElement) =>
 // The panel fills the first screen exactly, whatever rows Steam adds above (family library, cloud…):
 // the page is that one screen, with nothing below it to scroll to.
 // Returns whether the description doesn't fit (so it can be opened to read it whole).
-export function fitPanel(el: HTMLElement, open: boolean): boolean {
+// `reserve`: room kept at the bottom of the screen for something under the columns.
+export function fitPanel(el: HTMLElement, open: boolean, reserve = 0): boolean {
   const page = pageOf(el);
   if (!page) return open;
   const top =
@@ -163,7 +164,7 @@ export function fitPanel(el: HTMLElement, open: boolean): boolean {
     list.style.removeProperty("display");
     const items = Array.from(list.querySelectorAll<HTMLElement>(".vz-next-item"));
     for (const item of items) item.style.removeProperty("display");
-    const limit = el.getBoundingClientRect().top + height;
+    const limit = el.getBoundingClientRect().top + height - reserve;
     let shown = items.length;
     for (const item of items) {
       if (item.getBoundingClientRect().bottom > limit) {
@@ -185,7 +186,7 @@ export function fitPanel(el: HTMLElement, open: boolean): boolean {
     const line = parseFloat(getComputedStyle(desc).lineHeight) || 20;
     const lines = Math.min(
       6,
-      Math.max(1, Math.floor((height - desc.offsetTop - 12) / line)),
+      Math.max(1, Math.floor((height - reserve - desc.offsetTop - 12) / line)),
     );
     desc.style.setProperty("-webkit-line-clamp", String(lines));
   }
@@ -225,6 +226,10 @@ export function useActions(appid: number, also = ""): AddonAction[] {
 
 export const ACTIONS_CSS = `
 .vz-acts { display: flex; gap: 12px; margin: 0 0 16px; }
+/* At the foot of the first screen, for what is seldom done (uninstalling). */
+.vz-acts.vz-acts-end { margin: auto 0 0; padding-top: 12px; justify-content: flex-end; }
+.vz-acts-end .vz-act { padding: 7px 14px; font-size: 14px; font-weight: 500; background: transparent; color: rgba(255, 255, 255, 0.6); }
+.vz-acts-end .vz-act.gpfocus { color: #f4f4f4; }
 .vz-act {
   padding: 10px 18px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #f4f4f4;
   font-size: 15px; font-weight: 600; outline: 1.5px solid transparent; outline-offset: 2px;
@@ -232,10 +237,10 @@ export const ACTIONS_CSS = `
 .vz-act.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent)); outline-offset: 2px; }
 `;
 
-export function Actions({ actions }: { actions: AddonAction[] }) {
+export function Actions({ actions, end }: { actions: AddonAction[]; end?: boolean }) {
   if (!actions.length) return null;
   return (
-    <Focusable className="vz-acts" flow-children="row">
+    <Focusable className={`vz-acts${end ? " vz-acts-end" : ""}`} flow-children="row">
       {actions.map((a) => (
         <Focusable
           key={a.id}

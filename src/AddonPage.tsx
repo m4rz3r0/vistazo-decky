@@ -119,17 +119,19 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
     };
   }, [missing]);
 
+  // The row at the foot of the screen takes its room from the columns above it.
+  const reserve = () => ((root.current?.querySelector(".vz-acts-end") as HTMLElement | null)?.offsetHeight ?? 0);
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
     markPage(el, true);
-    setClipped(fitPanel(el, openRef.current));
+    setClipped(fitPanel(el, openRef.current, reserve()));
   }, [game, file?.here, file?.downloading, file?.problem, open, actions.length]);
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
     const page = el.closest("[data-vz-page]") as HTMLElement | null;
-    const ro = new ResizeObserver(() => setClipped(fitPanel(el, openRef.current)));
+    const ro = new ResizeObserver(() => setClipped(fitPanel(el, openRef.current, reserve())));
     if (page) ro.observe(page);
     return () => {
       ro.disconnect();
@@ -163,7 +165,7 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
   const share = file?.share ?? 0;
 
   return (
-    <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
+    <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root} style={{ display: "flex", flexDirection: "column" }}>
       <style>{pageCss() + OWN_CSS + ACTIONS_CSS}</style>
       {missing && (
         <Focusable className="vz-own-bar" flow-children="row" ref={bar as any}>
@@ -183,7 +185,6 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
           </span>
         </Focusable>
       )}
-      {!missing && <Actions actions={actions} />}
       <Focusable className={`vz-cols${total > 0 ? "" : " vz-solo"}`} flow-children="row">
         {total > 0 && game && (
           <Focusable
@@ -253,6 +254,7 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
             ))}
         </div>
       </Focusable>
+      {!missing && <Actions actions={actions} end />}
     </div>
   );
 });
