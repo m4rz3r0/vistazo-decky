@@ -192,7 +192,7 @@ const es = {
   ownNoAnswer: "RomM no responde ahora mismo.",
   ownKept: "RomM no responde ahora: esto es lo último que dijo.",
   ownDownloading: (p: number) => `Descargando: ${p} %`,
-  ownReady: "Listo: está en tu biblioteca, entre los juegos que no son de Steam.",
+  ownReady: "Listo: está en la estantería Retro, con un ojo en la esquina, y en tu biblioteca.",
   ownNoFile: "La entrada está creada, pero falta el juego.",
   ownWhy: (why: string) =>
     (({
@@ -416,7 +416,7 @@ const en: typeof es = {
   ownNoAnswer: "RomM is not answering right now.",
   ownKept: "RomM is not answering now: this is what it said last.",
   ownDownloading: (p: number) => `Downloading: ${p}%`,
-  ownReady: "Ready: it is in your library, among the non-Steam games.",
+  ownReady: "Ready: it is on the Retro shelf, with an eye in its corner, and in your library.",
   ownNoFile: "The entry is there, but the game is missing.",
   ownWhy: (why: string) =>
     (({
