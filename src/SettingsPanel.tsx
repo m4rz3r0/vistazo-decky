@@ -92,9 +92,16 @@ export function SettingsPanel() {
 // do about it. A key for achievements only is enough until the games are Vistazo's: then the row
 // asks to connect again, with a key that can see them. Opening the settings asks RomM whether the
 // key still works, so the row never says "connected" about a key RomM has dropped.
+// What came of the last try, said on the row too: it stays there after the dialog is gone.
+let lastAnswer: PairAnswer | null = null;
 function RommRow({ games }: { games: boolean }) {
   const status = useRomm();
   const [health, setHealth] = useState<RommHealth | null>(null);
+  const [answer, setAnswer] = useState<PairAnswer | null>(lastAnswer);
+  const heard = (a: PairAnswer | null) => {
+    lastAnswer = a;
+    setAnswer(a);
+  };
   const has = status === "linked" || status === "limited";
   useEffect(() => {
     let alive = true;
@@ -107,7 +114,10 @@ function RommRow({ games }: { games: boolean }) {
   if (!status || status === "no-server") return null;
   const short = games && status === "limited";
   const linked = has && !short;
-  const description = short
+  const failed = answer && answer.result !== "ok" && answer.result !== "limited" ? t.rommAnswer(answer, games) : null;
+  const description = failed
+    ? failed
+    : short
     ? t.rommLimited
     : linked
       ? health === "unreachable"
@@ -124,7 +134,11 @@ function RommRow({ games }: { games: boolean }) {
         layout="below"
         label={games ? t.rommLabelGames : t.rommLabel}
         description={description}
-        onClick={() => (linked ? unlinkRomm() : showModal(<PairModal games={games} />))}
+        onClick={() => {
+          heard(null);
+          if (linked) unlinkRomm();
+          else showModal(<PairModal games={games} onAnswer={heard} />);
+        }}
       >
         {linked ? t.rommUnlink : short ? t.rommAgain : t.rommPair}
       </ButtonItem>
@@ -136,7 +150,15 @@ function RommRow({ games }: { games: boolean }) {
 // open while RomM is asked and says what came of it: connected, or exactly what is wrong (the
 // code, RomM not answering, which permissions the key lacks or has too many of), ready for
 // another code.
-function PairModal({ games, closeModal }: { games: boolean; closeModal?: () => void }) {
+function PairModal({
+  games,
+  onAnswer,
+  closeModal,
+}: {
+  games: boolean;
+  onAnswer: (a: PairAnswer) => void;
+  closeModal?: () => void;
+}) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState<PairAnswer | null>(null);
@@ -147,6 +169,7 @@ function PairModal({ games, closeModal }: { games: boolean; closeModal?: () => v
     setAnswer(null);
     pairRomm(clean, games).then((a) => {
       setAnswer(a);
+      onAnswer(a);
       setBusy(false);
       // A code is good for one try.
       if (a.result !== "ok" && a.result !== "code") setCode("");
