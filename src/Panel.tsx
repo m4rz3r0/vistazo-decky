@@ -201,7 +201,7 @@ export function markPage(el: HTMLElement, on: boolean) {
 }
 
 // What add-ons offer to do with this game ("play on …"): quiet buttons over the panel.
-export function useActions(appid: number): AddonAction[] {
+export function useActions(appid: number, also = ""): AddonAction[] {
   const [actions, setActions] = useState<AddonAction[]>([]);
   const round = useAddons();
   useEffect(() => {
@@ -219,7 +219,7 @@ export function useActions(appid: number): AddonAction[] {
     return () => {
       alive = false;
     };
-  }, [appid, round]);
+  }, [appid, round, also]);
   return actions;
 }
 

@@ -90,7 +90,7 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
   const game = useGame(addon, appid);
   const [file, again] = useFile(addon, appid);
   // What add-ons offer to do with this game (uninstall it, say), as on a Steam game's page.
-  const actions = useActions(appid);
+  const actions = useActions(appid, `${file?.here}`);
   const root = useRef<HTMLDivElement>(null);
   const [clipped, setClipped] = useState(false);
   const [open, setOpen] = useState(false);
