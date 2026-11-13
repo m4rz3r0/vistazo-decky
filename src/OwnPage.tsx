@@ -42,7 +42,7 @@ function useGame(romId: number, appid: number): Loaded | null | undefined {
       seen.set(romId, now);
       setData(now);
       if (!game.ra_id) return;
-      const progress = await rommProgress(game.ra_id, refresh).catch(() => null);
+      const progress = await rommProgress(game.ra_id, refresh, true).catch(() => null);
       if (!alive || isUnloaded() || !progress?.ok) return;
       const next = { game, progress };
       seen.set(romId, next);
@@ -215,6 +215,7 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
         <div className="vz-about">
           {data === undefined && <div className="vz-ach-quiet">{t.ownAsking}</div>}
           {data === null && <div className="vz-ach-quiet">{t.ownNoAnswer}</div>}
+          {(game?.kept || data?.progress?.kept) && <div className="vz-own-kept">{t.ownKept}</div>}
           <div className="vz-facts">
             {cells.map(([label, value]) => (
               <div className="vz-fact" key={label}>
@@ -315,6 +316,7 @@ const OWN_CSS = `
 }
 .vz-own-get.vz-own-stop { background: rgba(255, 255, 255, 0.08); color: #f4f4f4; }
 .vz-own-get.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent, #b8f35a)); outline-offset: 3px; }
+.vz-own-kept { margin: 0 0 12px; font-size: 13px; color: rgba(255, 255, 255, 0.5); }
 .vz-own-note { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
 .vz-own-note.vz-own-bad { color: var(--obs-warn, #ffb040); }
 .vz-own-title {

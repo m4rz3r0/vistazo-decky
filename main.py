@@ -329,6 +329,39 @@ def _text(v):
     return v if isinstance(v, str) else ""
 
 
+# What RomM last said of each game Vistazo looks after and of the player's achievements in it,
+# kept so its page still has something to show while RomM is asleep or out of reach.
+KEPT_FILE = os.path.join(RUNTIME, "romm-kept.json")
+KEPT_MOST = 300
+
+
+def _kept(kind, number):
+    try:
+        with open(KEPT_FILE, encoding="utf-8") as f:
+            entry = json.load(f).get(kind, {}).get(str(number))
+        return entry if isinstance(entry, dict) else None
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+def _keep(kind, number, entry):
+    with _lock:
+        try:
+            with open(KEPT_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
+                data = {}
+        except (OSError, ValueError):
+            data = {}
+        group = data.get(kind) if isinstance(data.get(kind), dict) else {}
+        group.pop(str(number), None)
+        group[str(number)] = entry  # the newest last
+        for old in list(group)[: max(0, len(group) - KEPT_MOST)]:
+            del group[old]
+        data[kind] = group
+        _write_private(KEPT_FILE, data)
+
+
 def _detail(rom):
     """What the game page shows of RomM's answer for one game; nothing else leaves the backend."""
     meta = rom.get("metadatum") if isinstance(rom.get("metadatum"), dict) else {}
@@ -797,10 +830,21 @@ class Plugin:
         _forget_key()
         return "unlinked"
 
-    async def romm_progress(self, ra_id, refresh=False):
+    async def romm_progress(self, ra_id, refresh=False, kept=False):
         """This game's achievements as RomM has them; with `refresh`, RomM reads them from
         RetroAchievements first and this waits (up to about a minute) for the new figures.
-        {"ok": False, "why": ...} when there is no key, RomM is not answering or refuses it."""
+        {"ok": False, "why": ...} when there is no key, RomM is not answering or refuses it;
+        with `kept`, RomM not answering gives what it said last time instead ("kept": True)."""
+        got = await self._progress(ra_id, refresh)
+        if got.get("ok"):
+            _keep("progress", _number(ra_id), {k: v for k, v in got.items() if k not in ("ok", "changed")})
+        elif kept and got.get("why") == "unreachable":
+            last = _kept("progress", _number(ra_id))
+            if last:
+                return {"ok": True, "changed": False, "kept": True, **last}
+        return got
+
+    async def _progress(self, ra_id, refresh):
         try:
             ra_id = int(ra_id)
         except (TypeError, ValueError):
@@ -851,8 +895,12 @@ class Plugin:
             return {"ok": False, "why": key}
         rom, why = await asyncio.get_running_loop().run_in_executor(None, _rom, server, key, rom_id)
         if not rom:
-            return {"ok": False, "why": why}
-        return {"ok": True, **_detail(rom)}
+            # RomM asleep or out of reach: what it said last time, marked as such.
+            kept = _kept("games", rom_id) if why == "unreachable" else None
+            return {"ok": True, "kept": True, **kept} if kept else {"ok": False, "why": why}
+        detail = _detail(rom)
+        _keep("games", rom_id, detail)
+        return {"ok": True, **detail}
 
     async def game_list(self):
         """The Steam games Vistazo looks after: {Steam number: RomM number}."""

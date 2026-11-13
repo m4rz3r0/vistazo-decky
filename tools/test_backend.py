@@ -155,11 +155,16 @@ class Handler(BaseHTTPRequestHandler):
         self.handle_one("DELETE")
 
 
-server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+class Quiet(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        pass  # a download cut on purpose
+
+
+server = Quiet(("127.0.0.1", 0), Handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
 URL = "http://127.0.0.1:%d" % server.server_port
 # A second address, standing for "somewhere else": a redirect there must never be followed.
-other = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+other = Quiet(("127.0.0.1", 0), Handler)
 threading.Thread(target=other.serve_forever, daemon=True).start()
 OTHER = "http://127.0.0.1:%d" % other.server_port
 
@@ -290,9 +295,22 @@ def test_detail():
     # A redirect is never followed: the key reaches no other address.
     romm.redirect_to = OTHER
     before = len(romm.calls)
-    check("redirect refused", run(plugin.romm_game(5)), {"ok": False, "why": "unreachable"})
+    check("redirect refused: only what was kept comes back", run(plugin.romm_game(5)).get("kept"), True)
     check("one call only, none to the other address", len(romm.calls) - before, 1)
     romm.redirect_to = None
+
+    # RomM asleep: the page still gets what RomM said last time, marked as kept.
+    check("progress read once", run(plugin.romm_progress(77, False, True))["earned"], 2)
+    server.shutdown()
+    asleep = run(plugin.romm_game(5))
+    check("kept game", (asleep["ok"], asleep.get("kept"), asleep["name"], len(asleep["achievements"])), (True, True, "Game 5", 1))
+    check("never seen game", run(plugin.romm_game(404)), {"ok": False, "why": "unreachable"})
+    check("kept progress", [run(plugin.romm_progress(77, False, True)).get(k) for k in ("ok", "kept", "earned", "total")], [True, True, 2, 130])
+    check("only when asked for", run(plugin.romm_progress(77)), {"ok": False, "why": "unreachable"})
+    check("asleep says so", run(plugin.romm_check()), "unreachable")
+    check("kept file private", mode(main.KEPT_FILE), 0o600)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    check("awake again", "kept" in run(plugin.romm_game(5)), False)
 
     # Tender pointing elsewhere: the key is for the server it was paired with, and stays home.
     tender(OTHER)

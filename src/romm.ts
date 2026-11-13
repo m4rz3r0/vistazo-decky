@@ -20,6 +20,7 @@ export interface Progress {
   ok: boolean;
   why?: string;
   changed?: boolean; // RomM read RetroAchievements again and these figures came from that
+  kept?: boolean; // RomM did not answer: these are from the last time it did
   earned?: number;
   hardcore?: number;
   total?: number;
@@ -31,6 +32,7 @@ export interface Progress {
 export interface RommGame {
   ok: boolean;
   why?: string;
+  kept?: boolean; // RomM did not answer: this is from the last time it did
   rom_id: number;
   name: string;
   platform: string;
@@ -49,7 +51,8 @@ const status = callable<[], RommStatus>("romm_status");
 const pair = callable<[code: string, games: boolean], PairAnswer>("romm_pair");
 const check = callable<[], string>("romm_check");
 const unlink = callable<[], RommStatus>("romm_unlink");
-export const rommProgress = callable<[raId: number, refresh: boolean], Progress>("romm_progress");
+// With `kept`, RomM not answering gives what it said last time, marked as kept.
+export const rommProgress = callable<[raId: number, refresh: boolean, kept?: boolean], Progress>("romm_progress");
 
 let current: RommStatus | null = null;
 const listeners = new Set<(s: RommStatus | null) => void>();
