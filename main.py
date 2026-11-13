@@ -602,11 +602,22 @@ def _unzip(archive, folder, system_dir, job):
     return made
 
 
-def _discard(files, folders, system_dir):
-    """Removes files Vistazo made and, when left empty, the folders it made for them."""
+def _mark(path):
+    """A file as Vistazo left it (size and time of writing): to know later it is still that one."""
+    info = os.stat(path)
+    return [info.st_size, info.st_mtime_ns]
+
+
+def _discard(files, folders, system_dir, marks=None):
+    """Removes files Vistazo made and, when left empty, the folders it made for them. With
+    `marks`, a file that is no longer as Vistazo left it (another program put its own there
+    since) is not Vistazo's any more and stays."""
     for path in files:
         try:
             if _within(path, system_dir) and os.path.isfile(path) and not os.path.islink(path):
+                if marks is not None and marks.get(path) != _mark(path):
+                    decky.logger.info("A file changed since Vistazo brought it was left in place")
+                    continue
                 os.remove(path)
         except OSError as e:
             decky.logger.warning("Not removed: %s", e)
@@ -1036,7 +1047,8 @@ class Plugin:
                     job["state"] = "cancelled"
                     return
                 kept.pop("part", None)
-                kept.update(path=got["path"], files=got["files"], folders=got["folders"], size=got["size"], installed=True)
+                kept.update(path=got["path"], files=got["files"], folders=got["folders"], size=got["size"], installed=True,
+                            marks={f: _mark(f) for f in got["files"] if os.path.isfile(f)})
                 job["state"] = "installed" if _write_games(data) else "disk"
 
         asyncio.get_running_loop().run_in_executor(None, run)
@@ -1065,10 +1077,11 @@ class Plugin:
             system_dir = os.path.join(_roms_root(), _text(game.get("system")))
             # Forgotten first: a game without its file must never be left marked as installed.
             folders = [f for f in game.get("folders") or [] if isinstance(f, str)]
-            game.update(installed=False, path=None, files=[], folders=[])
+            marks = game.get("marks") if isinstance(game.get("marks"), dict) else None
+            game.update(installed=False, path=None, files=[], folders=[], marks={})
             if not _write_games(data):
                 return {"ok": False, "why": "disk"}
-            _discard(files, folders, system_dir)
+            _discard(files, folders, system_dir, marks)
             _jobs.pop(appid, None)
             return {"ok": True, **_state(appid, game)}
 

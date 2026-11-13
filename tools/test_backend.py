@@ -528,6 +528,17 @@ def test_download():
     run(plugin._main())
     check("only a half-done file of its own", os.path.isfile(neighbour), True)
 
+    # Another program put its own copy where Vistazo's was: not Vistazo's to remove any more.
+    run(plugin.game_download(500))
+    check("downloaded again", wait(500)["job"]["state"], "installed")
+    os.remove(target)
+    with open(target, "wb") as f:
+        f.write(DATA)
+    os.utime(target, ns=(1, 1))
+    check("removal goes through", run(plugin.game_remove(500))["installed"], False)
+    check("the other program's copy stays", os.path.isfile(target), True)
+    os.remove(target)
+
     # A file already there: used when whole (and never Vistazo's to remove), refused otherwise.
     romm.content[5] = DATA
     with open(target, "wb") as f:
