@@ -1,10 +1,12 @@
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
 
-// Vistazo's own RomM key, used only to have RomM read a player's achievements again after a game.
+// Vistazo's own RomM key: to have RomM read a player's achievements again after a game and, for
+// those who let Vistazo look after their RomM games, to see the games and bring their files.
 // The key lives in the backend; the frontend only ever sees what state it is in.
 
-export type RommStatus = "linked" | "unlinked" | "moved" | "no-server";
+// "limited": a key for achievements only. "linked": one that may also look after the games.
+export type RommStatus = "linked" | "limited" | "unlinked" | "moved" | "no-server";
 export type PairResult = "ok" | "code" | "invalid" | "scopes" | "no-server" | "unreachable" | "error";
 export interface Progress {
   ok: boolean;
@@ -18,7 +20,7 @@ export interface Progress {
 }
 
 const status = callable<[], RommStatus>("romm_status");
-const pair = callable<[code: string], PairResult>("romm_pair");
+const pair = callable<[code: string, games: boolean], PairResult>("romm_pair");
 const unlink = callable<[], RommStatus>("romm_unlink");
 export const rommProgress = callable<[raId: number, refresh: boolean], Progress>("romm_progress");
 
@@ -38,10 +40,10 @@ export async function rommStatus(): Promise<RommStatus | null> {
   return current;
 }
 
-export async function pairRomm(code: string): Promise<PairResult> {
+export async function pairRomm(code: string, games: boolean): Promise<PairResult> {
   let result: PairResult = "error";
   try {
-    result = await pair(code);
+    result = await pair(code, games);
   } catch (e) {
     console.warn("[Vistazo] RomM pair", e);
   }
@@ -57,7 +59,9 @@ export async function unlinkRomm(): Promise<void> {
   }
 }
 
-export const isLinked = () => current === "linked";
+// Either key reads achievements; only the wider one sees the games.
+export const isLinked = () => current === "linked" || current === "limited";
+export const seesGames = () => current === "linked";
 
 export function useRomm(): RommStatus | null {
   const [s, set] = useState(current);

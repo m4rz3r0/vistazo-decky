@@ -144,6 +144,19 @@ const es = {
     unreachable: "RomM no responde. Prueba otra vez en un momento.",
     error: "No se pudo conectar.",
   } as Record<string, string>,
+  // Vistazo looking after RomM games itself
+  ownGamesLabel: "Juegos retro a cargo de Vistazo",
+  ownGamesDesc: "Vistazo descarga e inicia por sí mismo los juegos de RomM que le pases, uno a uno. En pruebas.",
+  needsRetro: "Necesita la ficha de juegos retro.",
+  rommLabelGames: "Conexión con RomM",
+  rommUnlinkedGames: "Para ver los juegos, descargarlos y actualizar sus logros, Vistazo necesita su propia clave de RomM.",
+  rommLinkedGames: "Conectado: juegos y logros.",
+  rommLimited: "Conectado solo para los logros. Para llevar los juegos hace falta otra clave: vuelve a conectar.",
+  rommAgain: "Conectar de nuevo",
+  rommPairStepsGames:
+    "En RomM, en Ajustes › Client API Tokens, crea una clave marcando solo me.read, me.write, roms.read, platforms.read, assets.read y assets.write, y pulsa «Emparejar dispositivo». Escribe aquí el código que aparece: caduca en un minuto.",
+  rommScopesGames:
+    "La clave tiene que tener solo me.read, me.write, roms.read, platforms.read, assets.read y assets.write. Se ha borrado en RomM; crea otra.",
   // Retro game page (RomM games, with Tender)
   retroPageLabel: "Ficha de juegos retro",
   retroPageDesc: "Logros y datos en los juegos de RomM. Sin esto, la ficha original de Tender.",
@@ -300,6 +313,19 @@ const en: typeof es = {
     unreachable: "RomM is not answering. Try again in a moment.",
     error: "Could not connect.",
   } as Record<string, string>,
+  // Vistazo looking after RomM games itself
+  ownGamesLabel: "Retro games run by Vistazo",
+  ownGamesDesc: "Vistazo downloads and starts the RomM games you hand it by itself, one at a time. Experimental.",
+  needsRetro: "Needs the retro game page.",
+  rommLabelGames: "RomM connection",
+  rommUnlinkedGames: "To see the games, download them and update their achievements, Vistazo needs its own RomM key.",
+  rommLinkedGames: "Connected: games and achievements.",
+  rommLimited: "Connected for achievements only. Running the games needs another key: connect again.",
+  rommAgain: "Connect again",
+  rommPairStepsGames:
+    "In RomM, under Settings › Client API Tokens, create a token with only me.read, me.write, roms.read, platforms.read, assets.read and assets.write, and press “Pair device”. Type the code it shows here: it expires in a minute.",
+  rommScopesGames:
+    "The token must have only me.read, me.write, roms.read, platforms.read, assets.read and assets.write. It was deleted in RomM; create another.",
   // Retro game page (RomM games, with Tender)
   retroPageLabel: "Retro game page",
   retroPageDesc: "Achievements and facts on RomM games. Off: Tender's own page.",

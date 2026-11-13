@@ -10,11 +10,12 @@ export interface Settings {
   aOpensPage: boolean; // home: A opens the game page and X plays (Steam games only)
   retro: boolean; // the same first screen on RomM game pages (Tender's own page when off)
   updates: boolean; // ask GitHub once a day for a newer Vistazo and say so
+  ownGames: boolean; // Vistazo itself looks after RomM games (their data, files and launch); off for everyone by default
   shelves: string[]; // home shelves on show, by id (see availableShelves)
 }
 
 const KEY = "vistazo:settings";
-const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, retro: true, updates: true, shelves: ["installed", "retro"] };
+const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, retro: true, updates: true, ownGames: false, shelves: ["installed", "retro"] };
 
 function read(): Settings {
   const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});

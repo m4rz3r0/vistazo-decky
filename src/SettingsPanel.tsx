@@ -63,7 +63,8 @@ export function SettingsPanel() {
         {toggle("page", t.pageLabel, t.pageDesc)}
         {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
         {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
-        {s.retro && <RommRow />}
+        {toggle("ownGames", t.ownGamesLabel, t.ownGamesDesc, s.retro ? undefined : t.needsRetro)}
+        {s.retro && <RommRow games={s.ownGames} />}
       </PanelSection>
       <ThemeSection />
       <PanelSection title={t.sound}>
@@ -82,20 +83,31 @@ export function SettingsPanel() {
   );
 }
 
-// Vistazo's own RomM key, to see a retro game's achievements as soon as it closes. One row: what
-// state it is in and the one thing to do about it.
+// Vistazo's own RomM key, to see a retro game's achievements as soon as it closes and, with
+// `games`, to look after the games themselves. One row: what state it is in and the one thing to
+// do about it. A key for achievements only is enough until the games are Vistazo's: then the row
+// asks to connect again, with a key that can see them.
 let lastResult: PairResult | null = null;
-function RommRow() {
+function RommRow({ games }: { games: boolean }) {
   const status = useRomm();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PairResult | null>(lastResult);
   if (!status || status === "no-server") return null;
-  const linked = status === "linked";
-  const note = result && result !== "ok" ? t.rommResult[result] : undefined;
-  const description = note ?? (linked ? t.rommLinked : status === "moved" ? t.rommMoved : t.rommUnlinked);
+  const short = games && status === "limited";
+  const linked = (status === "linked" || status === "limited") && !short;
+  const note = result && result !== "ok" ? (games && result === "scopes" ? t.rommScopesGames : t.rommResult[result]) : undefined;
+  const description =
+    note ??
+    (short
+      ? t.rommLimited
+      : linked
+        ? games ? t.rommLinkedGames : t.rommLinked
+        : status === "moved"
+          ? t.rommMoved
+          : games ? t.rommUnlinkedGames : t.rommUnlinked);
   const connect = (code: string) => {
     setBusy(true);
-    pairRomm(code).then((r) => {
+    pairRomm(code, games).then((r) => {
       lastResult = r;
       setResult(r);
       setBusy(false);
@@ -105,30 +117,30 @@ function RommRow() {
     <PanelSectionRow>
       <ButtonItem
         layout="below"
-        label={t.rommLabel}
+        label={games ? t.rommLabelGames : t.rommLabel}
         description={description}
         disabled={busy}
         onClick={() => {
           lastResult = null;
           setResult(null);
           if (linked) unlinkRomm();
-          else showModal(<PairModal onCode={connect} />);
+          else showModal(<PairModal games={games} onCode={connect} />);
         }}
       >
-        {linked ? t.rommUnlink : t.rommPair}
+        {linked ? t.rommUnlink : short ? t.rommAgain : t.rommPair}
       </ButtonItem>
     </PanelSectionRow>
   );
 }
 
 // Where RomM's pairing code is typed: 8 letters and numbers, dashes and spaces ignored.
-function PairModal({ onCode, closeModal }: { onCode: (code: string) => void; closeModal?: () => void }) {
+function PairModal({ games, onCode, closeModal }: { games: boolean; onCode: (code: string) => void; closeModal?: () => void }) {
   const [code, setCode] = useState("");
   const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
   return (
     <ConfirmModal
       strTitle={t.rommPair}
-      strDescription={t.rommPairSteps}
+      strDescription={games ? t.rommPairStepsGames : t.rommPairSteps}
       strOKButtonText={t.rommPair}
       bOKDisabled={clean.length !== 8}
       closeModal={closeModal}
