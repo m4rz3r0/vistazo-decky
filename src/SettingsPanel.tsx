@@ -21,6 +21,7 @@ const shelfDesc = (id: string) =>
 export function SettingsPanel() {
   const s = useSettings();
   useAddons(); // their shelves come and go
+  const theme = useTheme();
   // A setting that depends on another says why it is off instead of its usual line.
   const toggle = (key: Flag, label: string, description: string, blockedBy?: string) => (
     <PanelSectionRow>
@@ -114,6 +115,8 @@ export function SettingsPanel() {
     );
   const shelvesOn = availableShelves().filter((x) => s.shelves.includes(x.id)).length;
   const pageBits = [s.page && t.pageLabel, s.page && s.protondb && "ProtonDB", s.retro && t.retro].filter(Boolean).join(" · ");
+  const obsidiana = theme?.loader && theme.theme?.enabled ? `Obsidiana · ${t.colorNames[theme.theme.color] ?? ""}` : "";
+  const lookBits = [obsidiana, s.sounds && t.soundsLabel].filter(Boolean).join(" · ");
   const row = (g: string, label: string, summary: string) => (
     <PanelSectionRow key={g}>
       <Field
@@ -134,9 +137,11 @@ export function SettingsPanel() {
       <PanelSection>
         {row("home", t.homeSection, s.home ? t.shelvesCount(shelvesOn) : t.off)}
         {row("page", t.pageSection, pageBits || t.off)}
-        {row("look", t.lookSection, s.sounds ? t.soundsLabel : "")}
-        {addons.map((a) => row(`addon:${a.id}`, a.name, t.addonRow))}
-        {row("addons", t.addonsSection, t.addonsCount(addons.length))}
+        {row("look", t.lookSection, lookBits || t.off)}
+      </PanelSection>
+      <PanelSection title={t.addonsSection}>
+        {addons.map((a) => row(`addon:${a.id}`, a.name, ""))}
+        {row("addons", t.addonsManage, t.addonsCount(addons.length))}
       </PanelSection>
       <PanelSection title={t.updateSection}>
         <UpdateRows />
