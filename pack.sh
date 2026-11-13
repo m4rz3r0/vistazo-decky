@@ -6,6 +6,6 @@ if command -v pnpm >/dev/null; then pnpm run build >/dev/null; else npx -y pnpm@
 rm -rf out && mkdir -p out/Vistazo/dist
 cp plugin.json package.json main.py README.md LICENSE out/Vistazo/
 cp dist/index.js out/Vistazo/dist/
-cp -r theme out/Vistazo/
+cp -r theme bin out/Vistazo/
 (cd out && zip -qr Vistazo.zip Vistazo)
 sha256sum out/Vistazo.zip
