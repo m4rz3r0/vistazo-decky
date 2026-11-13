@@ -463,6 +463,53 @@ def test_download():
     check("cancelled leaves nothing", (os.path.exists(target), leftovers()), (False, []))
     main.CHUNK = 1024 * 1024
 
+    # RomM's own sum of the file is checked: the right size with the wrong bytes is not the game.
+    import hashlib
+    romm.roms[5]["files"][0]["sha1_hash"] = hashlib.sha1(DATA).hexdigest().upper()
+    romm.content[5] = bytes(len(DATA))
+    run(plugin.game_download(500))
+    check("wrong bytes", wait(500)["job"]["state"], "damaged")
+    check("wrong bytes leave nothing", (os.path.exists(target), leftovers()), (False, []))
+    romm.content[5] = DATA
+    run(plugin.game_download(500))
+    check("right bytes", wait(500)["job"]["state"], "installed")
+    run(plugin.game_remove(500))
+    # A packed file's sum is of what is inside it: not compared.
+    romm.roms[12] = rom(12, "Packed.zip", files=[("Packed.zip", len(DATA))])
+    romm.roms[12]["files"][0]["md5_hash"] = "0" * 32
+    romm.content[12] = DATA
+    run(plugin.game_take(1200, 12))
+    run(plugin.game_download(1200))
+    check("packed file kept as it is", wait(1200)["job"]["state"], "installed")
+    run(plugin.game_remove(1200))
+    run(plugin.game_release(1200))
+
+    # A download cut off by a restart leaves a half-done file: written down, and cleared at the next start.
+    going.clear()
+    main.CHUNK = 4096
+    romm.content[5] = slow
+    run(plugin.game_download(500))
+    going.wait(5)
+    with open(main.GAMES_FILE) as f:
+        check("half-done file written down", json.load(f)["games"]["500"].get("part"), target + ".part")
+    stale = os.path.join(TMP, "stale.part")
+    shutil.copy(target + ".part", stale)
+    run(plugin.game_cancel(500))
+    wait(500)
+    with open(main.GAMES_FILE) as f:
+        check("nothing half-done written down", "part" in json.load(f)["games"]["500"], False)
+    main.CHUNK = 1024 * 1024
+    # As a restart leaves it: the file there and the note of it.
+    shutil.move(stale, target + ".part")
+    main._note_part(500, target + ".part")
+    main._jobs.clear()
+    run(plugin._main())
+    check("cleared at the start", (leftovers(), "part" in main._read_games()["games"]["500"]), ([], False))
+    # A note pointing anywhere else removes nothing.
+    main._note_part(500, neighbour)
+    run(plugin._main())
+    check("only a half-done file of its own", os.path.isfile(neighbour), True)
+
     # A file already there: used when whole (and never Vistazo's to remove), refused otherwise.
     romm.content[5] = DATA
     with open(target, "wb") as f:

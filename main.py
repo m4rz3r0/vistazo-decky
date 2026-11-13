@@ -4,6 +4,7 @@
 # how they start). Everything else runs in the frontend.
 import asyncio
 import base64
+import hashlib
 import json
 import os
 import re
@@ -408,6 +409,23 @@ def _rom_files(rom):
     return [(_text(f.get("file_name")), _number(f.get("file_size_bytes"))) for f in files if isinstance(f, dict)]
 
 
+# RomM's sums of a packed file are of what is inside it, not of the file as it is sent.
+PACKED = (".zip", ".7z", ".rar", ".gz", ".bz2", ".xz", ".tar")
+
+
+def _expected_sum(rom):
+    """(the sum's kind, its value) RomM keeps of a game's only file, or None when there is
+    nothing to compare a download with."""
+    files = [f for f in rom.get("files") or [] if isinstance(f, dict)]
+    if len(files) != 1 or _text(files[0].get("file_name")).lower().endswith(PACKED):
+        return None
+    for kind, field in (("sha1", "sha1_hash"), ("md5", "md5_hash")):
+        value = _text(files[0].get(field)).strip().lower()
+        if value and all(c in "0123456789abcdef" for c in value):
+            return kind, value
+    return None
+
+
 def _state(appid, game):
     """One game as the page needs it: whether Vistazo starts it, has its file, and any download."""
     job = _jobs.get(appid)
@@ -425,13 +443,50 @@ def _state(appid, game):
     return out
 
 
+def _note_part(appid, part):
+    """Writes down the half-done file of a download (or that there is none any more), so one
+    cut off by a restart can be cleared away later."""
+    with _lock:
+        data = _read_games()
+        game = data["games"].get(str(appid))
+        if game is None or game.get("part") == part:
+            return
+        if part:
+            game["part"] = part
+        else:
+            game.pop("part", None)
+        _write_games(data)
+
+
+def _sweep_parts():
+    """Clears away the half-done files of downloads a restart cut off."""
+    with _lock:
+        data = _read_games()
+        left = False
+        for game in data["games"].values():
+            part = game.pop("part", None) if isinstance(game, dict) else None
+            if not isinstance(part, str):
+                continue
+            left = True
+            system_dir = os.path.join(_roms_root(), _text(game.get("system")))
+            try:
+                if part.endswith(".part") and _within(part, system_dir) and os.path.isfile(part) and not os.path.islink(part):
+                    os.remove(part)
+            except OSError as e:
+                decky.logger.warning("Half-done download not removed: %s", e)
+        if left:
+            _write_games(data)
+
+
 class _Stop(Exception):
     """A download that ends early, with the reason the page shows."""
 
 
-def _fetch(server, token, path, target, job, expected=0):
+def _fetch(server, token, path, target, job, expected=0, check=None):
     """Streams one answer of RomM's into `target` (made new, private). Returns the bytes written;
-    raises _Stop when cancelled, stalled, refused or cut short."""
+    raises _Stop when cancelled, stalled, refused, cut short or, with `check` (a sum's kind and
+    value), not the file RomM has."""
+    summed = hashlib.new(check[0]) if check else None
     req, _, ctx = _prepare(server, "GET", path, token, accept="*/*")
     try:
         r = _opener(ctx).open(req, timeout=STALL)
@@ -458,6 +513,8 @@ def _fetch(server, token, path, target, job, expected=0):
                     if not block:
                         break
                     f.write(block)
+                    if summed:
+                        summed.update(block)
                     written += len(block)
                     job["done"] = written
                 f.flush()
@@ -468,6 +525,9 @@ def _fetch(server, token, path, target, job, expected=0):
     # Every byte RomM announced, and when it announced none, every byte the game has there.
     if (length and written != length) or (not length and expected and written != expected):
         raise _Stop("unreachable")
+    if summed and summed.hexdigest() != check[1]:
+        decky.logger.error("Download does not match RomM's %s", check[0])
+        raise _Stop("damaged")
     return written
 
 
@@ -526,9 +586,10 @@ def _discard(files, folders, system_dir):
                 pass
 
 
-def _download(server, token, rom, job):
+def _download(server, token, rom, job, started=lambda part: None):
     """Brings one game's file from RomM into RetroDECK's folder for its system. Returns what
-    the games file keeps of it: {"path", "files", "folders", "size"}; raises _Stop otherwise."""
+    the games file keeps of it: {"path", "files", "folders", "size"}; raises _Stop otherwise.
+    `started` is told the half-done file's name before it is made."""
     system = _detail(rom)["system"]
     if not system:
         raise _Stop("system")
@@ -557,8 +618,9 @@ def _download(server, token, rom, job):
                 return {"path": target, "files": [], "folders": [], "size": files[0][1]}
             raise _Stop("exists")
         part = target + ".part"
+        started(part)
         try:
-            written = _fetch(server, token, path, part, job, files[0][1])
+            written = _fetch(server, token, path, part, job, files[0][1], _expected_sum(rom))
             if files[0][1] and written != files[0][1]:
                 raise _Stop("unreachable")
             os.rename(part, target)
@@ -575,6 +637,7 @@ def _download(server, token, rom, job):
     if os.path.lexists(folder):
         raise _Stop("exists")
     part = folder + ".zip.part"
+    started(part)
     try:
         _fetch(server, token, path, part, job)
         os.mkdir(folder)
@@ -907,12 +970,14 @@ class Plugin:
                 rom, why = _rom(server, key, rom_id)
                 if not rom:
                     raise _Stop(why)
-                got = _download(server, key["token"], rom, job)
+                got = _download(server, key["token"], rom, job, lambda part: _note_part(appid, part))
             except _Stop as stop:
+                _note_part(appid, None)
                 job["state"] = str(stop)
                 return
             except Exception as e:  # never leave a download hanging in "downloading"
                 decky.logger.error("Download failed: %s", e)
+                _note_part(appid, None)
                 job["state"] = "error"
                 return
             with _lock:
@@ -922,6 +987,7 @@ class Plugin:
                     _discard(got["files"], got["folders"], os.path.join(_roms_root(), _detail(rom)["system"]))
                     job["state"] = "cancelled"
                     return
+                kept.pop("part", None)
                 kept.update(path=got["path"], files=got["files"], folders=got["folders"], size=got["size"], installed=True)
                 job["state"] = "installed" if _write_games(data) else "disk"
 
@@ -964,6 +1030,7 @@ class Plugin:
             if data["games"]:
                 _install_launcher()
                 _write_games(data)
+                _sweep_parts()
 
     async def _unload(self):
         for job in list(_jobs.values()):
