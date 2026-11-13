@@ -1,0 +1,28 @@
+{
+  "addons": [
+    {
+      "id": "romm",
+      "plugin": "Vistazo RomM",
+      "repo": "vistazo-romm",
+      "zip": "VistazoRomM.zip",
+      "contract": 1,
+      "name": { "es": "RomM", "en": "RomM" },
+      "about": {
+        "es": "Juegos retro de RomM: logros al día, y descarga e inicio con RetroDECK.",
+        "en": "Retro games from RomM: fresh achievements, and download and launch through RetroDECK."
+      }
+    },
+    {
+      "id": "geforcenow",
+      "plugin": "Vistazo GeForce NOW",
+      "repo": "vistazo-geforcenow",
+      "zip": "VistazoGeForceNOW.zip",
+      "contract": 1,
+      "name": { "es": "GeForce NOW", "en": "GeForce NOW" },
+      "about": {
+        "es": "Un botón para jugar en la nube los juegos de Steam que ofrece GeForce NOW.",
+        "en": "A button to play in the cloud the Steam games GeForce NOW carries."
+      }
+    }
+  ]
+}

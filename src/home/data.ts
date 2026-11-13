@@ -1,7 +1,6 @@
 import { safe } from "../safe";
 import { locale, t } from "../i18n";
-import { ownedApps } from "../own";
-import { settings } from "../settings";
+import { allAddons } from "../addons";
 declare const collectionStore: any;
 declare const appStore: any;
 declare const friendStore: any;
@@ -26,8 +25,15 @@ export interface Shelf {
   label: string;
 }
 
-// The RomM games that are Vistazo's own entries in Steam, for those who turned that on.
-const ownGames = (): number[] => (settings().ownGames ? ownedApps() : []);
+// The games add-ons keep as their own entries in Steam (RomM games, say).
+const ownGames = (): number[] =>
+  allAddons().flatMap((a) => {
+    try {
+      return a.shelf?.() ?? [];
+    } catch {
+      return [];
+    }
+  });
 
 const isRomm = (c: any) => /^RomM:/.test(String(c?.displayName ?? ""));
 
@@ -35,7 +41,7 @@ const isRomm = (c: any) => /^RomM:/.test(String(c?.displayName ?? ""));
 export function availableShelves(): Shelf[] {
   const collections: any[] = safe(() => collectionStore.userCollections, []);
   const out: Shelf[] = [{ id: "installed", label: t.installed }];
-  // "Retro" only where there are RomM games: Tender's, or the ones Vistazo looks after itself.
+  // "Retro" only where there are RomM games: Tender's, or the ones an add-on looks after.
   if (collections.some(isRomm) || ownGames().length) out.push({ id: "retro", label: t.retro });
   // Favourites and collections the user made (or a tool such as Steam ROM Manager made for them);
   // Steam's built-in ones (installed, soundtracks, uncategorised…) and Tender's RomM ones are left out.

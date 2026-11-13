@@ -7,8 +7,8 @@ import {
 } from "@decky/ui";
 import { createElement } from "react";
 import { Panel } from "./Panel";
-import { OwnPage } from "./OwnPage";
-import { loadOwned, useOwnedRom, watchOwnGames } from "./own";
+import { AddonPage, watchAddonGames } from "./AddonPage";
+import { openAddons, ownerOf, useAddons } from "./addons";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
@@ -157,11 +157,11 @@ const isBody = (x: any) =>
   x?.props?.setSections &&
   x?.props?.overview;
 
-// A RomM game that is Vistazo's own entry in Steam (for those who turned that on) gets the same
-// first screen, with RomM's data. Any non-Steam entry may be one: what is put on its page looks
+// A game that is an add-on's own entry in Steam (a RomM game, say) gets the same first screen,
+// with what the add-on hands over. Any non-Steam entry may be one: what is put on its page looks
 // it up and stays out of the way when it is not.
 const isOwnGame = (overview: any) =>
-  !!overview && settings().ownGames && settings().retro && safe(() => !!overview.BIsShortcut?.(), false);
+  !!overview && settings().retro && safe(() => !!overview.BIsShortcut?.(), false);
 
 function afterBody(props: any, out: any) {
   const overview = props?.overview;
@@ -260,14 +260,15 @@ function HomeSwitch({ steam }: { steam: any }) {
 }
 function TabsSwitch({ own, children }: { own: number; children?: any }) {
   const s = useSettings();
-  const romId = useOwnedRom(own);
-  return (own ? s.retro && s.ownGames && romId : s.page) ? null : children;
+  useAddons();
+  return (own ? s.retro && ownerOf(own) : s.page) ? null : children;
 }
 function OwnPanel({ appid }: { appid: number }) {
   const s = useSettings();
-  const romId = useOwnedRom(appid);
-  return s.retro && s.ownGames && romId
-    ? createElement(Guard, { name: "own page", key: appid }, createElement(OwnPage, { appid, romId }))
+  useAddons();
+  const addon = s.retro ? ownerOf(appid) : null;
+  return addon
+    ? createElement(Guard, { name: "add-on page", key: `${addon.id}:${appid}` }, createElement(AddonPage, { appid, addon }))
     : null;
 }
 // Keyed by appid: a new game starts with fresh state.
@@ -327,8 +328,8 @@ export default definePlugin(() => {
   const stopWatching = watchGames();
   const stopUpdates = watchUpdates();
   const stopRetro = watchRetroPages();
-  loadOwned();
-  const stopOwn = watchOwnGames();
+  const closeAddons = openAddons();
+  const stopOwn = watchAddonGames((appid) => !!ownerOf(appid));
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,
@@ -342,6 +343,7 @@ export default definePlugin(() => {
       stopUpdates();
       stopRetro();
       stopOwn();
+      closeAddons();
       routerHook.removePatch(ROUTE, patch);
       routerHook.removePatch(HOME, homePatch);
     },

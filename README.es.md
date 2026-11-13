@@ -18,15 +18,18 @@ Logros, datos y los veredictos de Deck y ProtonDB en la primera pantalla, sin pe
 la lista completa.
 
 Los juegos retro de [RomM](https://github.com/rommapp/romm) con [Tender](https://github.com/danielcopper/romm-tender)
-tienen la misma ficha. Para ver los logros que acabas de conseguir nada más cerrar el juego, conecta Vistazo con RomM en
-sus ajustes: en RomM, en Ajustes › Client API Tokens, crea una clave con solo `me.read` y `me.write`, pulsa
-**Emparejar dispositivo** y escribe el código corto en la Deck.
+tienen la misma ficha. Para ver los logros que acabas de conseguir nada más cerrar el juego, instala el complemento de
+RomM desde los ajustes de Vistazo y conéctalo ahí con RomM.
 
-**Juegos con Vistazo** (en pruebas, apagado de fábrica) deja que Vistazo lleve por sí mismo un juego de RomM, de uno
-en uno, junto a Tender. Desde la ficha del juego, los ajustes añaden a Steam una segunda entrada que Vistazo descarga
-de RomM e inicia en RetroDECK, con su propia ficha; al quitarla desaparecen esa entrada y solo los archivos que trajo
-Vistazo. Necesita una clave que también vea los juegos: Assets (read y write), Collections (read), Firmware (read),
-Me (read y write), Platforms (read) y Roms (read). Las partidas guardadas aún no se sincronizan desde esa entrada.
+## Complementos
+
+Vistazo es el aspecto. Lo que sabe más allá de Steam viene de complementos: plugins de Decky aparte que solo instala
+quien los quiere, para que nadie lleve código que no usa. Los ajustes de Vistazo los listan y Decky los instala,
+preguntando antes.
+
+- **RomM** — logros nada más cerrar un juego retro, y juegos de RomM descargados e iniciados con RetroDECK.
+- **GeForce NOW** — un botón en la ficha de un juego de Steam para jugarlo en la nube, cuando el servicio de Nvidia
+  lo ofrece.
 
 ## Sonidos
 
@@ -62,9 +65,8 @@ Para actualizar, abre Vistazo en el menú de acceso rápido y pulsa **Actualizar
 
 Todo sale de Steam en la Deck. La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, y se
 puede desactivar. Una vez al día Vistazo pregunta a `api.github.com` si hay una versión nueva, sin enviar nada
-sobre ti; también se puede desactivar. Conectado a RomM, Vistazo pide a tu propio servidor RomM que vuelva a leer tus
-logros tras un juego retro y, con Juegos con Vistazo activo, los juegos que lleva y sus archivos, con una clave propia
-que solo se guarda en la Deck. Sin telemetría.
+sobre ti; también se puede desactivar. Al abrir el apartado de complementos se lee su lista del repositorio de Vistazo
+en GitHub. Con quién habla cada complemento es cosa suya y lo dice su propia página. Sin telemetría.
 
 ## Compilar
 

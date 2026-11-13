@@ -5,7 +5,7 @@ import { isUnloaded } from "./lifecycle";
 import { fitPanel } from "./Panel";
 import { safe } from "./safe";
 import { inSpanish, keepTranslated, restoreText, wordInSpanish } from "./retroText";
-import { Progress, isLinked, rommProgress, rommStatus } from "./romm";
+import { AddonProgress as Progress, firstWith } from "./addons";
 import { settings } from "./settings";
 import { pageCss } from "./styles";
 
@@ -46,7 +46,6 @@ interface Retro {
   hardcore: number;
   next: Next[] | null; // null: not read yet
   raId: number; // 0: no achievements
-  romId: number; // the game in RomM
   retryAt?: number; // the slower reads did not get through: read again after this time
 }
 
@@ -84,6 +83,11 @@ function nextOf(list: any[], got: Set<string>): Next[] {
       awarded: Number(a.num_awarded) || 0,
     }));
 }
+
+// Achievements straight from an add-on that has its own way to the source (RomM's add-on, with
+// its own key): never behind Tender's, which reads the same source and then keeps its reading.
+const fromAddon = (raId: number, refresh: boolean): Promise<Progress | null> =>
+  Promise.resolve(firstWith("progress")?.progress?.(raId, refresh) ?? null).catch(() => null);
 
 const toFresh = (p: Progress): Fresh => ({
   ids: new Set(p.ids ?? []),
@@ -137,7 +141,6 @@ async function load(appid: number): Promise<void> {
       // Read again after a game: what was shown stays until the new list is in.
       next: before?.next ?? null,
       raId: Number(g.ra_id) || 0,
-      romId: Number(g.rom_id) || 0,
     };
     applyFresh(appid, retro);
     cache.set(appid, retro);
@@ -164,10 +167,9 @@ async function load(appid: number): Promise<void> {
     // With Vistazo's own key, the figures come straight from RomM: Tender keeps its reading for an
     // hour, and what Vistazo learnt after a game is gone once the plugin reloads.
     // Asked again when not known yet: at Steam's start the backend may not have answered.
-    if (retro.raId && Date.now() >= quietUntil && (isLinked() || (await rommStatus()) === "linked")) {
-      const p = await rommProgress(retro.raId, false).catch(() => null);
+    if (retro.raId && Date.now() >= quietUntil) {
+      const p = await fromAddon(retro.raId, false);
       if (p?.ok) fresh.set(appid, toFresh(p));
-      else if (p?.why === "refused") rommStatus();
     }
     const b = bios?.bios_status;
     if (b?.needs_bios) retro.bios = b.bios_level === "ok" ? "ok" : "missing";
@@ -589,14 +591,6 @@ function patchSheet(sheet: HTMLElement, f: Fresh): boolean {
 }
 
 let shownApp = 0; // the game whose page is open
-// The Steam game whose page is open now (0 when it is another screen), and which RomM game it is
-// when it is one of Tender's.
-export function openPage(): { appid: number; romId: number } {
-  const win = safe(() => SteamUIStore.WindowStore.GamepadUIMainWindowInstance, null as any);
-  const m = /^\/library\/app\/(\d+)/.exec(String(win?.m_history?.location?.pathname ?? ""));
-  const appid = m ? Number(m[1]) : 0;
-  return { appid, romId: cache.get(appid)?.romId ?? 0 };
-}
 function applyAchievements(doc: Document) {
   const sheet = sheetOf(doc);
   const tools = doc.querySelector(".vz-sheet-tools") as HTMLElement | null;
@@ -1000,21 +994,16 @@ function afterGame(appid: number) {
   };
   pending.set(appid, [setTimeout(again, 20 * 1000), setTimeout(again, 3 * 60 * 1000)] as unknown as number[]);
   if (!data.raId) return;
-  rommStatus().then(() => {
-    if (!isLinked()) return;
-    return rommProgress(data.raId, true).then((p) => {
-      if (isUnloaded()) return;
-      // RomM's figures are never behind Tender's (Tender reads them from RomM, then keeps them).
-      if (!p?.ok) {
-        if (p?.why === "refused") rommStatus();
-        return;
-      }
+  fromAddon(data.raId, true)
+    .then((p) => {
+      if (isUnloaded() || !p?.ok) return;
+      // The add-on's figures are never behind Tender's (Tender reads the same source, then keeps them).
       fresh.set(appid, toFresh(p));
       const now = cache.get(appid);
       if (now) applyFresh(appid, now);
       changed();
-    });
-  }).catch((e) => console.warn("[Vistazo] achievements after a game", e));
+    })
+    .catch((e) => console.warn("[Vistazo] achievements after a game", e));
 }
 
 function watchGames(): () => void {
@@ -1045,7 +1034,6 @@ export function watchRetroPages(): () => void {
   tickNow = tick;
   const timer = setInterval(tick, 400);
   const stopGames = watchGames();
-  rommStatus();
   return () => {
     clearInterval(timer);
     stopGames();

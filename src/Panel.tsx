@@ -12,6 +12,7 @@ import {
   loadAchievements,
   loadProton,
 } from "./data";
+import { AddonAction, allAddons, useAddons } from "./addons";
 import { useSettings } from "./settings";
 import { pageCss } from "./styles";
 
@@ -199,7 +200,40 @@ export function markPage(el: HTMLElement, on: boolean) {
   el.parentElement?.toggleAttribute("data-vz-host", on);
 }
 
+// What add-ons offer to do with this game ("play on …"): quiet buttons over the panel.
+function useActions(appid: number): AddonAction[] {
+  const [actions, setActions] = useState<AddonAction[]>([]);
+  const round = useAddons();
+  useEffect(() => {
+    let alive = true;
+    Promise.all(
+      allAddons().map((a) =>
+        Promise.resolve()
+          .then(() => a.actions?.(appid) ?? [])
+          .catch(() => [] as AddonAction[]),
+      ),
+    ).then((lists) => {
+      const all = lists.flat().filter((x) => x && typeof x.label === "string" && typeof x.run === "function");
+      if (alive) setActions(all.slice(0, 3));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [appid, round]);
+  return actions;
+}
+
+const ACTIONS_CSS = `
+.vz-acts { display: flex; gap: 12px; margin: 0 0 16px; }
+.vz-act {
+  padding: 10px 18px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #f4f4f4;
+  font-size: 15px; font-weight: 600; outline: 1.5px solid transparent; outline-offset: 2px;
+}
+.vz-act.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent)); outline-offset: 2px; }
+`;
+
 export const Panel = memo(function Panel({ appid }: { appid: number }) {
+  const actions = useActions(appid);
   const [ach, setAch] = useState<AchievementSummary | null | undefined>(
     cachedAchievements(appid),
   );
@@ -223,7 +257,7 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
     if (!root.current) return;
     markPage(root.current, true);
     fit(root.current);
-  }, [ach, achFailed, proton, protondb, open]);
+  }, [ach, achFailed, proton, protondb, open, actions.length]);
   // Opened, the panel grows past the first screen: scroll just enough to show all of it above
   // Steam's button hints, and go back to where the page was when it is folded again.
   const scrolledFrom = useRef<number | null>(null);
@@ -320,7 +354,22 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
   // achievements gives the whole width to the game.
   return (
     <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
-      <style>{pageCss()}</style>
+      <style>{pageCss() + ACTIONS_CSS}</style>
+
+      {actions.length > 0 && (
+        <Focusable className="vz-acts" flow-children="row">
+          {actions.map((a) => (
+            <Focusable
+              key={a.id}
+              className="vz-act"
+              noFocusRing
+              onActivate={() => Promise.resolve().then(() => a.run()).catch((e) => console.warn("[Vistazo] action", e))}
+            >
+              {a.label}
+            </Focusable>
+          ))}
+        </Focusable>
+      )}
 
       {/* A row for the gamepad too: right from the achievements reaches the description. */}
       <Focusable className={`vz-cols${ach === null ? " vz-solo" : ""}`} flow-children="row">

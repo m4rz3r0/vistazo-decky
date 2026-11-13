@@ -1,86 +1,95 @@
 import { Focusable, ModalRoot, appActionButtonClasses, showModal } from "@decky/ui";
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Addon, AddonAchievement, AddonFile, AddonGame, useAddons } from "./addons";
 import { medal } from "./data";
 import { num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
-import { GameState, cancelOwn, gameState, refreshArt, retryOwn, takePlayed, useOwnChanges } from "./own";
 import { Ring, fitPanel, formatSize, markPage, pageOf } from "./Panel";
+import { safe } from "./safe";
 import { wordInSpanish } from "./retroText";
-import { Progress, RommGame, rommGame, rommProgress } from "./romm";
 import { pageCss } from "./styles";
 
-// The page of a RomM game that is Vistazo's own entry in Steam. Steam's play button stays (it
-// starts the entry as any other); under it goes the same first screen every game gets: the
-// achievements and what comes next on the left, the game on the right. Everything on it comes
-// straight from RomM with Vistazo's key. While the game's file is not on the Deck, a row above
-// says so and brings it.
-interface Loaded {
-  game: RommGame;
-  progress: Progress | null;
+// The page of a game that is an add-on's own entry in Steam (a RomM game, say). Steam's play
+// button stays (it starts the entry as any other); under it goes the same first screen every game
+// gets: the achievements and what comes next on the left, the game on the right. Everything on
+// it is what the add-on hands over; Vistazo only draws it. While the game's file is not on the
+// Deck, the button that brings it takes the play button's place.
+declare const SteamClient: any;
+declare const appStore: any;
+
+// What each add-on said of each game, kept while Steam runs: the page shows it at once and asks
+// again.
+const seen = new Map<number, AddonGame>();
+// Games closed since their page last asked: the add-on is asked to read them afresh.
+const played = new Set<number>();
+export function watchAddonGames(owned: (appid: number) => boolean): () => void {
+  const reg = safe(
+    () =>
+      SteamClient.GameSessions.RegisterForAppLifetimeNotifications((u: any) => {
+        const appid = Number(u?.unAppID);
+        if (u && u.bRunning === false && owned(appid)) played.add(appid);
+      }),
+    null as any,
+  );
+  return () => safe(() => reg?.unregister(), undefined);
 }
-// What RomM said of each game, kept while Steam runs: the page shows it at once and reads again.
-const seen = new Map<number, Loaded>();
 
 const badge = (u: string) => (/^https:\/\/media\.retroachievements\.org\/[\w/.-]+$/.test(u) ? u : "");
 
-function useGame(romId: number, appid: number): Loaded | null | undefined {
-  // undefined: asking; null: RomM did not answer.
-  const [data, setData] = useState<Loaded | null | undefined>(seen.get(romId));
-  // The game was closed since the page last asked: RomM reads its achievements again.
-  const [round, setRound] = useState(0);
-  useOwnChanges(useCallback(() => setRound((n) => n + 1), []));
+function useGame(addon: Addon, appid: number): AddonGame | null | undefined {
+  // undefined: asking; null: the add-on has nothing (its source did not answer).
+  const [data, setData] = useState<AddonGame | null | undefined>(seen.get(appid));
+  const round = useAddons();
   useEffect(() => {
     let alive = true;
     const read = async (refresh: boolean) => {
-      const game = await rommGame(romId).catch(() => null);
+      const game = await Promise.resolve(addon.game?.(appid, refresh)).catch(() => null);
       if (!alive || isUnloaded()) return;
-      if (!game?.ok) {
-        if (!seen.has(romId)) setData(null);
+      if (!game) {
+        if (!seen.has(appid)) setData(null);
         return;
       }
-      const before = seen.get(romId)?.progress ?? null;
-      const now: Loaded = { game, progress: before };
-      seen.set(romId, now);
-      setData(now);
-      if (!game.ra_id) return;
-      const progress = await rommProgress(game.ra_id, refresh, true).catch(() => null);
-      if (!alive || isUnloaded() || !progress?.ok) return;
-      const next = { game, progress };
-      seen.set(romId, next);
-      setData(next);
+      seen.set(appid, game);
+      setData(game);
     };
-    read(takePlayed(appid));
+    // What there is first; then, after a game, afresh (that may take a while).
+    read(false).then(() => {
+      if (alive && played.delete(appid)) read(true);
+    });
     return () => {
       alive = false;
     };
-  }, [romId, appid, round]);
+  }, [addon, appid, round]);
   return data;
 }
 
 // Whether the game's file is here and how a download goes, asked again while one is under way.
-function useFile(appid: number): [GameState | null, () => void] {
-  const [state, setState] = useState<GameState | null>(null);
+function useFile(addon: Addon, appid: number): [AddonFile | null, () => void] {
+  const [state, setState] = useState<AddonFile | null>(null);
   const [tick, setTick] = useState(0);
-  const downloading = state?.job?.state === "downloading";
+  const downloading = !!state?.downloading;
   useEffect(() => {
+    if (!addon.file) return;
     let alive = true;
-    const read = () => gameState(appid).then((s) => alive && setState(s)).catch(() => undefined);
+    const read = () =>
+      Promise.resolve(addon.file!(appid))
+        .then((s) => alive && setState(s))
+        .catch(() => undefined);
     read();
-    // Often while a download runs; now and then otherwise (one may be started from the settings).
+    // Often while a download runs; now and then otherwise (one may be started elsewhere).
     const timer = setInterval(read, downloading ? 700 : 3000);
     return () => {
       alive = false;
       clearInterval(timer);
     };
-  }, [appid, tick, downloading]);
+  }, [addon, appid, tick, downloading]);
   return [state, () => setTick((n) => n + 1)];
 }
 
-export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; romId: number }) {
-  const data = useGame(romId, appid);
-  const [file, again] = useFile(appid);
+export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: number; addon: Addon }) {
+  const game = useGame(addon, appid);
+  const [file, again] = useFile(addon, appid);
   const root = useRef<HTMLDivElement>(null);
-  useEffect(() => refreshArt(appid), [appid]);
   const [clipped, setClipped] = useState(false);
   const [open, setOpen] = useState(false);
   const openRef = useRef(open);
@@ -88,7 +97,7 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
   // Without its file the game cannot start: Steam's play button steps aside and the button that
   // brings the file takes its place, and the selection.
   const bar = useRef<HTMLDivElement>(null);
-  const missing = !!file && !file.installed;
+  const missing = !!file && !file.here;
   useLayoutEffect(() => {
     const el = bar.current;
     const play = (root.current ? pageOf(root.current) : null)?.querySelector(`.${playClass}`) as HTMLElement | null;
@@ -113,7 +122,7 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
     if (!el) return;
     markPage(el, true);
     setClipped(fitPanel(el, openRef.current));
-  }, [data, file?.installed, file?.job?.state, open]);
+  }, [game, file?.here, file?.downloading, file?.problem, open]);
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -126,30 +135,30 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
     };
   }, []);
 
-  const game = data?.game;
-  const list = game?.achievements ?? [];
-  const got = new Set(data?.progress?.ids ?? []);
-  const total = data?.progress?.total || list.length;
-  const earned = data?.progress?.ok ? Number(data.progress.earned) || 0 : 0;
-  const hardcore = Number(data?.progress?.hardcore) || 0;
+  const name = String(safe(() => appStore.GetAppOverviewByAppID(appid)?.display_name, "") ?? "");
+  const ach = game?.achievements;
+  const list = ach?.list ?? [];
+  const got = new Set(ach?.got ?? []);
+  const total = ach?.total || list.length;
+  const earned = ach?.earned ?? 0;
+  const hardcore = ach?.hardcore ?? 0;
   // The ones most players have come first: they are the nearest.
   const next = list
-    .filter((a) => !got.has(a.badge_id))
-    .sort((a, b) => b.num_awarded - a.num_awarded)
+    .filter((a) => !got.has(a.id))
+    .sort((a, b) => b.players - a.players)
     .slice(0, 3);
 
   const cells: [string, string][] = [];
   if (game?.platform) cells.push([t.retroPlatform, game.platform]);
-  if (game?.released) cells.push([t.year, String(new Date(game.released).getUTCFullYear())]);
-  if (game?.genres.length) cells.push([t.genre, game.genres.slice(0, 2).map(wordInSpanish).join(", ")]);
+  if (game?.year) cells.push([t.year, String(game.year)]);
+  if (game?.genres?.length) cells.push([t.genre, game.genres.slice(0, 2).map(wordInSpanish).join(", ")]);
   const size = formatSize(game?.size ?? 0);
   if (size) cells.push([missing ? t.ownSize : t.onDisk, size]);
-  if (game && game.rating > 0) cells.push([t.retroRating, `${num(Math.round(game.rating))} %`]);
+  if (game?.rating && game.rating > 0) cells.push([t.retroRating, `${num(Math.round(game.rating))} %`]);
 
-  const job = file?.job?.state;
-  const downloading = job === "downloading";
-  const failed = !!job && !["downloading", "installed", "cancelled"].includes(job);
-  const share = file?.job?.total ? Math.floor((100 * file.job.done) / file.job.total) : 0;
+  const downloading = !!file?.downloading;
+  const failed = !!file?.problem;
+  const share = file?.share ?? 0;
 
   return (
     <div className={`vz-root${open ? " vz-reading" : ""}`} ref={root}>
@@ -159,12 +168,16 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
           <Focusable
             className={`vz-own-get${downloading ? " vz-own-stop" : ""}`}
             noFocusRing
-            onActivate={() => (downloading ? cancelOwn(appid) : retryOwn(appid)).then(again)}
+            onActivate={() =>
+              Promise.resolve(downloading ? addon.cancelFile?.(appid) : addon.fetchFile?.(appid))
+                .catch(() => undefined)
+                .then(again)
+            }
           >
             {downloading ? t.ownCancel : t.ownGet}
           </Focusable>
           <span className={`vz-own-note${failed ? " vz-own-bad" : ""}`}>
-            {downloading ? t.ownDownloading(share) : failed ? t.ownWhy(job) : t.ownNotHere}
+            {downloading ? t.ownDownloading(share) : failed ? file?.problem : t.ownNotHere}
           </span>
         </Focusable>
       )}
@@ -173,7 +186,7 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
           <Focusable
             className={`vz-ach vz-${medal(earned, total) ?? "none"}`}
             noFocusRing
-            onActivate={() => showModal(<Achievements name={game.name} list={list} got={got} />)}
+            onActivate={() => showModal(<Achievements name={name} list={list} got={got} />)}
             onOKActionDescription={t.seeAllAchievements}
           >
             <div className="vz-ach-head">
@@ -196,14 +209,14 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
                   <span>{t.retroHave}</span>
                 </li>
                 {next.map((a) => (
-                  <li className="vz-next-item" key={a.badge_id}>
-                    {badge(a.badge_url_lock || a.badge_url) ? (
-                      <img className="vz-icon" src={badge(a.badge_url_lock || a.badge_url)} alt="" />
+                  <li className="vz-next-item" key={a.id}>
+                    {badge(a.badgeLocked || a.badge) ? (
+                      <img className="vz-icon" src={badge(a.badgeLocked || a.badge)} alt="" />
                     ) : (
                       <span className="vz-icon" />
                     )}
                     <span className="vz-next-name">{a.title}</span>
-                    <span className="vz-next-sub">{a.num_awarded > 0 ? t.retroPlayers(num(a.num_awarded)) : ""}</span>
+                    <span className="vz-next-sub">{a.players > 0 ? t.retroPlayers(num(a.players)) : ""}</span>
                   </li>
                 ))}
               </ul>
@@ -211,9 +224,9 @@ export const OwnPage = memo(function OwnPage({ appid, romId }: { appid: number; 
           </Focusable>
         )}
         <div className="vz-about">
-          {data === undefined && <div className="vz-ach-quiet">{t.ownAsking}</div>}
-          {data === null && <div className="vz-ach-quiet">{t.ownNoAnswer}</div>}
-          {(game?.kept || data?.progress?.kept) && <div className="vz-own-kept">{t.ownKept}</div>}
+          {game === undefined && <div className="vz-ach-quiet">{t.ownAsking}</div>}
+          {game === null && <div className="vz-ach-quiet">{t.ownNoAnswer(addon.name)}</div>}
+          {game?.stale && <div className="vz-own-kept">{t.ownKept(addon.name)}</div>}
           <div className="vz-facts">
             {cells.map(([label, value]) => (
               <div className="vz-fact" key={label}>
@@ -250,14 +263,14 @@ function Achievements({
   closeModal,
 }: {
   name: string;
-  list: RommGame["achievements"];
+  list: AddonAchievement[];
   got: Set<string>;
   closeModal?: () => void;
 }) {
   const rows = [...list].sort((a, b) => {
-    const [mine, theirs] = [got.has(a.badge_id), got.has(b.badge_id)];
+    const [mine, theirs] = [got.has(a.id), got.has(b.id)];
     if (mine !== theirs) return mine ? -1 : 1;
-    return mine ? a.order - b.order : b.num_awarded - a.num_awarded;
+    return mine ? a.order - b.order : b.players - a.players;
   });
   return (
     <ModalRoot closeModal={closeModal} bAllowFullSize>
@@ -270,10 +283,10 @@ function Achievements({
       </div>
       <Focusable className="vz-own-list">
         {rows.map((a, i) => {
-          const mine = got.has(a.badge_id);
-          const img = badge(mine ? a.badge_url : a.badge_url_lock || a.badge_url);
+          const mine = got.has(a.id);
+          const img = badge(mine ? a.badge : a.badgeLocked || a.badge);
           // Each of the two groups under its name.
-          const cap = i === 0 || mine !== got.has(rows[i - 1].badge_id);
+          const cap = i === 0 || mine !== got.has(rows[i - 1].id);
           return [
             cap && (
               <div className="vz-own-cap" key={mine ? "earned" : "locked"}>
@@ -281,7 +294,7 @@ function Achievements({
               </div>
             ),
             <Focusable
-              key={a.badge_id}
+              key={a.id}
               className={`vz-own-row${mine ? " vz-own-mine" : ""}`}
               noFocusRing
               onActivate={() => undefined}
@@ -292,7 +305,7 @@ function Achievements({
                 <b>{a.title}</b>
                 <p>{a.description}</p>
               </div>
-              <i>{a.num_awarded > 0 ? t.retroPlayers(num(a.num_awarded)) : ""}</i>
+              <i>{a.players > 0 ? t.retroPlayers(num(a.players)) : ""}</i>
               <em>{num(a.points)}</em>
             </Focusable>,
           ];

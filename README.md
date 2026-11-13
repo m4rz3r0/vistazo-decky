@@ -18,15 +18,17 @@ Achievements, facts and the Deck and ProtonDB verdicts on the first screen, no t
 achievements for the full list.
 
 Retro games from [RomM](https://github.com/rommapp/romm) through [Tender](https://github.com/danielcopper/romm-tender)
-get the same page. To see the achievements you just earned as soon as the game closes, connect Vistazo to RomM in its
-settings: in RomM, under Settings › Client API Tokens, create a token with only `me.read` and `me.write`, press
-**Pair device** and type the short code on the Deck.
+get the same page. To see the achievements you just earned as soon as the game closes, install the RomM add-on from
+Vistazo's settings and connect it to RomM there.
 
-**Games by Vistazo** (experimental, off by default) lets Vistazo look after a RomM game by itself, one game at a
-time, next to Tender. From the game's page, the settings add a second entry of it to Steam that Vistazo downloads
-from RomM and starts in RetroDECK, with its own page; removing it takes away that entry and only the files Vistazo
-brought. It needs a token that can also see the games: Assets (read and write), Collections (read), Firmware (read),
-Me (read and write), Platforms (read) and Roms (read). Save games are not synced from that entry yet.
+## Add-ons
+
+Vistazo is the look. What it knows beyond Steam comes from add-ons: separate Decky plugins that only those who want
+them install, so nobody carries code they do not use. Vistazo's settings list them and Decky installs them, asking
+first.
+
+- **RomM** — achievements as soon as a retro game closes, and RomM games downloaded and started through RetroDECK.
+- **GeForce NOW** — a button on a Steam game's page to play it in the cloud, when Nvidia's service carries it.
 
 ## Sounds
 
@@ -61,9 +63,8 @@ To update, open Vistazo in the quick access menu and press **Update** under Vers
 
 Everything comes from Steam on the Deck. The ProtonDB rating asks `protondb.com` with the game's number only,
 and can be turned off. Once a day Vistazo asks `api.github.com` whether there is a newer version, sending nothing
-about you; that can be turned off too. Connected to RomM, Vistazo asks your own RomM server to read your
-achievements again after a retro game and, with Games by Vistazo on, for the games it looks after and their files,
-with its own token kept only on the Deck. No telemetry.
+about you; that can be turned off too. Opening the add-ons section reads the list of add-ons from Vistazo's own
+repository on GitHub. What each add-on talks to is its own business and said in its own page. No telemetry.
 
 ## Build
 
