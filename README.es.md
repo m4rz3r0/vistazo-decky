@@ -41,7 +41,8 @@ Steam.
 Vistazo trae **Obsidiana**, un tema para toda la consola: negro puro para la pantalla OLED, un color vivo
 para lo que se puede pulsar y movimiento que sigue al mando. Con [CSS Loader](https://deckthemes.com) de la
 tienda de Decky instalado, Vistazo lo añade y lo activa la primera vez. Elige lima, fucsia, azul o blanco,
-texto grande y movimiento en los ajustes de Vistazo.
+texto grande y movimiento en los ajustes de Vistazo. Ahí también, la forma de tu foto en la barra superior: como
+la muestra Steam, con las esquinas redondeadas o redonda (esto funciona también sin el tema).
 
 ## Ajustes
 

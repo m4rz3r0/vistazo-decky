@@ -4,7 +4,7 @@ import { useState } from "react";
 import { OfferState, installAddon, readAddonList, useAddonList } from "./addonList";
 import { allAddons, useAddons } from "./addons";
 import { Guard } from "./Guard";
-import { Settings, setSetting, useSettings } from "./settings";
+import { AVATARS, Settings, setSetting, useSettings } from "./settings";
 import { playSample } from "./sounds";
 import { availableShelves } from "./home/data";
 import { checkForUpdate, installUpdate, useUpdate } from "./update";
@@ -75,6 +75,17 @@ export function SettingsPanel() {
   const look = (
     <>
       <ThemeSection />
+      <PanelSection title={t.topBarSection}>
+        <PanelSectionRow>
+          <DropdownItem
+            label={t.avatarLabel}
+            description={t.avatarDesc}
+            rgOptions={AVATARS.map((a) => ({ data: a, label: t.avatarNames[a] }))}
+            selectedOption={s.avatar}
+            onChange={(o) => setSetting("avatar", o.data)}
+          />
+        </PanelSectionRow>
+      </PanelSection>
       <PanelSection title={t.sound}>
         {toggle("sounds", t.soundsLabel, t.soundsDesc)}
         <PanelSectionRow>
