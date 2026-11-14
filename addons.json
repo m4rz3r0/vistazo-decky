@@ -20,8 +20,8 @@
       "contract": 1,
       "name": { "es": "GeForce NOW", "en": "GeForce NOW" },
       "about": {
-        "es": "Juegos de GeForce NOW como entradas en Steam, con su estantería. En pruebas.",
-        "en": "GeForce NOW games as entries in Steam, with their own shelf. Experimental."
+        "es": "Un botón de GeForce NOW junto a Jugar, y los juegos que elijas como entradas en Steam con su estantería.",
+        "en": "A GeForce NOW button beside Play, and the games you choose as entries in Steam with their own shelf."
       }
     }
   ]

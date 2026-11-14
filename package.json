@@ -1,6 +1,6 @@
 {
   "name": "vistazo",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "Calm OLED home screen and one-glance game pages for the Steam Deck, with quiet menu sounds.",
   "type": "module",
   "private": true,
