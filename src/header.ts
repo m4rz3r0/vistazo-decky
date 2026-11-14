@@ -19,16 +19,14 @@ function css(shape: Avatar): string {
     );
   if (!holder) return ""; // Steam's top bar changed: it stays as it is
   const me = `.${holder}`;
-  if (shape === "rounded") return `${me} .avatar { border-radius: 9px !important; }`;
-  // Round: the square frame some profiles wear would not fit, so it steps aside, and the edge
-  // that says whether the player is online becomes a dot on the picture's rim.
-  return `
-${me} .avatar { border-radius: 50% !important; }
-${me} .avatarFrame { display: none !important; }
-${me} .avatarStatus {
-  left: auto !important; top: auto !important; right: -2px !important; bottom: -2px !important;
-  width: 9px !important; height: 9px !important; border-radius: 50% !important; box-shadow: 0 0 0 2px #000;
-}`;
+  // The square frame some profiles wear covers the corners, so it steps aside in both shapes.
+  // Steam shows that edge with a rule of its own that outweighs a plain one.
+  const status = `${me} .avatarHolder .avatarStatus.avatarStatus`;
+  const noFrame = `${me} .avatarFrame { display: none !important; }`;
+  if (shape === "rounded")
+    return `${me} .avatar { border-radius: 10px !important; } ${noFrame} ${status} { border-radius: 2px !important; }`;
+  // Round: the straight edge that says whether the player is online has no place on a circle.
+  return `${me} .avatar { border-radius: 50% !important; } ${noFrame} ${status} { display: none !important; }`;
 }
 
 function apply() {

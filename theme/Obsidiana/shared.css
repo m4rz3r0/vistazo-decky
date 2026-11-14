@@ -1367,3 +1367,58 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
 .romm-play-section-row.romm-play-section-row .appactionbutton_PlayButtonContainer_1FnJ6.appactionbutton_PlayButtonContainer_1FnJ6:has(> .gpfocus) {
   outline: 0 solid transparent !important;
 }
+
+/* Ajustes → Sistema, con una actualización pendiente: el recuadro de sus notas era un bloque
+   gris azulado de esquinas rectas con títulos en mayúsculas. Va como las demás filas. */
+.updaterfield_PatchNotes_Evi7g {
+  background: var(--obs-surface) !important;
+  border-radius: var(--obs-radius) !important;
+  padding: 14px 18px !important;
+}
+.updaterfield_PostedTime_3lI6D,
+.updaterfield_EventDetailTitle_1suo0 {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+.updaterfield_PostedTime_3lI6D { font-size: 12px !important; font-weight: 500 !important; }
+.updaterfield_EventDetailTitle_1suo0 { font-size: 15px !important; font-weight: 600 !important; color: #f4f4f4 !important; }
+.updaterfield_EventDetailsBody_LRVqO { font-size: 13px !important; }
+
+/* Notas del parche y noticias de un juego, a pantalla completa: tarjetas carbón sin degradados,
+   sin desenfoque detrás ni marco blanco; la tarjeta elegida lleva el anillo del tema. */
+.basiclibrary_OverlayAppDetailsTransitionEntered_3pmme {
+  backdrop-filter: none !important;
+  background: rgba(0, 0, 0, 0.88) !important;
+}
+.partnereventdisplay_InLibraryView_3X6U9 {
+  background: var(--obs-surface) !important;
+  border-radius: var(--obs-radius) !important;
+  outline: 1.5px solid transparent !important;
+  outline-offset: 2px !important;
+}
+.gpfocus > .partnereventdisplay_InLibraryView_3X6U9 { outline-color: var(--obs-ring) !important; }
+.partnereventdisplay_EventDetailTitleContainer_35gM9 { background-image: none !important; }
+.partnereventdisplay_LibraryEventTitleContainer_2gdgU {
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  background: var(--obs-surface) !important;
+  border-radius: var(--obs-radius) var(--obs-radius) 0 0 !important;
+}
+.apppartnereventspage_EventType_30JUM {
+  color: rgba(255, 255, 255, 0.6) !important;
+  text-transform: none !important;
+}
+.localdateandtime_RightSideTitles_3sPON { text-transform: none !important; letter-spacing: 0 !important; }
+.partnereventdisplay_InLibraryView_3X6U9 a { color: var(--obs-accent) !important; }
+/* Steam tiñe la tarjeta con una captura del juego difuminada detrás del texto: fuera. */
+.partnereventdisplay_EventBackgroundBlur_eti5E { display: none !important; }
+.partnereventdisplay_LibraryEventBodyContainer_2ZgLv { backdrop-filter: none !important; }
+/* Al pie de la tarjeta: los votos y «Comentar», como botones tranquilos. */
+.Lilhs8nX_Container { background-image: none !important; }
+.discussionwidget_VoteContainer_1uhQY,
+.discussionwidget_DiscussContainer_3tXYJ { background: transparent !important; }
+.discussionwidget_DiscussionButton_wnKan {
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  border-radius: var(--obs-radius) !important;
+}
