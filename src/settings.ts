@@ -13,11 +13,11 @@ export interface Settings {
   shelves: string[]; // home shelves on show, by id (see availableShelves)
   avatar: Avatar; // the shape of the player's picture in the top bar
 }
-export const AVATARS = ["steam", "rounded", "round"] as const;
+export const AVATARS = ["round", "rounded", "steam"] as const;
 export type Avatar = (typeof AVATARS)[number];
 
 const KEY = "vistazo:settings";
-const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, retro: true, updates: true, shelves: ["installed", "retro"], avatar: "steam" };
+const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, retro: true, updates: true, shelves: ["installed", "retro"], avatar: "round" };
 
 function read(): Settings {
   const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});

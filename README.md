@@ -39,8 +39,8 @@ Every menu sound becomes a short, soft tone, made by the plugin and played throu
 Vistazo brings **Obsidiana**, a theme for the whole console: true black for the OLED screen, one vivid color
 for what you can press, and motion that follows the controller. With [CSS Loader](https://deckthemes.com)
 from the Decky store installed, Vistazo adds it and turns it on the first time. Pick lime, fuchsia, blue or
-white, larger text and motion in Vistazo's settings. There, too, the shape of your picture in the top bar: as
-Steam shows it, with rounded corners, or round (this one works without the theme as well).
+white, larger text and motion in Vistazo's settings. There, too, the shape of your picture in the top bar: round
+(as it comes), with rounded corners, or as Steam shows it (this one works without the theme as well).
 
 ## Settings
 

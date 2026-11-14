@@ -4,7 +4,7 @@ import { Avatar, onSettings, settings } from "./settings";
 
 // The player's picture at the right end of Steam's top bar, in the shape chosen in the settings.
 // It is a few CSS rules of Vistazo's own in Steam's window, so it works with or without the
-// Obsidiana theme, and "as Steam shows it" leaves nothing there at all.
+// Obsidiana theme, and "as Steam shows it" leaves nothing there at all. Round is how it comes.
 declare const SteamUIStore: any;
 
 const STYLE = "vistazo-header";
@@ -25,8 +25,20 @@ function css(shape: Avatar): string {
   const noFrame = `${me} .avatarFrame { display: none !important; }`;
   if (shape === "rounded")
     return `${me} .avatar { border-radius: 10px !important; } ${noFrame} ${status} { border-radius: 2px !important; }`;
-  // Round: the straight edge that says whether the player is online has no place on a circle.
-  return `${me} .avatar { border-radius: 50% !important; } ${noFrame} ${status} { display: none !important; }`;
+  // Round: the straight edge that says whether the player is online becomes a dot on the
+  // picture's rim, in the colours Vistazo's own status menu uses (green: online; mint: playing;
+  // amber: away; grey: offline), not Steam's blue.
+  return `
+${me} .avatar { border-radius: 50% !important; }
+${noFrame}
+${status} {
+  left: auto !important; top: auto !important; right: -2px !important; bottom: -2px !important;
+  width: 9px !important; height: 9px !important; border-radius: 50% !important; box-shadow: 0 0 0 2px #000;
+  background-color: #5fc97e !important;
+}
+${me} .avatarHolder.ingame .avatarStatus.avatarStatus { background-color: var(--obs-ingame, #5fd8a0) !important; }
+${me} .avatarHolder:is(.away, .awayOrSnooze, .snooze) .avatarStatus.avatarStatus { background-color: #f2c94c !important; }
+${me} .avatarHolder.offline .avatarStatus.avatarStatus { background-color: #8a8a8a !important; }`;
 }
 
 function apply() {
