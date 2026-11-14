@@ -6,16 +6,17 @@ import {
   findInReactTree,
 } from "@decky/ui";
 import { createElement } from "react";
-import { Panel } from "./Panel";
+import { Panel, RowActions } from "./Panel";
+import { watchHeader } from "./header";
 import { AddonPage, watchAddonGames } from "./AddonPage";
-import { openAddons, ownerOf, useAddons } from "./addons";
+import { Addon, openAddons, ownerOf, useAddons } from "./addons";
 import { Home } from "./home/Home";
 import { SettingsPanel } from "./SettingsPanel";
 import { setupTheme } from "./theme";
 import { watchGames } from "./data";
 import { watchRetroPages } from "./retro";
 import { watchUpdates } from "./update";
-import { settings, useSettings } from "./settings";
+import { Settings, settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
 import { Guard } from "./Guard";
 import { markUnloaded } from "./lifecycle";
@@ -160,8 +161,33 @@ const isBody = (x: any) =>
 // A game that is an add-on's own entry in Steam (a RomM game, say) gets the same first screen,
 // with what the add-on hands over. Any non-Steam entry may be one: what is put on its page looks
 // it up and stays out of the way when it is not.
-const isOwnGame = (overview: any) =>
-  !!overview && settings().retro && safe(() => !!overview.BIsShortcut?.(), false);
+const isOwnGame = (overview: any) => !!overview && safe(() => !!overview.BIsShortcut?.(), false);
+// The add-on whose page this entry gets, when its switch is on: retro games (the ones an add-on
+// puts on the Retro shelf) have their own switch; any other add-on's games follow the game page's.
+const shownOwner = (appid: number, s: Settings): Addon | null => {
+  const addon = ownerOf(appid);
+  return addon && (addon.shelf ? s.retro : s.page) ? addon : null;
+};
+
+// Steam's play row: [play button, last session and play time, controller and settings buttons].
+// What add-ons offer to do with the game goes right after the play button, inside the row.
+const isPlayStats = (x: any) => x?.props?.statusPanelType !== undefined && x?.props?.overview;
+function afterPlayBar(props: any, out: any) {
+  if (!isSteamGame(props?.overview)) return out;
+  const row = findInReactTree(
+    out,
+    (x: any) => Array.isArray(x?.props?.children) && x.props.children.some(isPlayStats),
+  );
+  if (!row) {
+    // The row is drawn a component or two deeper (same props); follow them.
+    for (const inner of findAll(out, isBody)) wrapType(inner, "play-bar", afterPlayBar);
+    return out;
+  }
+  const kids: any[] = row.props.children;
+  if (!kids.some((c: any) => c?.key === "vistazo-acts"))
+    kids.splice(kids.findIndex(isPlayStats), 0, createElement(RowSwitch, { key: "vistazo-acts", appid: props.overview.appid }));
+  return out;
+}
 
 function afterBody(props: any, out: any) {
   const overview = props?.overview;
@@ -180,6 +206,7 @@ function afterBody(props: any, out: any) {
     return out;
   }
   const children: any[] = list.props.children;
+  if (!own) for (const c of children) if (isBody(c)) wrapType(c, "play-bar", afterPlayBar);
   const idx = children.findIndex(
     (c: any) => c && findInReactTree(c, isTabsHost),
   );
@@ -261,12 +288,17 @@ function HomeSwitch({ steam }: { steam: any }) {
 function TabsSwitch({ own, children }: { own: number; children?: any }) {
   const s = useSettings();
   useAddons();
-  return (own ? s.retro && ownerOf(own) : s.page) ? null : children;
+  return (own ? shownOwner(own, s) : s.page) ? null : children;
+}
+function RowSwitch({ appid }: { appid: number }) {
+  return useSettings().page
+    ? createElement(Guard, { name: "play row", key: appid }, createElement(RowActions, { appid }))
+    : null;
 }
 function OwnPanel({ appid }: { appid: number }) {
   const s = useSettings();
   useAddons();
-  const addon = s.retro ? ownerOf(appid) : null;
+  const addon = shownOwner(appid, s);
   return addon
     ? createElement(Guard, { name: "add-on page", key: `${addon.id}:${appid}` }, createElement(AddonPage, { appid, addon }))
     : null;
@@ -330,6 +362,7 @@ export default definePlugin(() => {
   const stopRetro = watchRetroPages();
   const closeAddons = openAddons();
   const stopOwn = watchAddonGames((appid) => !!ownerOf(appid));
+  const stopHeader = watchHeader();
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,
@@ -343,6 +376,7 @@ export default definePlugin(() => {
       stopUpdates();
       stopRetro();
       stopOwn();
+      stopHeader();
       closeAddons();
       routerHook.removePatch(ROUTE, patch);
       routerHook.removePatch(HOME, homePatch);

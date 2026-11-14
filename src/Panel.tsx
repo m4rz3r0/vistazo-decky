@@ -201,7 +201,7 @@ export function markPage(el: HTMLElement, on: boolean) {
   el.parentElement?.toggleAttribute("data-vz-host", on);
 }
 
-// What add-ons offer to do with this game ("play on …"): quiet buttons over the panel.
+// What add-ons offer to do with this game ("play on …"): quiet buttons beside Steam's play button.
 export function useActions(appid: number, also = ""): AddonAction[] {
   const [actions, setActions] = useState<AddonAction[]>([]);
   const round = useAddons();
@@ -226,6 +226,20 @@ export function useActions(appid: number, also = ""): AddonAction[] {
 
 export const ACTIONS_CSS = `
 .vz-acts { display: flex; gap: 12px; margin: 0 0 16px; }
+/* In Steam's play row, right after the play button: as tall as it, and as quiet as the row's own
+   small buttons. The row's play times give way when there is more than one. */
+.vz-acts.vz-acts-row { flex: none; gap: 8px; margin: 0; }
+.vz-acts-row .vz-act {
+  box-sizing: border-box; height: 48px; padding: 0 16px; line-height: 48px; max-width: 220px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* One that brings its own mark is a square, like the row's controller and settings buttons. */
+.vz-acts-row .vz-act.vz-act-icon { width: 48px; padding: 0; display: flex; align-items: center; justify-content: center; }
+.vz-act-icon svg { width: 26px; height: 26px; display: block; }
+.vz-acts-row.vz-acts-2 .vz-act { max-width: 150px; padding: 0 14px; }
+.vz-acts-row.vz-acts-3 .vz-act { max-width: 136px; padding: 0 12px; font-size: 14px; }
+.vz-acts-row.vz-acts-2.vz-acts-wide + div .tool-tip-source { display: none; }
+.vz-acts-row.vz-acts-3.vz-acts-wide + div { visibility: hidden; }
 /* At the foot of the first screen, for what is seldom done (uninstalling). */
 .vz-acts.vz-acts-end { margin: auto 0 0; padding-top: 12px; justify-content: flex-end; }
 .vz-acts-end .vz-act { padding: 7px 14px; font-size: 14px; font-weight: 500; background: transparent; color: rgba(255, 255, 255, 0.6); }
@@ -234,29 +248,87 @@ export const ACTIONS_CSS = `
   padding: 10px 18px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #f4f4f4;
   font-size: 15px; font-weight: 600; outline: 1.5px solid transparent; outline-offset: 2px;
 }
-.vz-act.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent)); outline-offset: 2px; }
+.vz-act.gpfocus { outline: 1.5px solid var(--obs-ring, var(--vz-accent, var(--obs-accent, #B8F35A))); outline-offset: 2px; }
 `;
 
-export function Actions({ actions, end }: { actions: AddonAction[]; end?: boolean }) {
+// The mark an action brings, when it is one plain path and a plain colour; else none.
+function markOf(a: AddonAction): { path: string; tone: string } | null {
+  const path = a.icon?.path;
+  if (typeof path !== "string" || !/^[MmLlHhVvCcSsQqTtAaZz0-9\s.,eE+-]{1,4000}$/.test(path)) return null;
+  const tone = a.icon?.tone;
+  return { path, tone: typeof tone === "string" && /^#[0-9a-fA-F]{6}$/.test(tone) ? tone : "currentColor" };
+}
+
+export function Actions({ actions, end, row }: { actions: AddonAction[]; end?: boolean; row?: boolean }) {
   if (!actions.length) return null;
+  // In the play row a mark stands for the words; anywhere else there is room for them.
+  const marks = actions.map((a) => (row ? markOf(a) : null));
+  const wide = marks.filter((m) => !m).length > 1 || (marks.some((m) => !m) && actions.length > 2);
+  const place = end ? " vz-acts-end" : row ? ` vz-acts-row vz-acts-${Math.min(3, actions.length)}${wide ? " vz-acts-wide" : ""}` : "";
   return (
-    <Focusable className={`vz-acts${end ? " vz-acts-end" : ""}`} flow-children="row">
-      {actions.map((a) => (
+    <Focusable className={`vz-acts${place}`} flow-children="row">
+      {actions.map((a, i) => (
         <Focusable
           key={a.id}
-          className="vz-act"
+          className={`vz-act${marks[i] ? " vz-act-icon" : ""}`}
           noFocusRing
           onActivate={() => Promise.resolve().then(() => a.run()).catch((e) => console.warn("[Vistazo] action", e))}
+          onOKActionDescription={a.label}
         >
-          {a.label}
+          {marks[i] ? (
+            <svg viewBox="0 0 24 24" role="img" aria-label={a.label}>
+              <path d={marks[i]!.path} fill={marks[i]!.tone} />
+            </svg>
+          ) : (
+            a.label
+          )}
         </Focusable>
       ))}
     </Focusable>
   );
 }
 
-export const Panel = memo(function Panel({ appid }: { appid: number }) {
+// The play rows that carry the actions of their game. Should Steam's page change shape and the
+// row not be found, the panel shows them above itself, as it used to.
+const rows = new Map<number, number>();
+const rowWatchers = new Set<() => void>();
+function useRowTaken(appid: number): boolean {
+  const [, turn] = useState(0);
+  useEffect(() => {
+    const fn = () => turn((n) => n + 1);
+    rowWatchers.add(fn);
+    return () => {
+      rowWatchers.delete(fn);
+    };
+  }, []);
+  return (rows.get(appid) ?? 0) > 0;
+}
+
+// The actions inside Steam's play row, between the play button and the play times: reached with
+// left and right like the rest of the row.
+export function RowActions({ appid }: { appid: number }) {
   const actions = useActions(appid);
+  useLayoutEffect(() => {
+    rows.set(appid, (rows.get(appid) ?? 0) + 1);
+    rowWatchers.forEach((fn) => fn());
+    return () => {
+      rows.set(appid, (rows.get(appid) ?? 1) - 1);
+      rowWatchers.forEach((fn) => fn());
+    };
+  }, [appid]);
+  if (!actions.length) return null;
+  return (
+    <>
+      <style>{ACTIONS_CSS}</style>
+      <Actions actions={actions} row />
+    </>
+  );
+}
+
+export const Panel = memo(function Panel({ appid }: { appid: number }) {
+  const inRow = useRowTaken(appid);
+  const loose = useActions(appid);
+  const actions = inRow ? [] : loose;
   const [ach, setAch] = useState<AchievementSummary | null | undefined>(
     cachedAchievements(appid),
   );

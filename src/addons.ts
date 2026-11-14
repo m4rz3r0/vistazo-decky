@@ -61,6 +61,9 @@ export interface AddonShelf {
 export interface AddonAction {
   id: string;
   label: string;
+  // A mark to show instead of the words where room is short (beside the play button): one SVG
+  // path for a 24x24 box, and the colour it is drawn in ("#76b900"). The label still names it.
+  icon?: { path: string; tone?: string };
   run(): void | Promise<void>;
 }
 
