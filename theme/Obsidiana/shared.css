@@ -1422,3 +1422,29 @@ button.DialogButton.gamepaddialog_Button_1kn70.gpfocus[style*="width: 40px"][sty
   box-shadow: none !important;
   border-radius: var(--obs-radius) !important;
 }
+/* ===== Conflicto con el mando (2026-11-15) =====
+   Al lanzar un juego cuya disposición de mandos difiere entre la nube y el equipo, Steam pide elegir
+   una. Las dos opciones son filas de una lista sobre negro: sin relleno gris, ni en reposo ni con el
+   foco (que ya marca el anillo); la elegida se ve en blanco y con el círculo del tono del tema, en
+   lugar del azul de Steam. CSS Loader no traduce los nombres de este módulo (ebV80Z5s_*), así que
+   van sus clases tal cual: DialogChoiceButton, Active, Title, RadioButton y LastModified. */
+.DialogBodyText button[class*="1NanE3eExGghMdycVIVR8b"].DialogButton:not(.Primary),
+.DialogBodyText button[class*="1NanE3eExGghMdycVIVR8b"].DialogButton.gpfocus:not(.Primary) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.DialogBodyText button[class*="1NanE3eExGghMdycVIVR8b"][class*="2hegSJLw7cDEDv9fKZj8xS"].DialogButton:not(.Primary),
+.DialogBodyText button[class*="1NanE3eExGghMdycVIVR8b"].DialogButton.gpfocus:not(.Primary) {
+  color: #ffffff !important;
+}
+/* El título toma el color de la fila: Steam lo pone negro con el foco, pensando en un fondo claro. */
+[class*="1NanE3eExGghMdycVIVR8b"] [class*="369FNQtjKZj4k1RgMk_upt"] { color: inherit !important; }
+[class*="1NanE3eExGghMdycVIVR8b"] [class*="3CKEaM8le_xVqysDq9s4d3"] { color: rgba(255, 255, 255, 0.5) !important; }
+[class*="1NanE3eExGghMdycVIVR8b"] [class*="2SNqCkeOL0u8yOzul4tJuI"] {
+  background: transparent !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35) !important;
+}
+[class*="1NanE3eExGghMdycVIVR8b"][class*="2hegSJLw7cDEDv9fKZj8xS"] [class*="2SNqCkeOL0u8yOzul4tJuI"] {
+  background: radial-gradient(circle, var(--obs-accent) 0 4px, transparent 4.5px) !important;
+  box-shadow: inset 0 0 0 2px var(--obs-accent) !important;
+}
