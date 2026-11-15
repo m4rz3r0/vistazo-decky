@@ -338,6 +338,24 @@ function GlanceIcon() {
   );
 }
 
+// Decky keeps the plugin page that was open in the quick access menu when Vistazo reloads (an
+// update or a reinstall): it goes on showing the old copy, which no longer sees the add-ons, until
+// the player goes back and in again. The old copy hands the page over to the new one once Decky
+// lists it, and gives up after a while if no new copy comes.
+declare const DeckyPluginLoader: any;
+function handOverPage(content: unknown) {
+  let tries = 0;
+  const step = () => {
+    const state = safe(() => DeckyPluginLoader.deckyState, null);
+    const now = safe(() => state?.publicState(), null);
+    if (!now || now.activePlugin?.content !== content) return; // not open, or already handed over
+    const next = now.plugins?.find((p: any) => p.name === "Vistazo" && p.content !== content);
+    if (next) return void safe(() => state.setActivePlugin("Vistazo"), undefined);
+    if (++tries < 60) setTimeout(step, 1000);
+  };
+  setTimeout(step, 1000);
+}
+
 export default definePlugin(() => {
   const patch = patchAppPage();
   const homePatch = patchHome();
@@ -349,10 +367,11 @@ export default definePlugin(() => {
   const closeAddons = openAddons();
   const stopOwn = watchAddonGames((appid) => !!ownerOf(appid));
   const stopHeader = watchHeader();
+  const content = <SettingsPanel />;
   return {
     name: "Vistazo",
     titleView: <div>Vistazo</div>,
-    content: <SettingsPanel />,
+    content,
     icon: <GlanceIcon />,
     onDismount() {
       active = false;
@@ -366,6 +385,7 @@ export default definePlugin(() => {
       closeAddons();
       routerHook.removePatch(ROUTE, patch);
       routerHook.removePatch(HOME, homePatch);
+      handOverPage(content);
     },
   };
 });
