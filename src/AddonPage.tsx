@@ -1,7 +1,7 @@
 import { Focusable, ModalRoot, appActionButtonClasses, showModal } from "@decky/ui";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Addon, AddonAchievement, AddonFile, AddonGame, useAddons } from "./addons";
-import { medal } from "./data";
+import { medal, noteCount } from "./data";
 import { num, t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
 import { ACTIONS_CSS, Actions, Ring, fitPanel, formatSize, markPage, pageOf, useActions } from "./Panel";
@@ -51,6 +51,7 @@ function useGame(addon: Addon, appid: number): AddonGame | null | undefined {
       }
       seen.set(appid, game);
       setData(game);
+      if (game.achievements) noteCount(appid, game.achievements.earned, game.achievements.total);
     };
     // What there is first; then, after a game, afresh (that may take a while).
     read(false).then(() => {

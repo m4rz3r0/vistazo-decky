@@ -2,6 +2,7 @@ import { safe } from "./safe";
 import { t } from "./i18n";
 import { fetchNoCors } from "@decky/api";
 import { isUnloaded } from "./lifecycle";
+import { ownerOf } from "./addons";
 
 declare const appStore: any;
 declare const appDetailsStore: any;
@@ -126,7 +127,14 @@ const tender = (method: string, ...args: unknown[]): Promise<any> =>
 let retroPauseUntil = 0;
 const RETRO_PAUSE = 2 * 60 * 1000;
 const TENDER_PAUSE = 10 * 60 * 1000;
-async function loadRetroCount(appid: number): Promise<void> {
+async function loadRetroCount(appid: number, refresh = false): Promise<void> {
+  // An add-on's own entry: the add-on knows its game (Tender may not even be installed).
+  const owner = ownerOf(appid);
+  if (owner?.count) {
+    const c = await Promise.resolve(owner.count(appid, refresh)).catch(() => null);
+    if (c) saveCount(appid, Number(c.achieved) || 0, Number(c.total) || 0);
+    return;
+  }
   if (Date.now() < retroPauseUntil) return;
   try {
     const game = await tender("get_cached_game_detail", appid);
@@ -144,8 +152,12 @@ async function loadRetroCount(appid: number): Promise<void> {
 }
 
 // Refreshes the saved count of any game: Steam's own achievements, or RetroAchievements for RomM.
-export function loadCount(appid: number): Promise<unknown> {
-  return isShortcut(appid) ? loadRetroCount(appid) : loadAchievements(appid);
+export function loadCount(appid: number, refresh = false): Promise<unknown> {
+  return isShortcut(appid) ? loadRetroCount(appid, refresh) : loadAchievements(appid);
+}
+// A count a game page has just read: the home shows the same figure.
+export function noteCount(appid: number, achieved: number, total: number) {
+  saveCount(appid, achieved, total);
 }
 
 export function cachedAchievements(appid: number) {
@@ -297,8 +309,8 @@ export function watchGames(): () => void {
           return;
         }
         achCache.delete(n.unAppID);
-        // Tender syncs RetroAchievements from RomM after the session, which takes a little longer.
-        setTimeout(() => loadCount(n.unAppID), isShortcut(n.unAppID) ? 20000 : 5000);
+        // RomM reads RetroAchievements again after the session, which takes a little longer.
+        setTimeout(() => loadCount(n.unAppID, true), isShortcut(n.unAppID) ? 20000 : 5000);
       }),
     null as any,
   );

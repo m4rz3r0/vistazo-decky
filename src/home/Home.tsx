@@ -287,6 +287,8 @@ function Hero({ game }: { game: Game | null }) {
 function useAchievements(game: Game | null): AchievementCount | null {
   const id = game?.appid ?? 0;
   const [count, setCount] = useState<AchievementCount | null>(() => (id ? savedCount(id) : null));
+  // An add-on that registers late (after boot, or after an update) owns its games' counts: ask again then.
+  const addonsRound = useAddons();
   useEffect(() => {
     const saved = id ? savedCount(id) : null;
     setCount(saved);
@@ -299,7 +301,7 @@ function useAchievements(game: Game | null): AchievementCount | null {
       live = false;
       clearTimeout(timer);
     };
-  }, [id]);
+  }, [id, addonsRound]);
   return count;
 }
 

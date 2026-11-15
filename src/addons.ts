@@ -101,6 +101,9 @@ export interface Addon {
   actions?(appid: number): Promise<AddonAction[]>;
   // Achievements straight from the add-on's source, for pages another program draws.
   progress?(raId: number, refresh: boolean): Promise<AddonProgress | null>;
+  // How many of one of its games' achievements are earned, for the home's count (light: no
+  // pictures, saves or files). `refresh` once the game was just played. null: not known now.
+  count?(appid: number, refresh: boolean): Promise<{ achieved: number; total: number } | null>;
   // Its own section in Vistazo's settings (plain Decky rows).
   Settings?: ComponentType;
 }
