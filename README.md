@@ -10,7 +10,10 @@ shelves, every game page at a glance, and soft menu sounds.
 ## Home
 
 The selected game fills the screen with its art. Your games sit below on shelves: installed, retro and any of
-your Steam collections. <kbd>L1</kbd> <kbd>R1</kbd> move between them, <kbd>A</kbd> plays, <kbd>X</kbd> opens the game page and <kbd>Y</kbd> the full library.
+your Steam collections. <kbd>L1</kbd> <kbd>R1</kbd> move between them (on a keyboard, <kbd>Page Up</kbd> <kbd>Page Down</kbd>, or Steam's own <kbd>F6</kbd> <kbd>F7</kbd>), <kbd>A</kbd> plays, <kbd>X</kbd> opens the game page and <kbd>Y</kbd> the full library.
+
+On a PC the mouse works too: whatever is under the pointer gets selected, a click does what <kbd>A</kbd> does, the wheel
+runs along the shelf and clicking a shelf's name opens it. The game page works the same with its buttons.
 
 ## Game page
 
@@ -44,8 +47,9 @@ white, larger text and motion in Vistazo's settings. There, too, the shape of yo
 
 ## Settings
 
-Press <img src="docs/icons/menu.svg" height="16" alt="···">, open <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, then **Vistazo**. Turn each part on or off, swap <kbd>A</kbd> and <kbd>X</kbd>, and pick your shelves. Changes
-apply at once.
+Press <img src="docs/icons/menu.svg" height="16" alt="···">, open <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, then **Vistazo**. In order: **Home** (swap <kbd>A</kbd> and
+<kbd>X</kbd>, pick your shelves), **Look** (theme and picture), **Game pages** (the ProtonDB rating), **Add-ons** and
+**Version**. Changes apply at once. The home, the game pages, the soft tones and the new-version notice are always on.
 
 ## Install
 
@@ -64,7 +68,7 @@ To update, open Vistazo in the quick access menu and press **Update** under Vers
 
 Everything comes from Steam on the Deck. The ProtonDB rating asks `protondb.com` with the game's number only,
 and can be turned off. Once a day Vistazo asks `api.github.com` whether there is a newer version, sending nothing
-about you; that can be turned off too. Opening the add-ons section reads the list of add-ons from Vistazo's own
+about you. Opening the add-ons section reads the list of add-ons from Vistazo's own
 repository on GitHub. What each add-on talks to is its own business and said in its own page. No telemetry.
 
 ## Build

@@ -6,7 +6,6 @@ import { fitPanel } from "./Panel";
 import { safe } from "./safe";
 import { inSpanish, keepTranslated, restoreText, wordInSpanish } from "./retroText";
 import { AddonProgress as Progress, firstWith } from "./addons";
-import { settings } from "./settings";
 import { pageCss } from "./styles";
 
 // The page of a RomM game. Tender (another plugin) owns that page: it replaces Steam's play row and
@@ -857,7 +856,6 @@ function sync() {
   const m = /^\/library\/app\/(\d+)$/.exec(String(win?.m_history?.location?.pathname ?? ""));
   const appid = m ? Number(m[1]) : 0;
   const row = appid ? (doc.querySelector(".romm-play-section-row") as HTMLElement | null) : null;
-  if (!settings().retro) return clear(doc);
   watch(doc);
   if (!doc.getElementById(STYLE)) {
     const style = doc.createElement("style");

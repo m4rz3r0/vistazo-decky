@@ -10,7 +10,10 @@ inicio por estanterías, la ficha de cada juego de un vistazo y sonidos suaves.
 ## Inicio
 
 El juego elegido llena la pantalla con su arte. Debajo, tus juegos en estanterías: instalados, retro y
-cualquiera de tus colecciones de Steam. <kbd>L1</kbd> <kbd>R1</kbd> pasan de una a otra, <kbd>A</kbd> juega, <kbd>X</kbd> abre la ficha y <kbd>Y</kbd> la biblioteca.
+cualquiera de tus colecciones de Steam. <kbd>L1</kbd> <kbd>R1</kbd> pasan de una a otra (con teclado, <kbd>Re Pág</kbd> <kbd>Av Pág</kbd>, o las propias de Steam, <kbd>F6</kbd> <kbd>F7</kbd>), <kbd>A</kbd> juega, <kbd>X</kbd> abre la ficha y <kbd>Y</kbd> la biblioteca.
+
+En un PC también va con ratón: lo que queda bajo el puntero se selecciona, un clic hace lo mismo que <kbd>A</kbd>, la rueda
+recorre la estantería y un clic en su nombre la abre. En la ficha, igual con sus botones.
 
 ## Ficha
 
@@ -46,8 +49,10 @@ texto grande y movimiento en los ajustes de Vistazo. Ahí también, la forma de 
 
 ## Ajustes
 
-Pulsa <img src="docs/icons/menu.svg" height="16" alt="···"> y abre <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, luego **Vistazo**. Activa o desactiva cada parte, intercambia <kbd>A</kbd> y <kbd>X</kbd> y elige tus
-estanterías. Los cambios se aplican al momento.
+Pulsa <img src="docs/icons/menu.svg" height="16" alt="···"> y abre <img src="docs/icons/plug.svg" height="16" alt="Decky"> **Decky**, luego **Vistazo**. Por orden: **Inicio** (intercambiar
+<kbd>A</kbd> y <kbd>X</kbd> y elegir tus estanterías), **Aspecto** (tema y foto), **Fichas de juegos** (la nota de
+ProtonDB), **Complementos** y **Versión**. Los cambios se aplican al momento. El inicio, las fichas, los tonos suaves
+y el aviso de versiones nuevas van siempre activados.
 
 ## Instalar
 
@@ -66,7 +71,7 @@ Para actualizar, abre Vistazo en el menú de acceso rápido y pulsa **Actualizar
 
 Todo sale de Steam en la Deck. La nota de ProtonDB se pide a `protondb.com` solo con el número del juego, y se
 puede desactivar. Una vez al día Vistazo pregunta a `api.github.com` si hay una versión nueva, sin enviar nada
-sobre ti; también se puede desactivar. Al abrir el apartado de complementos se lee su lista del repositorio de Vistazo
+sobre ti. Al abrir el apartado de complementos se lee su lista del repositorio de Vistazo
 en GitHub. Con quién habla cada complemento es cosa suya y lo dice su propia página. Sin telemetría.
 
 ## Compilar

@@ -292,14 +292,3 @@ function hookSounds(isOn: () => boolean): (() => void) | null {
   };
 }
 
-// A short sample for the settings screen: move, confirm, open a menu, launch.
-export function playSample() {
-  const seq: [string, number][] = [
-    ["deck_ui_navigation", 0],
-    ["deck_ui_navigation", 160],
-    ["deck_ui_default_activation", 360],
-    ["deck_ui_show_modal", 700],
-    ["deck_ui_launch_game", 1100],
-  ];
-  for (const [name, ms] of seq) setTimeout(() => play(name), ms);
-}

@@ -213,6 +213,9 @@ export const homeCss = `
   font-weight: 700;
   color: var(--vh-dim);
 }
+/* With a mouse, shelf names and the glyphs beside them can be clicked. */
+.vh-shelf, .vh-glyph { cursor: pointer; transition: color calc(140ms * var(--vh-motion)) ease-out; }
+.vh-shelf:hover, .vh-glyph:hover { color: var(--vh-text); }
 
 /* Covers. "Protagonist": the chosen game steps forward at full light, the rest stay smaller and
    in the half-light. Only transform and opacity change, so the GPU composes it without laying the
@@ -408,4 +411,7 @@ export const homeCss = `
   font-size: 14px;
   opacity: 0.6;
 }
+/* Steam's top bar keeps an empty, clickable strip across its middle, over the friends corner: the
+   pointer must reach the corner through it. */
+html[data-vh-home] [class*="_2a1-sPpExCp24Q8dfImB0a"]:empty { pointer-events: none; }
 `;

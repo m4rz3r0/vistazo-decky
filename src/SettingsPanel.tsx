@@ -5,7 +5,6 @@ import { OfferState, installAddon, readAddonList, useAddonList } from "./addonLi
 import { allAddons, useAddons } from "./addons";
 import { Guard } from "./Guard";
 import { AVATARS, Settings, setSetting, useSettings } from "./settings";
-import { playSample } from "./sounds";
 import { availableShelves } from "./home/data";
 import { checkForUpdate, installUpdate, useUpdate } from "./update";
 import { COLOR, COLORS, MOTION, TEXT, setThemeEnabled, setThemeOption, useTheme } from "./theme";
@@ -37,14 +36,13 @@ export function SettingsPanel() {
   const home = (
     <>
       <PanelSection title={t.homeSection}>
-        {toggle("home", t.homeLabel, t.homeDesc)}
-        {toggle("aOpensPage", t.aOpensPageLabel, t.aOpensPageDesc, s.home ? undefined : t.needsHome)}
+        {toggle("aOpensPage", t.aOpensPageLabel, t.aOpensPageDesc)}
       </PanelSection>
       <PanelSection title={t.shelvesSection}>
         {availableShelves().map((shelf) => {
           const on = s.shelves.includes(shelf.id);
           // The last shelf on stays on: the home always has one to show.
-          const blockedBy = !s.home ? t.needsHome : on && s.shelves.length <= 1 ? t.lastShelf : undefined;
+          const blockedBy = on && s.shelves.length <= 1 ? t.lastShelf : undefined;
           return (
             <PanelSectionRow key={shelf.id}>
               <ToggleField
@@ -65,13 +63,6 @@ export function SettingsPanel() {
       </PanelSection>
     </>
   );
-  const page = (
-    <PanelSection title={t.pageSection}>
-      {toggle("page", t.pageLabel, t.pageDesc)}
-      {toggle("protondb", t.protonLabel, t.protonDesc, s.page ? undefined : t.needsPage)}
-      {toggle("retro", t.retroPageLabel, t.retroPageDesc)}
-    </PanelSection>
-  );
   const look = (
     <>
       <ThemeSection />
@@ -84,14 +75,6 @@ export function SettingsPanel() {
             selectedOption={s.avatar}
             onChange={(o) => setSetting("avatar", o.data)}
           />
-        </PanelSectionRow>
-      </PanelSection>
-      <PanelSection title={t.sound}>
-        {toggle("sounds", t.soundsLabel, t.soundsDesc)}
-        <PanelSectionRow>
-          <ButtonItem layout="below" onClick={playSample}>
-            {t.playSample}
-          </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
     </>
@@ -108,7 +91,7 @@ export function SettingsPanel() {
   const addon = group?.startsWith("addon:") ? addons.find((a) => `addon:${a.id}` === group) : undefined;
   const AddonRows = addon?.Settings;
   const body =
-    group === "home" ? home : group === "page" ? page : group === "look" ? look : group === "addons" ? <AddonList /> : addon && AddonRows ? (
+    group === "home" ? home : group === "look" ? look : group === "addons" ? <AddonList /> : addon && AddonRows ? (
       <Guard name={`add-on ${addon.id}`}>
         <AddonRows />
       </Guard>
@@ -125,9 +108,8 @@ export function SettingsPanel() {
       </Focusable>
     );
   const shelvesOn = availableShelves().filter((x) => s.shelves.includes(x.id)).length;
-  const pageBits = [s.page && t.pageLabel, s.page && s.protondb && "ProtonDB", s.retro && t.retro].filter(Boolean).join(" · ");
   const obsidiana = theme?.loader && theme.theme?.enabled ? `Obsidiana · ${t.colorNames[theme.theme.color] ?? ""}` : "";
-  const lookBits = [obsidiana, s.sounds && t.soundsLabel].filter(Boolean).join(" · ");
+  const lookBits = obsidiana || t.avatarNames[s.avatar];
   const row = (g: string, label: string, summary: string) => (
     <PanelSectionRow key={g}>
       <Field
@@ -143,12 +125,15 @@ export function SettingsPanel() {
       </Field>
     </PanelSectionRow>
   );
+  // Most used first: the home and its look, the one choice on game pages, the add-ons, the version.
   return (
     <>
       <PanelSection>
-        {row("home", t.homeSection, s.home ? t.shelvesCount(shelvesOn) : t.off)}
-        {row("page", t.pageSection, pageBits || t.off)}
-        {row("look", t.lookSection, lookBits || t.off)}
+        {row("home", t.homeSection, t.shelvesCount(shelvesOn))}
+        {row("look", t.lookSection, lookBits)}
+      </PanelSection>
+      <PanelSection title={t.pageSection}>
+        {toggle("protondb", t.protonLabel, t.protonDesc)}
       </PanelSection>
       <PanelSection title={t.addonsSection}>
         {addons.map((a) => row(`addon:${a.id}`, a.name, ""))}
@@ -156,7 +141,6 @@ export function SettingsPanel() {
       </PanelSection>
       <PanelSection title={t.updateSection}>
         <UpdateRows />
-        {toggle("updates", t.updatesLabel, t.updatesDesc)}
       </PanelSection>
     </>
   );

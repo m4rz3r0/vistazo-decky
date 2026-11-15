@@ -1,5 +1,6 @@
 import { lang, num, t } from "./i18n";
 import { GemShape } from "./gem";
+import { followMouse } from "./focus";
 import { Focusable, Navigation, appDetailsClasses } from "@decky/ui";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
@@ -353,6 +354,11 @@ export const Panel = memo(function Panel({ appid }: { appid: number }) {
     markPage(root.current, true);
     fit(root.current);
   }, [ach, achFailed, proton, protondb, open, actions.length]);
+  // The mouse on a desktop: hovering the play bar or the panel selects what is under the pointer.
+  useEffect(() => {
+    const host = root.current?.closest<HTMLElement>("[data-vz-host]");
+    return host ? followMouse(host) : undefined;
+  }, []);
   // Opened, the panel grows past the first screen: scroll just enough to show all of it above
   // Steam's button hints, and go back to where the page was when it is folded again.
   const scrolledFrom = useRef<number | null>(null);

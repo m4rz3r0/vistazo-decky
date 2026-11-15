@@ -16,7 +16,6 @@ import { setupTheme } from "./theme";
 import { watchGames } from "./data";
 import { watchRetroPages } from "./retro";
 import { watchUpdates } from "./update";
-import { Settings, settings, useSettings } from "./settings";
 import { installSounds } from "./sounds";
 import { Guard } from "./Guard";
 import { markUnloaded } from "./lifecycle";
@@ -162,12 +161,8 @@ const isBody = (x: any) =>
 // with what the add-on hands over. Any non-Steam entry may be one: what is put on its page looks
 // it up and stays out of the way when it is not.
 const isOwnGame = (overview: any) => !!overview && safe(() => !!overview.BIsShortcut?.(), false);
-// The add-on whose page this entry gets, when its switch is on: retro games (the ones an add-on
-// puts on the Retro shelf) have their own switch; any other add-on's games follow the game page's.
-const shownOwner = (appid: number, s: Settings): Addon | null => {
-  const addon = ownerOf(appid);
-  return addon && (addon.shelf ? s.retro : s.page) ? addon : null;
-};
+// The add-on whose page this entry gets.
+const shownOwner = (appid: number): Addon | null => ownerOf(appid);
 
 // Steam's play row: [play button, last session and play time, controller and settings buttons].
 // What add-ons offer to do with the game goes right after the play button, inside the row.
@@ -278,36 +273,27 @@ function patchAppPage() {
 const isHomeFrame = (x: any) =>
   x?.props?.headerVisibility !== undefined && x?.props?.children;
 
-// Both switches keep Steam's own content at hand, so turning a setting off shows Steam's screen at once.
 // If our screen fails to draw (a Steam update moved something it reads), Steam's own shows instead.
 function HomeSwitch({ steam }: { steam: any }) {
-  return useSettings().home
-    ? createElement(Guard, { name: "home", fallback: steam }, createElement(Home))
-    : steam;
+  return createElement(Guard, { name: "home", fallback: steam }, createElement(Home));
 }
 function TabsSwitch({ own, children }: { own: number; children?: any }) {
-  const s = useSettings();
   useAddons();
-  return (own ? shownOwner(own, s) : s.page) ? null : children;
+  return (own ? shownOwner(own) : true) ? null : children;
 }
 function RowSwitch({ appid }: { appid: number }) {
-  return useSettings().page
-    ? createElement(Guard, { name: "play row", key: appid }, createElement(RowActions, { appid }))
-    : null;
+  return createElement(Guard, { name: "play row", key: appid }, createElement(RowActions, { appid }));
 }
 function OwnPanel({ appid }: { appid: number }) {
-  const s = useSettings();
   useAddons();
-  const addon = shownOwner(appid, s);
+  const addon = shownOwner(appid);
   return addon
     ? createElement(Guard, { name: "add-on page", key: `${addon.id}:${appid}` }, createElement(AddonPage, { appid, addon }))
     : null;
 }
 // Keyed by appid: a new game starts with fresh state.
 function PagePanel({ appid }: { appid: number }) {
-  return useSettings().page
-    ? createElement(Guard, { name: "page", key: appid }, createElement(Panel, { appid }))
-    : null;
+  return createElement(Guard, { name: "page", key: appid }, createElement(Panel, { appid }));
 }
 
 function afterHome(_: any, out: any) {
@@ -355,7 +341,7 @@ function GlanceIcon() {
 export default definePlugin(() => {
   const patch = patchAppPage();
   const homePatch = patchHome();
-  const removeSounds = installSounds(() => settings().sounds);
+  const removeSounds = installSounds(() => true);
   setupTheme();
   const stopWatching = watchGames();
   const stopUpdates = watchUpdates();

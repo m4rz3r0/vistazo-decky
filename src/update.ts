@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { t } from "./i18n";
 import { isUnloaded } from "./lifecycle";
 import { safe } from "./safe";
-import { settings } from "./settings";
 
 // Updates without typing the address again. Vistazo asks GitHub for its latest release and hands
 // the zip to Decky's own installer, which shows its usual confirmation, checks the zip against the
@@ -133,14 +132,14 @@ export function installUpdate() {
   ).catch((e) => console.warn("[Vistazo] update", e));
 }
 
-// Once a day, a while after Steam starts, and one notification per new version. Only while
-// "tell me about new versions" is on; the settings screen can always ask by hand.
+// Once a day, a while after Steam starts, and one notification per new version. The settings screen
+// can always ask by hand.
 export function watchUpdates() {
   const run = async () => {
-    if (isUnloaded() || !settings().updates) return;
+    if (isUnloaded()) return;
     await checkForUpdate();
     const s = state();
-    if (isUnloaded() || !settings().updates || !s.available || !s.latest || saved.told === s.latest.version) return;
+    if (isUnloaded() || !s.available || !s.latest || saved.told === s.latest.version) return;
     save({ told: s.latest.version });
     toaster.toast({ title: t.updateToastTitle(s.latest.version), body: t.updateToastBody, onClick: installUpdate });
   };

@@ -2,14 +2,11 @@ import { safe } from "./safe";
 import { useEffect, useState } from "react";
 
 // User choices, kept in the Steam UI's own local storage (survives restarts, stays on the device).
+// The home screen, the game pages (Steam's and RomM's), the calm menu sounds and the daily look for
+// a newer version are always on: they used to have switches, and older saved choices are ignored.
 export interface Settings {
-  home: boolean; // our home screen instead of Steam's
-  page: boolean; // panel on each Steam game page
   protondb: boolean; // ask protondb.com for the game's rating
-  sounds: boolean; // calm menu sounds instead of Steam's
   aOpensPage: boolean; // home: A opens the game page and X plays (Steam games only)
-  retro: boolean; // the same first screen on RomM game pages (Tender's own page when off)
-  updates: boolean; // ask GitHub once a day for a newer Vistazo and say so
   shelves: string[]; // home shelves on show, by id (see availableShelves)
   avatar: Avatar; // the shape of the player's picture in the top bar
 }
@@ -17,7 +14,7 @@ export const AVATARS = ["round", "rounded", "steam"] as const;
 export type Avatar = (typeof AVATARS)[number];
 
 const KEY = "vistazo:settings";
-const DEFAULTS: Settings = { home: true, page: true, protondb: true, sounds: true, aOpensPage: false, retro: true, updates: true, shelves: ["installed", "retro"], avatar: "round" };
+const DEFAULTS: Settings = { protondb: true, aOpensPage: false, shelves: ["installed", "retro"], avatar: "round" };
 
 function read(): Settings {
   const saved = safe(() => JSON.parse(localStorage.getItem(KEY) ?? "null"), {});

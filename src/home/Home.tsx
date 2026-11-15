@@ -1,5 +1,5 @@
 import { safe } from "../safe";
-import { navFocus, wakeNavigation } from "../focus";
+import { focusedByMouse, followMouse, navFocus, wakeNavigation } from "../focus";
 import { locale, num, t } from "../i18n";
 import {
   Focusable,
@@ -30,6 +30,57 @@ import { useAddons } from "../addons";
 import { useSettings } from "../settings";
 import { AchievementCount, DAY, Medal, loadCount, medal, runningAppIds, savedCount } from "../data";
 import { PlatinumIcon } from "../gem";
+
+// Steam's input source (EFocusSource-like): 1 gamepad, 2 keyboard. Anything else (mouse, touch)
+// leaves the last of the two in place, so the hints do not flicker while the mouse moves.
+declare const FocusNavController: any;
+const KEYBOARD_SOURCE = 2;
+const GAMEPAD_SOURCE = 1;
+let lastKeyboard = false;
+
+function useKeyboardInUse(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(lastKeyboard);
+  const set = (v: boolean) => {
+    lastKeyboard = v;
+    setOn(v);
+  };
+  useEffect(() => {
+    const read = (v: any) => {
+      const type = v?.eActivationSourceType;
+      if (type === KEYBOARD_SOURCE) set(true);
+      else if (type === GAMEPAD_SOURCE) set(false);
+    };
+    try {
+      const source = FocusNavController.m_navigationSource;
+      read(source.Value);
+      const sub = source.Subscribe(read);
+      return () => sub?.Unsubscribe?.();
+    } catch {
+      return undefined;
+    }
+  }, []);
+  return [on, set];
+}
+
+/**
+ * Keyboard shelf switching for a desktop: Page Up / Page Down step left / right.
+ * Steam's own keyboard map already turns F6/F7 (and Ctrl+4/Ctrl+5) into L1/R1, which reach
+ * onButtonDown; Page Up/Down are not in that map, so they arrive as plain keys.
+ * Held keys and modified presses are ignored, like a bumper that does not repeat.
+ */
+export function shelfKeyStep(e: {
+  key?: string;
+  repeat?: boolean;
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  shiftKey?: boolean;
+  metaKey?: boolean;
+}): -1 | 0 | 1 {
+  if (e.repeat || e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return 0;
+  if (e.key === "PageUp") return -1;
+  if (e.key === "PageDown") return 1;
+  return 0;
+}
 
 // Image with fallbacks: tries each URL in turn, then shows `fallback`. Callers give it a key per
 // game, so a new game starts again from the first URL.
@@ -342,10 +393,17 @@ let wokeOnce = false;
 // screen: while focus moves quickly, jump straight there; a single press still glides.
 let lastRowMove = 0;
 function centerInRow(e: any): void {
+  const el = (e?.currentTarget ?? e?.target) as HTMLElement | null;
+  // Reached with the mouse: the cover is already under the pointer. Only bring it whole into view,
+  // or the row would slide it away from the pointer.
+  if (focusedByMouse()) {
+    el?.scrollIntoView?.({ behavior: "smooth", inline: "nearest", block: "nearest" });
+    return;
+  }
   const now = performance.now();
   const quick = now - lastRowMove < 250;
   lastRowMove = now;
-  ((e?.currentTarget ?? e?.target) as HTMLElement | null)?.scrollIntoView?.({
+  el?.scrollIntoView?.({
     behavior: quick ? "auto" : "smooth",
     inline: "center",
     block: "nearest",
@@ -524,6 +582,46 @@ export function Home() {
     if (b === GamepadButton.BUMPER_LEFT) cycle(-1);
     else if (b === GamepadButton.BUMPER_RIGHT) cycle(1);
   };
+  // Page Up/Down on a keyboard. Steam's Focusable drops onKeyDown, so listen on the home's own
+  // document; Steam keeps the browser focus on the selected element, so a key counts only when it
+  // comes from inside the home (not from a dialog, a text field or another page over it).
+  const [keyboard, setKeyboard] = useKeyboardInUse();
+  const cycleRef = useRef(cycle);
+  cycleRef.current = cycle;
+  const setKeyboardRef = useRef(setKeyboard);
+  setKeyboardRef.current = setKeyboard;
+  useEffect(() => {
+    const doc = titleRef.current?.ownerDocument ?? document;
+    const onKey = (evt: KeyboardEvent) => {
+      const dir = shelfKeyStep(evt);
+      const root = titleRef.current?.closest(".vh-root");
+      if (!dir || !root || !root.contains(evt.target as any)) return;
+      evt.preventDefault();
+      evt.stopPropagation();
+      setKeyboardRef.current(true);
+      cycleRef.current(dir);
+    };
+    doc.addEventListener("keydown", onKey);
+    return () => doc.removeEventListener("keydown", onKey);
+  }, []);
+
+  // The mouse on a desktop: hovering selects, the wheel scrolls the row of covers sideways.
+  useEffect(() => {
+    const root = titleRef.current?.closest<HTMLElement>(".vh-root");
+    if (!root) return;
+    const stop = followMouse(root);
+    const onWheel = (e: WheelEvent) => {
+      const row = (e.target as Element | null)?.closest?.<HTMLElement>(".vh-row");
+      if (!row || !root.contains(row) || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      row.scrollBy({ left: e.deltaY, behavior: "auto" });
+    };
+    root.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      stop();
+      root.removeEventListener("wheel", onWheel);
+    };
+  }, []);
 
   const { aOpensPage } = useSettings();
   const onShow = useCallback(
@@ -599,16 +697,23 @@ export function Home() {
       </div>
 
       <div className="vh-shelves">
-        <span className="vh-glyph">L1</span>
-        {shelves.map((s) => (
+        {/* With the mouse, a shelf's name opens it and the glyphs step like L1/R1. */}
+        <span className="vh-glyph" onClick={() => cycle(-1)}>{keyboard ? t.keyPrevShelf : "L1"}</span>
+        {shelves.map((s, i) => (
           <span
             key={s.id}
             className={`vh-shelf${s.id === shelf ? " vh-on" : ""}`}
+            onClick={() => {
+              const at = shelves.findIndex((x) => x.id === shelf);
+              if (i === at) return;
+              setSlide(i < at ? "vh-from-left" : "vh-from-right");
+              show(s.id);
+            }}
           >
             {s.label}
           </span>
         ))}
-        <span className="vh-glyph">R1</span>
+        <span className="vh-glyph" onClick={() => cycle(1)}>{keyboard ? t.keyNextShelf : "R1"}</span>
       </div>
 
       <Focusable key={shelf} className={`vh-row ${slide}`} flow-children="row">
@@ -630,6 +735,9 @@ export function Home() {
         <Focusable
           className="vh-cover vh-library"
           noFocusRing
+          // An empty shelf has no cover to take the selection: without this nothing is selected
+          // after the switch, and L1/R1 (or the keyboard) can no longer leave it.
+          autoFocus={games.length === 0}
           onGamepadFocus={(e: any) => {
             setFocusedId(null);
             centerInRow(e);
