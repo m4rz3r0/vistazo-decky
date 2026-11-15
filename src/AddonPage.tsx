@@ -267,7 +267,8 @@ export const AddonPage = memo(function AddonPage({ appid, addon }: { appid: numb
             ))}
         </div>
       </Focusable>
-      {!missing && <Actions actions={actions} end />}
+      {/* Also without the file: what an add-on offers (the background, say) does not need it. */}
+      <Actions actions={actions} end />
     </div>
   );
 });
